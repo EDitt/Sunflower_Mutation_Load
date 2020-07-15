@@ -23,8 +23,30 @@ See Mandel et al. (2013): https://journals.plos.org/plosgenetics/article?id=10.1
 
 Contextual sequences for the SNPs identified in Bachlava et al. (2012) were taken from supplementary file s006 and saved as a .txt file  
 This file was converted to FASTA format using the following code:
+
 ```bash
-awk
+awk 'NR >1 { print ">"$2"\n"$5 }' Bachlava_subset.txt > ContextualSeqs.fasta
 ```
 
+I also replaced the polymorphism syntax (e.g. "[A/C]") with ambiguous characters designated by IUPAC codes
+A/C - 1134; T/C - 4322; A/G - 3998; T/G - 1186 (No A/T or C/G polymorphisms, as these were removed)
+```bash
+sed -i 's|\[A/C]|M|g' ContextualSeqs.fasta
+sed -i 's|\[T/C]|Y|g' ContextualSeqs.fasta
+sed -i 's|\[A/G]|R|g' ContextualSeqs.fasta
+sed -i 's|\[T/G]|K|g' ContextualSeqs.fasta
+```
 
+Index reference  
+Adopted from Chaochih's script: https://github.com/MorrellLAB/morex_reference/blob/master/morex_v2/prep_reference/make_index_pseudo_bowtie2.sh  
+
+```bash
+qsub
+```
+
+Alignment
+Adopted from Chaochih's script: https://github.com/MorrellLAB/morex_reference/blob/master/morex_v2/prep_reference/check_by_aligning_bowtie2_BOPA.sh
+
+```bash
+qsub
+```
