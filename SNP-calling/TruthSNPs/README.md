@@ -112,4 +112,9 @@ done
 #### Format Genetic Map
 The creation of the genetic map is described in Bowers et al. (2012). I saved the first sheet "combined map" from supplementary file S1 from this paper as a tab-delimited .txt file
 ```bash
+# genetic map for all SNPs
+awk 'NR >2 {print $0}' MapData_Bowers2012_FileS1.txt  | cut -f10-13  | awk '{print $3,$1,$4,"-"FNR}' OFS='\t' > SNP_all_Genetic_Map.txt
+
+# genetic map for subset
+
 ```
