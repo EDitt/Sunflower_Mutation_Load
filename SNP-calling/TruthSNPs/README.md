@@ -116,9 +116,6 @@ Mandel et al. (2012) genotyped 5,359 array markers in 271 lines, All of these we
 
 ## Data Exploration
 
-#### How many SNPs in common between the map data (Bowers) and the genotyping (Mandel)?
-
-
 #### Mapping
 Mapped contextual sequences to the new reference:
 1.) Index reference  
