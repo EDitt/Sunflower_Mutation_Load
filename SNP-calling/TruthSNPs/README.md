@@ -18,7 +18,7 @@ A 10k SNP Illumina Infinium SNP array was created by aligning short-read transcr
 For details see Bachlava et al. (2012) https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0029814#s4  
 
 This SNP array was used to genotype four mapping populations to construct a consensus linkage map: see Bowers et al. (2012) https://pubmed.ncbi.nlm.nih.gov/22870395/  
-The consensus map contains 10,083 loci, and include 1512 PCR-based loci. 783 loci map to >1 loci (762 to 2 different locations and 21 to 3 different locations)
+The consensus map contains 10,083 loci, and includes 1512 PCR-based loci (not from SNP array). 783 mapped to >1 loci (762 to 2 different locations and 21 to 3 different locations)
 
 SNPs were also genotyped on a diverse collection of 271 sunflower lines (mostly overlapping with lines used to call SNPs in the current experiment). The total number of readily scorale, bi-allelic SNPs was 5,788, out of which 5,359 had MAF >/= 10%  
 See Mandel et al. (2013): https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1003378
@@ -32,6 +32,10 @@ This file was converted to FASTA format using the following code:
 
 ```bash
 awk 'NR >1 { print ">"$2"\n"$5 }' Bachlava_subset.txt > ContextualSeqs.fasta
+
+# re-created using only the SNPs mapped uniquely and used in the Bowers et al. (2012) genetic map
+awk 'FNR==NR{arr[$0];next}($2 in arr)' Unique_Assay_Names.txt Bachlava_subset.txt |  awk '{ print ">"$2"\n"$5 }' > ContextualSeqs_UniqMap.fasta
+
 ```
 
 I also replaced the polymorphism syntax (e.g. "[A/C]") with ambiguous characters designated by IUPAC codes  
@@ -43,12 +47,45 @@ sed -i 's|\[A/G]|R|g' ContextualSeqs.fasta
 sed -i 's|\[T/G]|K|g' ContextualSeqs.fasta
 ```
 
+#### Format Genetic Map
+The creation of the genetic map is described in Bowers et al. (2012). I saved the first sheet "combined map" and the last sheet "assays that map to > 1 loci" from supplementary file S1 from this paper as separate tab-delimited .txt files.
+
+Combined Map
+```bash
+# clean-up- remove top row and un-needed columns
+awk 'NR >1 {print $0}' MapData_Bowers2012_FileS1.txt  | cut -f10-13 > MapData_Bowers2012_reduced.txt
+# check numbers:
+wc -l MapData_Bowers2012_reduced.txt #10084 (10,083 markers)
+awk -F'\t' '$2!=""' MapData_Bowers2012_reduced.txt | wc -l #8572 (8571 without the 1512 PCR-based markers)
+```
+
+Assays that map to >1 loci
+```bash
+awk 'NR >2 {print $0}' MapData_Bowers2012_FileS1_multimappers.txt  | cut -f11  | sort -u > SNP_MultiMappers.txt
+wc -l SNP_MultiMappers.txt #783
+
+# how many markers are *not* multi-mappers?
+grep -wvf SNP_MultiMappers.txt MapData_Bowers2012_reduced.txt | wc -l #8497 (including header line)
+```
+
+```bash
+# genetic map for all SNPs that map uniquely to genome
+
+awk 'FNR==NR{arr[$0];next}!($2 in arr)' SNP_MultiMappers.txt MapData_Bowers2012_reduced.txt | awk -F'\t' '$2!="" && NR >1 {print $3,$1,$4,"-"FNR}' OFS='\t' > SNP_Genetic_Map_Unique.txt
+# check
+wc -l SNP_Genetic_Map_Unique.txt #6984 (8496 unique mappers minus 1512 PCR-based markers)
+# saved this list to subset others
+awk '{print $2}' SNP_Genetic_Map_Unique.txt > Unique_Assay_Names.txt
+
+```
+
 #### Create Illumina Lookup Table  
 This is a two-column, headerless table that has a SNP ID and contextual sequence in with the SNP in brackets and is a required input for SNP-utils  
 
 ```bash
 # for all SNPs
 awk -v OFS='\t' 'NR >1 { print $2, $5 }' Bachlava_subset.txt > LookupTable_All.txt
+# for uniquely mapped SNPs
 
 # for genotyped subset
 for i in `awk -F"\t" 'NR >1 { print $1 }' Mandel_TableS2.txt `; do
@@ -56,21 +93,22 @@ for i in `awk -F"\t" 'NR >1 { print $1 }' Mandel_TableS2.txt `; do
 done
 ```
 
-#### Format Genetic Map
-The creation of the genetic map is described in Bowers et al. (2012). I saved the first sheet "combined map" and the last sheet "assays that map to > 1 loci" from supplementary file S1 from this paper as separate tab-delimited .txt files.
 
-```bash
-# genetic map for all SNPs
-awk 'NR >2 {print $0}' MapData_Bowers2012_FileS1.txt  | cut -f10-13  | awk '{print $3,$1,$4,"-"FNR}' OFS='\t' > SNP_all_Genetic_Map.txt
+#### Summary:
+Bachlava et al. (2012) designed an array that included 10,640 SNPs (though only 9,480 were included due to 10.9% manufacturing loss)
 
-# genetic map for genotyped subset
+Bowers et al. (2012) mapped 10,083 loci, including 1512 PCR-based markers (not from array). Of the 8571 array-based markers used, 6984 mapped to only 1 location in the genome.
 
-```
+Mandel et al. (2012) genotyped 5,359 array markers in 271 lines
 
 ---
 
 ## Data Exploration
 
+#### How many SNPs in common between the map data (Bowers) and the genotyping (Mandel)?
+
+
+#### Mapping
 Mapped contextual sequences to the new reference:
 1.) Index reference  
 Adopted from Chaochih's script: https://github.com/MorrellLAB/morex_reference/blob/master/morex_v2/prep_reference/make_index_pseudo_bowtie2.sh  

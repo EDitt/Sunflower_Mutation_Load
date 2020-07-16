@@ -14,10 +14,10 @@ module load Bowtie2/2.3.5.1-GCC-8.3.0
 # Following what Li did for morex v1: https://github.com/lilei1/9k_BOPA_SNP/blob/master/script/commandlines
 
 # User provided input arguments
-FASTA_FILE=/scratch/eld72413/SNParray/ContextualSeqs_subset.fasta
+FASTA_FILE=/scratch/eld72413/SNParray/ContextualSeqs_UniqMap.fasta
 DB_NAME=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130
-OUT_PREFIX=Contextual_Subset_HA412v2_bowtie2
-OUT_DIR=/scratch/eld72413/SNParray/SNPsubset
+OUT_PREFIX=Contextual_UniqMap_HA412v2_bowtie2
+OUT_DIR=/scratch/eld72413/SNParray/AllUniqSNPs
 
 # Check if our dir exists, if not make it
 #mkdir -p ${OUT_DIR}
