@@ -8,6 +8,7 @@ Credit to Chaochih Liu for help with this process: (see https://github.com/Morre
 - [Data](#data)
 - [Data Exploration](#data-exploration)
 - [Data Preparation](#data-preparation)
+- [Run SNP-Utils](#run-snp-utils)
 
 ---
 
@@ -52,7 +53,7 @@ Alignment
 Adopted from Chaochih's script: https://github.com/MorrellLAB/morex_reference/blob/master/morex_v2/prep_reference/check_by_aligning_bowtie2_BOPA.sh
 
 ```bash
-qsub
+qsub AlignBowtie.sh
 ```
 
 I will also subset these 10,640 SNPs to only include the 5,359 that were genotyped in Mandel et al. (2013)  
@@ -139,7 +140,7 @@ samtools flagstat Contextual_Subset_HA412v2_bowtie2.sam
 
 #### BLAST database
 
-First, donwloaded taxonomy information:
+First, downloaded taxonomy information:
 ```bash
 wget https://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz
 # Extract files
