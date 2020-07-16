@@ -6,9 +6,9 @@ Credit to Chaochih Liu for help with this process: (see https://github.com/Morre
 ### Navigation: Jump to Section
 
 - [Data](#data)
-- [Data Exploration](#data-exploration)
 - [Data Preparation](#data-preparation)
-- [Run SNP-Utils](#run-snp-utils)
+- [Data Exploration](#data-exploration)
+- [SNP-Utils](#snp-utils)
 
 ---
 
@@ -18,14 +18,15 @@ A 10k SNP Illumina Infinium SNP array was created by aligning short-read transcr
 For details see Bachlava et al. (2012) https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0029814#s4  
 
 This SNP array was used to genotype four mapping populations to construct a consensus linkage map: see Bowers et al. (2012) https://pubmed.ncbi.nlm.nih.gov/22870395/  
+The consensus map contains 10,083 loci, and include 1512 PCR-based loci. 783 loci map to >1 loci (762 to 2 different locations and 21 to 3 different locations)
 
 SNPs were also genotyped on a diverse collection of 271 sunflower lines (mostly overlapping with lines used to call SNPs in the current experiment). The total number of readily scorale, bi-allelic SNPs was 5,788, out of which 5,359 had MAF >/= 10%  
 See Mandel et al. (2013): https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1003378
 
 ---
+## Data Preparation
 
-## Data Exploration
-
+#### Contextual Sequences
 Contextual sequences for the SNPs identified in Bachlava et al. (2012) were taken from supplementary file s006 and saved as a tab-delimited .txt file  
 This file was converted to FASTA format using the following code:
 
@@ -42,14 +43,43 @@ sed -i 's|\[A/G]|R|g' ContextualSeqs.fasta
 sed -i 's|\[T/G]|K|g' ContextualSeqs.fasta
 ```
 
-Index reference  
+#### Create Illumina Lookup Table  
+This is a two-column, headerless table that has a SNP ID and contextual sequence in with the SNP in brackets and is a required input for SNP-utils  
+
+```bash
+# for all SNPs
+awk -v OFS='\t' 'NR >1 { print $2, $5 }' Bachlava_subset.txt > LookupTable_All.txt
+
+# for genotyped subset
+for i in `awk -F"\t" 'NR >1 { print $1 }' Mandel_TableS2.txt `; do
+  awk -v OFS='\t' -v var="$i" 'NR >1 {if ($2 == var) { print $2, $5 }}' Bachlava_subset.txt >> LookupTable_MandelSub.txt
+done
+```
+
+#### Format Genetic Map
+The creation of the genetic map is described in Bowers et al. (2012). I saved the first sheet "combined map" and the last sheet "assays that map to > 1 loci" from supplementary file S1 from this paper as separate tab-delimited .txt files.
+
+```bash
+# genetic map for all SNPs
+awk 'NR >2 {print $0}' MapData_Bowers2012_FileS1.txt  | cut -f10-13  | awk '{print $3,$1,$4,"-"FNR}' OFS='\t' > SNP_all_Genetic_Map.txt
+
+# genetic map for genotyped subset
+
+```
+
+---
+
+## Data Exploration
+
+Mapped contextual sequences to the new reference:
+1.) Index reference  
 Adopted from Chaochih's script: https://github.com/MorrellLAB/morex_reference/blob/master/morex_v2/prep_reference/make_index_pseudo_bowtie2.sh  
 
 ```bash
 qsub RefBuild.sh
 ```
 
-Alignment
+2.) Alignment
 Adopted from Chaochih's script: https://github.com/MorrellLAB/morex_reference/blob/master/morex_v2/prep_reference/check_by_aligning_bowtie2_BOPA.sh
 
 ```bash
@@ -76,7 +106,7 @@ Number of polymorphisms after subsetting: A/C - 507; T/C - 2208; A/G - 2115; T/G
 
 I then ran the alignment again with this new set.
 
-Summary from Bowtie2 alignments
+#### Bowtie2 Alignment Results
 All sequences
 ```bash
 10640 reads; of these:
@@ -97,7 +127,7 @@ Subset that were genotyped
 89.48% overall alignment rate
 ```
 
-Get summary stats
+Summary stats:
 
 ```bash
 module load SAMtools/1.10-GCC-8.3.0
@@ -136,9 +166,9 @@ samtools flagstat Contextual_Subset_HA412v2_bowtie2.sam
 
 ---
 
-## Data Preparation
+## SNP-Utils 
 
-#### BLAST database
+#### Create BLAST database
 
 First, downloaded taxonomy information:
 ```bash
@@ -160,42 +190,21 @@ blast search for the SNPs against the reference database
 blastn -db Ha412HOv2.0-20181130.fasta -query /scratch/eld72413/SNParray/ContextualSeqs_subset.fasta -out /scratch/eld72413/SNParray/Blast_Mandel_subsetSNPs.out
 ```
 
-#### Create Illumina Lookup Table  
-This is a two-column, headerless table that has a SNP ID and contextual sequence in with the SNP in brackets and is a required input for SNP-utils  
-I again subsetted so I only used the SNPs genotyped in Mandel et al. (2013)
-
-```bash
-# for all SNPs
-awk -v OFS='\t' 'NR >1 { print $2, $5 }' Bachlava_subset.txt > LookupTable_All.txt
-
-# for genotyped subset
-for i in `awk -F"\t" 'NR >1 { print $1 }' Mandel_TableS2.txt `; do
-	awk -v OFS='\t' -v var="$i" 'NR >1 {if ($2 == var) { print $2, $5 }}' Bachlava_subset.txt >> LookupTable_MandelSub.txt
-done
-```
-
-#### Format Genetic Map
-The creation of the genetic map is described in Bowers et al. (2012). I saved the first sheet "combined map" from supplementary file S1 from this paper as a tab-delimited .txt file
-
-```bash
-# genetic map for all SNPs
-awk 'NR >2 {print $0}' MapData_Bowers2012_FileS1.txt  | cut -f10-13  | awk '{print $3,$1,$4,"-"FNR}' OFS='\t' > SNP_all_Genetic_Map.txt
-
-# genetic map for genotyped subset
-
-```
-
----
-
-## Run SNP-Utils 
-
-Install dependencies  
+#### Run SNP-Utils
+First, install dependencies  
 Listed here: https://github.com/mojaveazure/SNP_Utils#dependencies
 ```bash
-
+module load BLAST+/2.10.0 
 module load Anaconda3/2020.02
 # use PyPi to install biopython, Beautiful Soup 4, Overload, Ixml
 pip install PyPi
 pip install biopython
+pip install beautifulsoup4
+pip install overload
+pip install lxml
+```
+
+Define Variables
+```bash
 
 ```
