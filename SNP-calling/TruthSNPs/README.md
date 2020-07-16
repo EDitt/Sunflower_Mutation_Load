@@ -8,6 +8,7 @@ Credit to Chaochih Liu for help with this process: (see https://github.com/Morre
 - [Data](#data)
 - [Data Preparation](#data-preparation)
 - [Data Exploration](#data-exploration)
+  - [Alignment Results](#bowtie2-alignment-results)
 - [SNP-Utils](#snp-utils)
 
 ---
@@ -33,7 +34,7 @@ This file was converted to FASTA format using the following code:
 ```bash
 awk 'NR >1 { print ">"$2"\n"$5 }' Bachlava_subset.txt > ContextualSeqs.fasta
 
-# re-created using only the SNPs mapped uniquely and used in the Bowers et al. (2012) genetic map
+# re-created using only the SNPs mapped uniquely and used in the Bowers et al. (2012) genetic map (see below)
 awk 'FNR==NR{arr[$0];next}($2 in arr)' Unique_Assay_Names.txt Bachlava_subset.txt |  awk '{ print ">"$2"\n"$5 }' > ContextualSeqs_UniqMap.fasta
 
 ```
@@ -72,10 +73,18 @@ grep -wvf SNP_MultiMappers.txt MapData_Bowers2012_reduced.txt | wc -l #8497 (inc
 # genetic map for all SNPs that map uniquely to genome
 
 awk 'FNR==NR{arr[$0];next}!($2 in arr)' SNP_MultiMappers.txt MapData_Bowers2012_reduced.txt | awk -F'\t' '$2!="" && NR >1 {print $3,$1,$4,"-"FNR}' OFS='\t' > SNP_Genetic_Map_Unique.txt
+
+# there was one extra zero in the names from this paper compared to the names in the other two
+sed -i 's|SFW0|SFW|g' SNP_Genetic_Map_Unique.txt
+
 # check
 wc -l SNP_Genetic_Map_Unique.txt #6984 (8496 unique mappers minus 1512 PCR-based markers)
+
 # saved this list to subset others
 awk '{print $2}' SNP_Genetic_Map_Unique.txt > Unique_Assay_Names.txt
+
+# how many of these were genotyped in Mandel et al. (2013)?
+awk 'FNR==NR{arr[$0];next}($1 in arr)' Unique_Assay_Names.txt Mandel_TableS2.txt | wc -l #5359 (all that were genotyped were in this unique set)
 
 ```
 
@@ -85,7 +94,9 @@ This is a two-column, headerless table that has a SNP ID and contextual sequence
 ```bash
 # for all SNPs
 awk -v OFS='\t' 'NR >1 { print $2, $5 }' Bachlava_subset.txt > LookupTable_All.txt
+
 # for uniquely mapped SNPs
+awk 'FNR==NR{arr[$0];next}($2 in arr)' Unique_Assay_Names.txt Bachlava_subset.txt | awk -v OFS='\t' '{ print $2, $5 }' > LookupTable_MapUniq.txt
 
 # for genotyped subset
 for i in `awk -F"\t" 'NR >1 { print $1 }' Mandel_TableS2.txt `; do
@@ -99,7 +110,7 @@ Bachlava et al. (2012) designed an array that included 10,640 SNPs (though only 
 
 Bowers et al. (2012) mapped 10,083 loci, including 1512 PCR-based markers (not from array). Of the 8571 array-based markers used, 6984 mapped to only 1 location in the genome.
 
-Mandel et al. (2012) genotyped 5,359 array markers in 271 lines
+Mandel et al. (2012) genotyped 5,359 array markers in 271 lines, All of these were in the "uniquely mapped" set from Bowers et al. (2012)
 
 ---
 
@@ -140,12 +151,12 @@ grep "^>" ContextualSeqs_subset.fasta | wc -l #5360
 ```
 
 I also replaced the polymorphism syntax using the same code as above  
-Number of polymorphisms after subsetting: A/C - 507; T/C - 2208; A/G - 2115; T/G - 529  
+Number of polymorphisms after subsetting to only include genotyped results: A/C - 507; T/C - 2208; A/G - 2115; T/G - 529  
 
 I then ran the alignment again with this new set.
 
-#### Bowtie2 Alignment Results
-All sequences
+### Bowtie2 Alignment Results
+All sequences; N= 10640
 ```bash
 10640 reads; of these:
   10640 (100.00%) were unpaired; of these:
@@ -154,8 +165,17 @@ All sequences
     2265 (21.29%) aligned >1 times
 84.29% overall alignment rate
 ```
+Subset that mapped uniquely in Bowers et al. (2012); N= 6984
+```bash
+6984 reads; of these:
+  6984 (100.00%) were unpaired; of these:
+    910 (13.03%) aligned 0 times
+    4741 (67.88%) aligned exactly 1 time
+    1333 (19.09%) aligned >1 times
+86.97% overall alignment rate
+```
 
-Subset that were genotyped
+Subset that were genotyped in Mandel et al. (2013); N= 5359
 ```bash
 5359 reads; of these:
   5359 (100.00%) were unpaired; of these:
@@ -184,7 +204,24 @@ samtools flagstat Bachlava_Contextual_HA412v2_bowtie2.sam
 0 + 0 with mate mapped to a different chr
 0 + 0 with mate mapped to a different chr (mapQ>=5)
 ```
-Get summary stats for subset
+Summary stats for subset that were genotyped
+```bash
+6984 + 0 in total (QC-passed reads + QC-failed reads)
+0 + 0 secondary
+0 + 0 supplementary
+0 + 0 duplicates
+6074 + 0 mapped (86.97% : N/A)
+0 + 0 paired in sequencing
+0 + 0 read1
+0 + 0 read2
+0 + 0 properly paired (N/A : N/A)
+0 + 0 with itself and mate mapped
+0 + 0 singletons (N/A : N/A)
+0 + 0 with mate mapped to a different chr
+0 + 0 with mate mapped to a different chr (mapQ>=5)
+```
+
+Get summary stats for subset that were genotyped
 ```bash
 samtools flagstat Contextual_Subset_HA412v2_bowtie2.sam 
 5359 + 0 in total (QC-passed reads + QC-failed reads)
@@ -225,7 +262,9 @@ blastdbcheck -db Ha412HOv2.0-20181130.fasta
 
 blast search for the SNPs against the reference database
 ```bash
-blastn -db Ha412HOv2.0-20181130.fasta -query /scratch/eld72413/SNParray/ContextualSeqs_subset.fasta -out /scratch/eld72413/SNParray/Blast_Mandel_subsetSNPs.out
+#blastn -db Ha412HOv2.0-20181130.fasta -query /scratch/eld72413/SNParray/ContextualSeqs_subset.fasta -out /scratch/eld72413/SNParray/Blast_Mandel_subsetSNPs.out
+
+blastn -db Ha412HOv2.0-20181130.fasta -query /scratch/eld72413/SNParray/ContextualSeqs_UniqMap.fasta -out /scratch/eld72413/SNParray/Blast_UniqueSNPs.out
 ```
 
 #### Run SNP-Utils
@@ -242,7 +281,58 @@ pip install overload
 pip install lxml
 ```
 
-Define Variables
+Step 1: Config subroutine (configure BLAST search)
 ```bash
+GENOME=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
+cd /home/eld72413/DelMut/SNP_Utils/
+./snp_utils.py CONFIG -d ${GENOME} -k -i 90 -c /scratch/eld72413/SNParray/SNPutils/blast_MapUniqueSNP_idt90
+```
+
+```bash
+Validating config
+Searching for proper database files for Ha412HOv2.0-20181130.fasta in /scratch/eld72413/Ha412HOv2.0
+Setting option database with value /scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
+Setting option evalue with value 0.1
+Setting option max_hits with value 3
+Setting option max_hsps with value 3
+Setting option identity with value 90.0
+Setting option keep_query with value True
+
+Config file can be found at /scratch/eld72413/SNParray/SNPutils/blast_MapUniqueSNP_idt90
+```
+
+Step 2: Run SNP-Utils BLAST
+```bash
+# define variables
+LOOKUP_TABLE=/scratch/eld72413/SNParray/LookupTable_MapUniq.txt
+GENETIC_MAP=/scratch/eld72413/SNParray/SNP_Genetic_Map_Unique.txt
+OUT_PREFIX=/scratch/eld72413/SNParray/SNPutils/MapUniqueSNP_idt90
+
+cd /home/eld72413/DelMut/SNP_Utils
+./snp_utils.py BLAST -l ${LOOKUP_TABLE} -c /scratch/eld72413/SNParray/SNPutils/blast_MapUniqueSNP_idt90 -b -m ${GENETIC_MAP} -d -t 100000 -o ${OUT_PREFIX}
+```
+
+```bash
+Found 25090 chromosomes
+Filtering 6539 SNP IDs
+Writing 6539 SNPs to /scratch/eld72413/SNParray/SNPutils/MapUniqueSNP_idt90.vcf
+Removing masked SNPs that were actually found
+Writing 3 masked SNPs to /scratch/eld72413/SNParray/SNPutils/MapUniqueSNP_idt90_masked.vcf
+Writing 134 failed SNPs to /scratch/eld72413/SNParray/SNPutils/MapUniqueSNP_idt90_failed.log
+```
+
+### Result summary
+```bash
+# Total SNPs
+grep -v "#" MapUniqueSNP_idt90.vcf | cut -f 3 | wc -l # 6539
+# Total unique SNPs
+grep -v "#" MapUniqueSNP_idt90.vcf | cut -f 3 | sort -u | wc -l #6539
+# Total number of duplicates
+grep -v "#" MapUniqueSNP_idt90.vcf | cut -f 3 | sort | uniq -c | sort -n -r | grep -vw "1" | wc -l #0
 
 ```
+Running `snp_utils.py` for 90idt, I got:
+- 6,539 unique SNPs
+- 0 SNPs with duplicates
+- 3 masked SNPs
+- 134 failed SNPs
