@@ -201,7 +201,7 @@ samtools flagstat Bachlava_Contextual_HA412v2_bowtie2.sam
 0 + 0 with mate mapped to a different chr
 0 + 0 with mate mapped to a different chr (mapQ>=5)
 ```
-Summary stats for subset that were genotyped
+Summary stats for subset that mapped uniquely
 ```bash
 6984 + 0 in total (QC-passed reads + QC-failed reads)
 0 + 0 secondary
