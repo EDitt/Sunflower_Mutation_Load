@@ -10,6 +10,8 @@ Credit to Chaochih Liu for help with this process: (see https://github.com/Morre
 - [Data Exploration](#data-exploration)
   - [Alignment Results](#bowtie2-alignment-results)
 - [SNP-Utils](#snp-utils)
+- [Results Summary](#Result_summary)
+- [Clean-up](#clean-up)
 
 ---
 
@@ -333,3 +335,80 @@ Running `snp_utils.py` for 90idt, I got:
 - 0 SNPs with duplicates
 - 3 masked SNPs
 - 134 failed SNPs
+
+### Clean up
+
+I need to do two things-   
+1.) remove SNPs that are located in contigs less than 10kbp. I did not call SNPs in these regions.   
+2.) Convert length positions to chromosome names. For some reason SNP-utils listed the chromosome lengths instead of names in the .vcf.
+
+I need to do both of these together because the lengths of chromosomes are repeated in the small contigs, so they are unable to be distinguished
+
+How many SNPs were in small contigs (smaller than 10kbp)?
+```bash
+VCF="/scratch/eld72413/SNParray/SNPutils/MapUniqueSNP_idt90.vcf"
+
+grep -v "#" $VCF | awk '{print $1}' | cut -c 5- | awk '{if ($1 < 10000) {print $0}}' | wc -l # Answer: 15 (these will be removed)
+
+```
+  
+Use reference dictionary to find and replace:  
+```bash
+# First make a list of chromosome names and lengths:
+DICT="/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.dict"
+
+# make a list of chromosome names + lengths
+awk -F "[\t,:]" 'NR > 1 {$1=$1; print $3,$5}' $DICT > Chrom_Names_Len.txt
+
+# select only contigs greater than 10,000
+awk '{if ($2 > 10000) {print $0}}' Chrom_Names_Len.txt > Chrom_Names_Len_Over10kbp.txt
+wc -l Chrom_Names_Len_Over10kbp.txt #590
+
+```
+
+Subset to get only those represented in VCF (5 lengths are represented more than once in this set)
+```bash
+VCF="/scratch/eld72413/SNParray/SNPutils/MapUniqueSNP_idt90.vcf"
+
+grep -v "#" $VCF | awk '{print $1}' | sort -u | wc -l #36
+
+# lengths represented in VCF
+VCFLengths=$(grep -v "#" $VCF | awk '{print $1}' | sort -u )
+
+# make a new list that only contains the chromosomes represented in the VCF
+# this is the union of a.) in VCF and b.) over 10kbp
+for i in $VCFLengths; do
+  awk -v var="$i" '{if ($2 == var) {print $1,"len="$2}}' Chrom_Names_Len_Over10kbp.txt >> Chrom_Names_Len_InVCF_Over10kbp.txt
+done
+
+wc -l Chrom_Names_Len_InVCF_Over10kbp.txt #21 (17 chromosomes + 4 contigs over 10kbp) -> 36 minus the 15 small contigs
+```
+
+Make a new VCF file with contigs renamed and excluding small contigs
+```bash
+cp $VCF ./MapUniqueSNP_idt90_rename.vcf
+
+while read line; do
+  ChromName=$(echo $line | cut -d " " -f1)
+  ChromLen=$(echo $line | cut -d " " -f2)
+  sed -i 's|'^"${ChromLen}"'\b|'"${ChromName}"'|g' MapUniqueSNP_idt90_rename.vcf
+done < Chrom_Names_Len_InVCF_Over10kbp.txt
+
+#check
+grep "^len=" MapUniqueSNP_idt90_rename.vcf | wc -l #15
+
+```
+
+Remove 15 small contigs that could not be re-named
+```bash
+grep -v "^len=" MapUniqueSNP_idt90_rename.vcf > MapUniqueSNP_idt90_rename_rmContigs.vcf 
+
+# how many markers left?
+grep -v "#" MapUniqueSNP_idt90_rename_rmContigs.vcf | wc -l #6524
+```
+
+gzip for QC with bcftools
+```bash
+bgzip $Truth_Set
+tabix MapUniqueSNP_idt90_rename_rmContigs.vcf.gz
+```
