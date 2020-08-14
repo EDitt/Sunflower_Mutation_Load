@@ -8,16 +8,14 @@
 
 ## Re-sequencing data
 
-### Information
+Information about raw sequence data & file wrangling in: FileInformation.md  
 
-Some sequences needed to be obtained from the SRA
+Fastq.gz files needed to be concatenated (in some cases more than 1 forward/reverse)
 
-```bash
-# 
-```
-
-Merged fastq.gz files
+288 lines split into 9 groups of samples for processing (#1-7, "S_African_seqs", "SRA_seqs")
 
 ## Adapter Trimming
+
+
 
 ## Read Mapping
