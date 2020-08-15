@@ -18,7 +18,7 @@ for line in `awk -v var="$GROUP" '{if ($2 == var) {print $1}}' $LIST`; do
 done
 ```
 
-Check integrity of copied files
+###### Check integrity of copied files:
 ```bash
 find -type f -name *fastq.gz -exec md5sum "{}" + > Group3_raw_md5.chk 
 ```
@@ -54,7 +54,11 @@ PPN227                 
 PPN233                  
 These samples had many associated sequence files (83-378)
 
-# Check integrity of copied files:
 
 ##### Pre-processing
 Many samples had more than 1 forward/reverse sequence file that needed to be concatenated before beginning sequence handling
+
+### Adapter Trimming
+
+Used Adapters.fa file for adapter trimming
+A subset of sequences (South_Africa_seqs) had nextera adapter sequence contamination so used adapters_nextera.fa to trim those samples

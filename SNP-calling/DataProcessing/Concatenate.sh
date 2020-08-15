@@ -8,8 +8,8 @@
 #PBS -M dittmare@gmail.com
 #PBS -m abe
 
-INPUTDIR=/scratch/eld72413/SAM_seq/results2/Group3/RawSeqs
-OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/Group3/MergedSeqs
+INPUTDIR=/scratch/eld72413/SAM_seq/results2/Group4/RawSeqs
+OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/Group4/MergedSeqs
 
 cd $INPUTDIR
 
