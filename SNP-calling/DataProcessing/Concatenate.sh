@@ -4,7 +4,7 @@
 #PBS -l nodes=1:ppn=6
 #PBS -l walltime=80:00:00
 #PBS -l mem=20gb
-#PBS -t 1-50
+#PBS -t 1-9
 
 #PBS -M dittmare@gmail.com
 #PBS -m abe
