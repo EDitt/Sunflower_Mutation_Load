@@ -9,8 +9,8 @@
 #PBS -M dittmare@gmail.com
 #PBS -m abe
 
-INPUTDIR=/scratch/eld72413/SAM_seq/results2/Group6/RawSeqs
-OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/Group6/MergedSeqs
+INPUTDIR=/scratch/eld72413/SAM_seq/results2/Group7/RawSeqs
+OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/Group7/MergedSeqs
 
 DIR=$(find $INPUTDIR -name "PPN*" | sed -n ${PBS_ARRAYID}p)
 
