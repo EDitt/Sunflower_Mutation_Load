@@ -7,11 +7,11 @@ Most sequences were available in /project/jmblab/sunflower_1_sequence_data
 
 Sequences were separated into groups for processing. Copying by group was done using the following code:
 ```bash
-OUTPUTDIR="/scratch/eld72413/SAM_seq/results2/Group3/RawSeqs"
+OUTPUTDIR="/scratch/eld72413/SAM_seq/results2/Group7/RawSeqs"
 INPUTDIR="/project/jmblab/sunflower_1_sequence_data"
 LIST=/scratch/eld72413/SAM_seq/results2/Mapping_redo3.txt
 
-GROUP=3 #or whichever group was being copied
+GROUP=7 #or whichever group was being copied
 
 for line in `awk -v var="$GROUP" '{if ($2 == var) {print $1}}' $LIST`; do
 	cp -R $INPUTDIR/${line} $OUTPUTDIR
@@ -23,7 +23,7 @@ done
 find -type f -name *fastq.gz -exec md5sum "{}" + > Group3_raw_md5.chk
 # parallelize
 module load parallel/20200422-GCCcore-8.3.0
-find -name *fastq.gz | parallel "md5sum {}" > Group4_raw_md5.chk
+find -name *fastq.gz | parallel "md5sum {}" > Group7_raw_md5.chk
 ```
 
 Some sequences (N=9) needed to be obtained from the SRA:  
