@@ -18,6 +18,11 @@ for line in `awk -v var="$GROUP" '{if ($2 == var) {print $1}}' $LIST`; do
 done
 ```
 
+Check integrity of copied files
+```bash
+find -type f -name *fastq.gz -exec md5sum "{}" + > Group3_raw_md5.chk 
+```
+
 Some sequences (N=9) needed to be obtained from the SRA:  
 Sequence data for the following samples were not available in the Sunflower_1_sequence_data folder:  
 PPN267
