@@ -13,7 +13,7 @@ OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/Group3/MergedSeqs
 
 cd $INPUTDIR
 
-for d in *PPN*/; do
+for d in PPN*/; do
 	if [[ -d "$d" ]]; then
 		name=${d%%/}""
 		for f1 in `ls "$d"*R1.fastq.gz`; do
