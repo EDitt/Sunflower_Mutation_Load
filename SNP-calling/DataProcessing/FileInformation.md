@@ -24,6 +24,11 @@ find -type f -name *fastq.gz -exec md5sum "{}" + > Group3_raw_md5.chk
 # parallelize
 module load parallel/20200422-GCCcore-8.3.0
 find -name *fastq.gz | parallel "md5sum {}" > Group7_raw_md5.chk
+
+#make lists from larger 'Project' md5sums for each group
+for line in `awk -v var="$GROUP" '{if ($2 == var) {print $1}}' $LIST`; do
+awk -v var="$line" '{if ($2 ~ var) {print $0}}' $md5All >> Group7_ProjectFiles_md5.chk
+done
 ```
 
 Some sequences (N=9) needed to be obtained from the SRA:  
