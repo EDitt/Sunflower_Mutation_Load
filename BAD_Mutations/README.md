@@ -28,7 +28,7 @@ OUTPUTDIR="/scratch/eld72413/NSFproj/BADMutations"
 
 ```bash
 # to show available species databases
-python /home/eld72413/DelMut/BAD_Mutations/BAD_Mutations.py -v DEBUG setup --list-species
+python /home/eld72413/DelMut/BAD_Mutations/BAD_Mutations.py setup --list-species
 # helianthus not in this list
 
 python /home/eld72413/DelMut/BAD_Mutations/BAD_Mutations.py -v DEBUG setup -c $OUTPUTDIR -b $OUTPUTDIR -t 'Hannuus' -d /home/eld72413/apps
@@ -36,8 +36,12 @@ python /home/eld72413/DelMut/BAD_Mutations/BAD_Mutations.py -v DEBUG setup -c $O
 ```
 I tried creating my own config file based off of Sample_Config.txt
 
+```bash
+TEST_CONFIG=/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Test_Config081720
+```
+
 ## Fetch
 
 ```bash
-python BAD_Mutations.py fetch
+python /home/eld72413/DelMut/BAD_Mutations/BAD_Mutations.py -v DEBUG fetch -c $TEST_CONFIG 
 ```
