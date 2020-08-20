@@ -6,17 +6,19 @@ Sequence data was obtained as described in Hubner et al. (2019)
 
 ---
 
-### Mapping sunflower outgroups _Helianthus debilis_ :
+### Mapping sunflower outgroups  
 
-| SRA Name  | Renamed as |
-|-----------| ---------- |
-|SRS2413722 | Debilis_22 |
-|SRS2413743 | Debilis_43 |
-|SRS2413744 | Debilis_44 |
-|SRS2413741 | Debilis_41 |
-|SRS2413740 | Debilis_40 |
-|SRS2413739 | Debilis_39 |
-|SRS2413737 | Debilis_37 |
+_Helianthus debilis_ :
+
+| SRA Name  | Renamed as | Mapped 4% | Mapped 3% |	
+|-----------| ---------- | ----------| ----------|
+|SRS2413722 | Debilis_22 | 97.53%	 |
+|SRS2413743 | Debilis_43 | 97.83%	 |
+|SRS2413744 | Debilis_44 | 97.75%	 |
+|SRS2413741 | Debilis_41 | 97.76%	 |
+|SRS2413740 | Debilis_40 | 97.84%	 |
+|SRS2413739 | Debilis_39 | 97.67%	 |
+|SRS2413737 | Debilis_37 | 98.03%	 |
 
 ---
 
@@ -41,8 +43,12 @@ stampy.py -g Ha412HOv2 -H Ha412HOv2
 ```
 
 - Finally samples were mapped using the `Stampy_mapping.sh` script. A 0.04 substitution rate was used to start with
+- Used samtools flagstat to check mapping percentages:
+```bash
+module load SAMtools/1.10-GCC-8.3.0
+for file in *.sam; do
+	samtools flagstat $file >> Mapped.04_Debilis.txt
+done
+```
 
-I then used SAM_Processing with sequence handling to get BAM file statistics. Here are the differences (averaged across the 7 samples):
-	- 3% divergence:
-	- 4% divergence: 97.74% mapped, 25.16% properly paired, and 1.27% singletons
-	- 5% divergence: 
+I then used SAM_Processing with sequence handling
