@@ -12,14 +12,15 @@ _Helianthus debilis_ :
 
 | SRA Name  | Renamed as | Mapped 4% | Mapped 3% |	
 |-----------| ---------- | ----------| ----------|
-|SRS2413722 | Debilis_22 | 97.53%	 |
-|SRS2413743 | Debilis_43 | 97.83%	 |
-|SRS2413744 | Debilis_44 | 97.75%	 |
-|SRS2413741 | Debilis_41 | 97.76%	 |
-|SRS2413740 | Debilis_40 | 97.84%	 |
-|SRS2413739 | Debilis_39 | 97.67%	 |
-|SRS2413737 | Debilis_37 | 98.03%	 |
+|SRS2413722 | Debilis_22 | 97.53%	 | 97.54%
+|SRS2413743 | Debilis_43 | 97.83%	 | 98.05%
+|SRS2413744 | Debilis_44 | 97.75%	 | 97.69%
+|SRS2413741 | Debilis_41 | 97.76%	 | 97.86%
+|SRS2413740 | Debilis_40 | 97.84%	 | 97.74%
+|SRS2413739 | Debilis_39 | 97.67%	 | 97.85%
+|SRS2413737 | Debilis_37 | 98.03%	 | 97.77%
 
+				Average:	97.77%		97.79%
 ---
 
 ## Methods
@@ -47,8 +48,20 @@ stampy.py -g Ha412HOv2 -H Ha412HOv2
 ```bash
 module load SAMtools/1.10-GCC-8.3.0
 for file in *.sam; do
-	samtools flagstat $file >> Mapped.04_Debilis.txt
+	samtools flagstat $file >> Mapped.03_Debilis.txt
 done
 ```
 
 I then used SAM_Processing with sequence handling
+
+--
+
+## Helianthus annuus Landraces
+Resequencing data for 20 H. annuus landraces is available on SRA
+- Landraces already included in SAM lines: SAM046 (Mandan #1); Hopi dye (SAM083), HOPI (SAM285). Deleted from the list of 20 ("Hopi", "SAM083", "SAM046")
+
+## Wild Helianthus annuus
+
+List of individuals collected in Todesco et al. 2020
+- Took out CA collections (not native range)
+- Took out H. annuus ssp Texanus
