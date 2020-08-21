@@ -22,7 +22,7 @@ module load Stampy/1.0.31-foss-2016b-Python-2.7.14
 SEQ_DIR='/scratch/eld72413/NSFproj/ancestralseqs/Debilis/Adapter_Trimming'
 
 #   Where do our output files go?
-OUT_DIR='/scratch/eld72413/NSFproj/ancestralseqs/Debilis/Mapped/03Perc'
+OUT_DIR='/scratch/eld72413/NSFproj/ancestralseqs/Debilis/Mapped/05Perc'
 
 #	Naming scheme for forward and reverse reads
 FORWARDNAME="_Forward_ScytheTrimmed.fastq.gz"
@@ -30,7 +30,7 @@ FORWARDNAME="_Forward_ScytheTrimmed.fastq.gz"
 REVERSENAME="_Reverse_ScytheTrimmed.fastq.gz"
 
 #   What is our per site substitution rate?
-DIVERGENCE='0.03'
+DIVERGENCE='0.05'
 
 #   Reference prefix must match .stidx files
 REF_PREFIX='Ha412HOv2'
