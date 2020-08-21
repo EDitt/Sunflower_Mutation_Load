@@ -1,7 +1,24 @@
 # Predicting deleterious variants using BAD_Mutations: https://github.com/MorrellLAB/BAD_Mutations
 
+## Variant Effect Predictor (VeP)
 
-## Pre
+### Install
+```bash
+git clone https://github.com/Ensembl/ensembl-vep
+cd ensembl-vep
+
+# set up "cache files"
+perl INSTALL.pl
+
+```
+ - unpacking ./Bio/tmp/biodbhts.zip to ./Bio/tmp/
+./Bio/tmp/Bio-DB-HTS-2.11 - moving files to ./biodbhts
+ - making Bio::DB:HTS
+Can't locate Module/Build.pm in @INC (@INC contains: ./Bio /usr/local/lib64/perl5 /usr/local/share/perl5 /usr/lib64/perl5/vendor_perl /usr/share/perl5/vendor_perl /usr/lib64/perl5 /usr/share/perl5 .) at Build.PL line 20.
+BEGIN failed--compilation aborted at Build.PL line 20.
+ERROR: Shared Bio::DB:HTS library not found
+
+## Prep
 
 I cloned this repository, and then switched to `dev` branch:
 ```bash
