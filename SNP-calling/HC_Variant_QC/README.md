@@ -19,6 +19,42 @@ Filtering parameters:
 
 ## Jupyter Notebook Exploration
 
+Port Jupyter Notebook into Sapelo
+
+setup-
+
+convert VCF to h5
+Used vcf_toh5.py script from sequence handling
+```bash
+module load Anaconda3/2020.02
+pip install scikit-allel[full]
+qlogin
+
+python vcf_to_h5.py <vcf>
+```
+
+```bash
+#interactive job
+qlogin
+
+# set up environment
+module load Anaconda3/2020.02
+pip install scikit-allel[full]
+
+NOTEBOOKPORT=8656 #random value between 8000 and 10000
+
+IPUSED=$(hostname -i)
+
+echo "NOTEBOOKPORT is " $NOTEBOOKPORT
+echo "IPUSED is " $IPUSED
+jupyter-notebook --port $NOTEBOOKPORT --ip=$IPUSED --no-browser
+
+# establish another ssn tunnel into port NOTEBOOKPORT
+ssh -N -L 8656:${IPUSED}:8656 eld72413@sapelo2.gacrc.uga.edu
+
+# http://localhost:8656
+
+```
 
 
 ## Compare with Truth Set
