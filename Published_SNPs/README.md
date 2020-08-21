@@ -18,6 +18,46 @@ aws configure
 
 download files
 ```bash
+# "environmental" sample set contains 719 wild H. annuus individuals
+aws s3 ls s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/env/
+
+# copied in a tmux environment
+aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/env/Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz .
+
+#also copy the vcf index
+aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/env/Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz.tbi .
+
+# SAM SNPs
+aws s3 ls s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/fullsam/
+
+aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/fullsam/Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz .
+
+aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/fullsam/Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz.tbi .
+
+```
+
+### Basic Stats
+```bash
+module load BCFtools/1.10.2-GCC-8.3.0
+
+bcftools stats Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz > WildAnnVCF_stats.txt
+
+bcftools stats Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz > CultAnnVCF_stats.txt
+```
+Wild H. annuus: 719 samples; 4,882,321 sites; ts/tv=2.33
+	- smallest allele frequency = 0.0097376 (N=7), 119,544 SNPs
+
+Cultivated H. annuus: 287 samples; 2,155,376 sites; ts/tv=2.29
+	- smallest allele frequency = 0.006969 (N=2), 4478 SNPs
+
+---
+H. argophyllus SNPs
+```bash
+aws s3 ls s3://ubc-sunflower-genome/haploblocks/processed_snps/all_arg1/gwas/
+```
+
+download files
+```bash
 aws s3 cp s3://ubc-sunflower-genome/cohorts/ha412v2/wgs_all/sample-names.tsv .
 
 #list of files to download
