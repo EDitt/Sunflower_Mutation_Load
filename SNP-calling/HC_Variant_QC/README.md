@@ -9,6 +9,17 @@
 
 ## Overview
 
+#### Run 1
+Filtering parameters:  
+	- DP per sample cutoff: 5  
+	- GQ cutoff: 20  
+	- Max "bad" sites: 58  
+	- Max heterozygous sites: 259  
+	- QUAL score cutoff: 40
+
+## Jupyter Notebook Exploration
+
+
 
 ## Compare with Truth Set
 

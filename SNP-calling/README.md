@@ -41,7 +41,13 @@ Read mapping statistics-
 
 ## Create HC Subset
 
+The Unfiltered DP per sample and GQ percentile tables are in "VCF_Stats/" as well as tables for the filtered sets
+See "HC_Variant_QC" for VCF exploration info
+
+
+
 ## Variant Recalibrator
+Training sets included High Confidence subset and a Truth Set of SNPs obtained from an Illumina SNP array (see "TruthSNPs" folder)
 
 ## Variant Filtering
 

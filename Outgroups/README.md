@@ -60,6 +60,14 @@ I then used SAM_Processing with sequence handling
 Resequencing data for 20 H. annuus landraces is available on SRA
 - Landraces already included in SAM lines: SAM046 (Mandan #1); Hopi dye (SAM083), HOPI (SAM285). Deleted from the list of 20 ("Hopi", "SAM083", "SAM046")
 
+```bash
+awk '{print $2}' ./Sunflower_Mutation_Load/Outgroups/Annuus_Landraces > Landrace_SRA.list
+```
+
+Used SRA_download.sh to obtain the sequence data for 17 landraces (not included in SAM lines)
+
+--
+
 ## Wild Helianthus annuus
 
 List of individuals collected in Todesco et al. 2020
