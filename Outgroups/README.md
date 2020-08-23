@@ -10,18 +10,19 @@ Sequence data was obtained as described in Hubner et al. (2019)
 
 _Helianthus debilis_ :
 
-| SRA Name  | Renamed as | Mapped 4% | Mapped 3% |	
-|-----------| ---------- | ----------| ----------|
-|SRS2413722 | Debilis_22 | 97.53%	 | 97.54%
-|SRS2413743 | Debilis_43 | 97.83%	 | 98.05%
-|SRS2413744 | Debilis_44 | 97.75%	 | 97.69%
-|SRS2413741 | Debilis_41 | 97.76%	 | 97.86%
-|SRS2413740 | Debilis_40 | 97.84%	 | 97.74%
-|SRS2413739 | Debilis_39 | 97.67%	 | 97.85%
-|SRS2413737 | Debilis_37 | 98.03%	 | 97.77%
+| SRA Name  | Renamed as | Mapped 4% | Mapped 3% | Mapped 5% |
+|-----------| ---------- | ----------| ----------| ----------|
+|SRS2413722 | Debilis_22 | 97.53%	 | 97.54%*	 | 97.51%	 |
+|SRS2413743 | Debilis_43 | 97.83%	 | 98.05%*	 | 98.02%	 |
+|SRS2413744 | Debilis_44 | 97.75%*	 | 97.69%	 | 97.65%	 |
+|SRS2413741 | Debilis_41 | 97.76%	 | 97.86%*	 | 97.82%	 |
+|SRS2413740 | Debilis_40 | 97.84%*	 | 97.74%	 | 97.73%	 |
+|SRS2413739 | Debilis_39 | 97.67%	 | 97.85%*	 | 97.81%	 |
+|SRS2413737 | Debilis_37 | 98.03%*	 | 97.77%	 | 97.73%	 |
 
-				Average:	97.77%		97.79%
+				Average:	97.77%		97.79%		97.75%
 ---
+* one of the 5% .sam files is truncated
 
 ## Methods
 
@@ -43,16 +44,17 @@ stampy.py -g Ha412HOv2 -H Ha412HOv2
 # Inputs needed are `-g` to specify the genome index prefix (use the genome index file PREFIX.stidx), and `-H` to build a hash file with the prefix listed (build hash PREFIX.sthash)
 ```
 
-- Finally samples were mapped using the `Stampy_mapping.sh` script. A 0.04 substitution rate was used to start with
+- Finally samples were mapped using the `Stampy_mapping.sh` script. Samples were mapped with a 0.03, 0.04, and 0.05 substitution rate to check mapping quality
 - Used samtools flagstat to check mapping percentages:
 ```bash
 module load SAMtools/1.10-GCC-8.3.0
 for file in *.sam; do
-	samtools flagstat $file >> Mapped.03_Debilis.txt
+	samtools flagstat $file >> Mapped.05_Debilis.txt
 done
 ```
+Mapping percentage was highest with a 0.03 substitution rate so these files were used for SAM_Processing  
 
-I then used SAM_Processing with sequence handling
+SAM_Processing with Picard was done using sequence handling
 
 --
 
@@ -61,7 +63,7 @@ Resequencing data for 20 H. annuus landraces is available on SRA
 - Landraces already included in SAM lines: SAM046 (Mandan #1); Hopi dye (SAM083), HOPI (SAM285). Deleted from the list of 20 ("Hopi", "SAM083", "SAM046")
 
 ```bash
-awk '{print $2}' ./Sunflower_Mutation_Load/Outgroups/Annuus_Landraces > Landrace_SRA.list
+awk '{print $3}' ./Sunflower_Mutation_Load/Outgroups/Annuus_Landraces > Landrace_SRA.list
 ```
 
 Used SRA_download.sh to obtain the sequence data for 17 landraces (not included in SAM lines)
