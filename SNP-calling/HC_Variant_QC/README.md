@@ -35,7 +35,8 @@ python vcf_to_h5.py <vcf>
 
 ```bash
 #interactive job
-qlogin
+qlogin #qsub -I -q s_interq -l walltime=12:00:00 -l nodes=1:ppn=1 -l mem=2gb
+qsub -I -q s_interq -l walltime=12:00:00 -l nodes=1:ppn=8 -l mem=50gb
 
 # set up environment
 module load Anaconda3/2020.02
