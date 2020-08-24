@@ -12,8 +12,8 @@
 #module load BCFtools/1.6-foss-2016b
 
 #     The VCF
-Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset/Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz
-
+#Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset/Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz
+Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset/Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz
 OUTPUTDIR=/scratch/eld72413/NSFproj/VEP
 
 #    Variant sets should be either 'deletions', 'insertions', or 'snps'
@@ -32,6 +32,6 @@ vep \
     --check_svs \
     --verbose \
     --format vcf \
-    --warning_file ${OUTPUTDIR}/fullsam_remappedHa412HO_${VARIANT_SET}_WARN.txt \
-    -o ${OUTPUTDIR}/fullsam_remappedHa412HO_${VARIANT_SET}.txt
+    --warning_file ${OUTPUTDIR}/wild_env_remappedHa412HO_${VARIANT_SET}_WARN.txt \
+    -o ${OUTPUTDIR}/wild_env_remappedHa412HO_${VARIANT_SET}.txt
 
