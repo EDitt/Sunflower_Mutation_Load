@@ -73,5 +73,7 @@ Used SRA_download.sh to obtain the sequence data for 17 landraces (not included 
 ## Wild Helianthus annuus
 
 List of individuals collected in Todesco et al. 2020
-- Took out CA collections (not native range)
-- Took out H. annuus ssp Texanus
+4 entire populations
+- Chose populations to sample from with largest number of pops and obtained SRA numbers (see SRA_Metadata.R)
+
+Representative Individuals

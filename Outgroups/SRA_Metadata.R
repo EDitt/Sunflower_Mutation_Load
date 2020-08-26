@@ -18,28 +18,35 @@ aggregate(annuus$Sample, by=list(annuus$Population), length)
 
 ### Combine with SRA Info
 SRA <- read.csv("SraRunInfo.csv", header=T)
-length(SRA$Run)
-aggregate(SRA$Run, by=list(SRA$Submission), length)
-# 562, 289, 4
+SRA_red <- SRA[,c(1,11,12,21,22,25,26,30)]
+length(which(SRA_red$BioSample %in% annuus$SRA.ID)) #855 (all)
+length(which(annuus$Sample %in% SRA_red$SampleName)) #613 (out of 720)
 
-IDs <- annuus$Sample
-length(which(SRA$SampleName %in% IDs)) #855
-# some individuals represented more than once?
-aggregate(SRA$Run, by=list(SRA$SampleName), length)
 
-all <- merge(annuus, SRA, by.x = "Sample", by.y="SampleName", all = TRUE)
-str(all$SRA.ID)
-str(SRA$BioSample)
+#### Another set of SRA info
+sra2 <- read.csv("SraRunInfo2.csv", header=T)
+SRA_red2 <- sra2[,c(1,11,12,21,22,25,26,30)]
+length(which(SRA_red2$BioSample %in% annuus$SRA.ID)) #157 (out of 492)
+length(which(annuus$Sample %in% SRA_red2$SampleName)) #100 (out of 720)
 
-aggregate(all$Sample, by=list(all$Population), length)
+## combine SRA dataframes
+Both_SRA <- rbind(SRA_red, SRA_red2)
+length(which(annuus$Sample %in% Both_SRA$SampleName)) #713 (out of 720)
+
+all <- merge(annuus, Both_SRA, by.x = "Sample", by.y="SampleName", all = TRUE)
+
+aggregate(all$Run, by=list(all$Population), length)
+aggregate(all$Run, by=list(all$Population, all$Sample), length)
+
 
 ### Select the 4 populations
 Pops <- c("ANN_52", "ANN_65", "ANN_70", "ANN_71")
-length(which(all$Population %in% Pops)) # N = 50 (3 more than expected)
+length(which(all$Population %in% Pops)) # N = 72 
 
 PopSubset <- all[which(all$Population %in% Pops),]
-length(PopSubset$Sample) #N=50
-write.table(PopSubset[,c(1,3,15,16,57)], file="WildAnnuusPops", sep = "\t", quote = FALSE)
+aggregate(PopSubset$Run, by=list(PopSubset$Population, PopSubset$Sample), length) #some individuals represented more than once
+
+write.table(PopSubset[,c(1,3,15,16,22)], file="WildAnnuusPops", sep = "\t", quote = FALSE)
 
 ### Also select one individual from each population (except pops that are really near each other)
 mean(annuus$Reads) # 83.7 M
