@@ -54,7 +54,19 @@ done
 ```
 Mapping percentage was highest with a 0.03 substitution rate so these files were used for SAM_Processing  
 
-SAM_Processing with Picard was done using sequence handling
+SAM_Processing with Picard was done using sequence handling. Final stats:
+
+|Accession	|	Reads_Mapped|
+ ----------- ----------------
+|22	|	14,137,927 |
+|37	|	36,615,622 |
+|39	|	34,510,330 |
+|40	|	32,270,543 |
+|41	|	54,225,956 |
+|43	|	36,648,908 |
+|44	|	38,410,001 |
+
+Chose accession with highest number of mapped reads (#41) to use for ancestral sequence
 
 --
 
@@ -76,4 +88,9 @@ List of individuals collected in Todesco et al. 2020
 4 entire populations
 - Chose populations to sample from with largest number of pops and obtained SRA numbers (see SRA_Metadata.R)
 
-Representative Individuals
+- Representative Individuals - chose individual with 
+```bash
+awk '{print $4}' WildAnnuusPops
+```
+
+
