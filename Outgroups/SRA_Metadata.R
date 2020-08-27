@@ -1,4 +1,5 @@
 setwd("/Users/eld72413/Google Drive/Active Projects/DelMutation/HaploblockData")
+setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/HaploblockData")
 
 ################################
 ######### WILD ANNUUS ##########
@@ -47,9 +48,25 @@ PopSubset <- all[which(all$Population %in% Pops),]
 aggregate(PopSubset$Run, by=list(PopSubset$Population, PopSubset$Sample), length) #some individuals represented more than once
 
 write.table(PopSubset[,c(1,3,15,16,22)], file="WildAnnuusPops", sep = "\t", quote = FALSE)
+# missing 1 ANN_65 individual
+
+################################
+######### ONE PER POP ##########
+################################
 
 ### Also select one individual from each population (except pops that are really near each other)
 mean(annuus$Reads) # 83.7 M
 min(annuus$Reads)  # 35.7 M
 max(annuus$Reads)  # 262 M
-aggregate(annuus$Reads, by=list(annuus$Population), max)
+MaxReads <- aggregate(annuus$Reads, by=list(annuus$Population), max)
+
+hist(annuus$Reads)
+
+MaxReadsPop <- annuus[which(annuus$Reads %in% MaxReads$x ),] #N = 71
+
+### Subset to one individual per 4 population
+OnePerPop <- all[which(all$Reads %in% MaxReads$x),]
+aggregate(OnePerPop$Species, by=list(OnePerPop$Sample), length)
+
+write.table(OnePerPop[,c(1,3,15,16,22)], file="WildAnnuusOnePerPop", sep = "\t", quote = FALSE)
+
