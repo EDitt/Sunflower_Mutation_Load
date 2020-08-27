@@ -20,7 +20,7 @@ ANC_SEQ=/scratch/eld72413/NSFproj/ancestralseqs/Debilis/Indel_Realigner/SRS24137
 REF_SEQ=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
 
 #   Name the project
-PROJECT=Sunflower_Mutational_load_Grp7
+PROJECT=Sunflower_Mutational_load_Test
 
 #   Where do we put the outfiles?
     #   Note, the final outdirectory will be
@@ -29,7 +29,7 @@ SCRATCH=/scratch/eld72413/NSFproj/ANGSD_FILES/SunflowerResults
 
 #   Define the region being looked at
 #       Optional, but ANGSD is expensive to run without specifying regions to look at
-REGIONS=
+REGIONS=/scratch/eld72413/NSFproj/ANGSD_FILES/Chromosome_regionsTest.txt
 
 #   Set common parameters for all methods
 #       Use only uniquely-mapped reads
