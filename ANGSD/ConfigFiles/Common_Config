@@ -11,7 +11,7 @@ SAMPLE_LIST=/scratch/eld72413/SAM_seq/results2/Group7/Indel_Realigner/Group7_rea
 
 #   Define a list of inbreeding coefficients
 #	This should end in '_.indF'
-SAMPLE_INBREEDING=
+SAMPLE_INBREEDING=/scratch/eld72413/NSFproj/ANGSD_FILES/SunflowerResults/Sunflower_Mutational_load_Test/Inbreeding_Coefficients/Sunflower_Mutational_load_Test.indF
 
 #   Ancestral sequence
 ANC_SEQ=/scratch/eld72413/NSFproj/ancestralseqs/Debilis/Indel_Realigner/SRS2413741_0.03_realigned.fa
