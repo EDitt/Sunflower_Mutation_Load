@@ -64,9 +64,32 @@ These samples had many associated sequence files (83-378)
 
 
 ##### Pre-processing
-Many samples had more than 1 forward/reverse sequence file that needed to be concatenated before beginning sequence handling
+Many samples had more than 1 forward/reverse sequence file that needed to be concatenated before beginning sequence handling (used Concatenate.sh script)
 
 ### Adapter Trimming
 
 Used Adapters.fa file for adapter trimming
 A subset of sequences (South_Africa_seqs) had nextera adapter sequence contamination so used adapters_nextera.fa to trim those samples
+
+Two samples had different quality encoding (Illumina 1.5 instead of Sanger/Illumina 1.9). The quality encoding was accounted for in subsequent steps (including adapter trimming)
+
+### Read Mapping
+
+Read mapping was performed using BWA 0.7.17 with default parameters
+
+### SAM Processing
+
+SAM Processing was performed using Picard (v.)
+
+### Sample Information
+Merged datasets to get file information, line information, and heterozygosity (based on SNPs called against XRQ) - see "All_SAM_Info.csv"
+```R
+SeqData <- read.csv("LineSeqData.csv", header=T)
+het <- read.csv("SAMlines_XRQheterozygosity.csv", header=T)
+metadata <- read.csv("SAM lines with meta data.csv", header=T)
+
+AllInfo <- merge(metadata, SeqData, by = "PPN", all=TRUE) #N=290
+AllInfo2 <- merge(AllInfo, het, by.x = "PPN", by.y ="Genotype", all=TRUE)
+
+write.csv(AllInfo2, file="All_SAM_Info.csv")
+```
