@@ -31,3 +31,6 @@ Then I was able to clone the repository (latest commit `6d10630`) and install de
 ```bash
 ./angsd-wrapper Ancestral /home/eld72413/DelMut/Sunflower_Mutation_Load/ANGSD/ConfigFiles/Ancestral_Sequence_Config 
 ```
+```bash
+./angsd-wrapper Inbreeding /scratch/eld72413/NSFproj/ANGSD_FILES/Inbreeding_Coefficients_Config
+```

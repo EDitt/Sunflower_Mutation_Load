@@ -70,3 +70,20 @@ aggregate(OnePerPop$Species, by=list(OnePerPop$Sample), length)
 
 write.table(OnePerPop[,c(1,3,15,16,22)], file="WildAnnuusOnePerPop", sep = "\t", quote = FALSE)
 
+### Sequences that don't have to be merged
+
+filesPerPop <- aggregate(OnePerPop$Species, by=list(OnePerPop$Population), length)
+
+OneFile <- subset(filesPerPop, x == 1) #N=20
+OneFile$Group.1
+
+#### Files per subset
+### I attempted to download all files, then chose a subset (of the ones successfully downloaded) that covered a geographic range
+Subset <- read.table("FirstStab_subset")
+
+filesPerPopSubset <- filesPerPop[which(filesPerPop$Group.1 %in% Subset$V1),]
+write.table(filesPerPopSubset, file="WildAnnuusSubset1", sep = "\t", quote = FALSE)
+
+
+
+

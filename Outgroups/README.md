@@ -88,9 +88,26 @@ List of individuals collected in Todesco et al. 2020
 4 entire populations
 - Chose populations to sample from with largest number of pops and obtained SRA numbers (see SRA_Metadata.R)
 
-- Representative Individuals - chose individual with 
+- Representative Individuals - chose 1 individual per population with highest number of mapped reads (see SRA_Metadata.R)
 ```bash
-awk '{print $4}' WildAnnuusPops
+WildAnn=/home/eld72413/DelMut/Sunflower_Mutation_Load/Outgroups/WildAnnuusOnePerPop
+
+awk 'NR>1 {print $5}' $WildAnn > WildAnn1perPop.txt
 ```
+Then I ran SRA_download.sh.
 
+- 6 samples didn't download correctly, out of the remaining I chose 29 that spanned a representative geographic spread.
 
+Start with ones that don't need to be merged (N=14). Find a list of these and move to a new folder
+```bash
+awk '{if ($3 == 1) {print $2}}' WildAnnuusSubset1 > WildAnnuus_1FileSet.txt
+
+LIST=/home/eld72413/DelMut/Sunflower_Mutation_Load/Outgroups/WildAnnuusOnePerPop
+while read line; do
+	sample=$(awk -v var="${line}" '{if ($3 == var) {print $5}}' $LIST)
+	mv ./Raw/${sample}* ./Raw/OneFileSet
+done < WildAnnuus_1FileSet.txt
+```
+I ran adapter trimming on these samples
+
+- Many sequences needed to be merged
