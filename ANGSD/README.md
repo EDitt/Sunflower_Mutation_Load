@@ -18,7 +18,9 @@ module load gnuplot/5.2.2-foss-2018a
 ```
 
 Interval List
-Format interval list for chromosomal sequence for ANGSD]
+Format interval list for chromosomal sequence for ANGSD
+
+(below is when testing)
 ```bash
 INTERVALS20k=/scratch/eld72413/SAM_seq/results2/VCF_results_new/N_Intervals/INTERVALS_20k_atNs.bed
 
@@ -27,6 +29,21 @@ awk '{print $1":"$2"-"$3}' $INTERVALS20k > Chromsome_regions.txt
 # for testing (first 5 chromosomes):
 head -49 Chromsome_regions.txt > Chromosome_regionsTest.txt
 
+```
+
+Interval list for chromosomal sequence for ANGSD
+It is highly recommended to use an intervals file, as ANGSD is computationally expensive. I will use bedtools to choose random intervals for this. (later I might pipe into `bedtools shuffle` to exclude strings of N's)  
+The genome file here is chromosomal sequence only
+```bash
+FASTA_INDEX=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta.fai
+
+# genome file for bedtools that contains only chromosomal sequence
+head -17 $FASTA_INDEX | awk -v OFS='\t' '{print $1,$2}' > ChromosomeLengths.txt
+
+# use bedtools random
+module load BEDTools/2.29.2-GCC-8.2.0-2.31.1
+
+bedtools random -l 100000 -n 250 -seed 56 -g ChromosomeLengths.txt | sort -V | awk '{print $1":"$2"-"$3}' > Random250x100k_regions.txt
 ```
 
 Then I was able to clone the repository (latest commit `6d10630`) and install dependencies
@@ -46,4 +63,9 @@ qsub -I -q s_interq -l walltime=12:00:00 -l nodes=1:ppn=8 -l mem=22gb
 
 ```bash
 ./angsd-wrapper Inbreeding /scratch/eld72413/NSFproj/ANGSD_FILES/Inbreeding_Coefficients_Config
+```
+
+#### 3. SFS
+```bash
+./angsd-wrapper SFS /scratch/eld72413/NSFproj/ANGSD_FILES/Site_Frequency_Spectrum_Config
 ```
