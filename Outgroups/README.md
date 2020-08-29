@@ -108,6 +108,21 @@ while read line; do
 	mv ./Raw/${sample}* ./Raw/OneFileSet
 done < WildAnnuus_1FileSet.txt
 ```
-I ran adapter trimming on these samples
 
-- Many sequences needed to be merged
+Many sequences needed to be merged. I used the following code to rename samples-
+
+```bash
+LIST=/home/eld72413/DelMut/Sunflower_Mutation_Load/Outgroups/WildAnnuusOnePerPop
+
+while read line; do
+	Sample=$(echo $line | awk '{print $2}')
+	SRR=$(echo $line | awk '{print $5}')
+	for f in $(ls ${SRR}*); do
+		echo "Changing $f to ${Sample}_${f}"
+		mv $f "${Sample}_${f}"
+	done
+done < $LIST
+```
+
+
+I ran adapter trimming on these samples
