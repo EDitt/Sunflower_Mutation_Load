@@ -17,7 +17,7 @@ Sample=$(sed -n ${PBS_ARRAYID}p $LIST | awk '{print $2}')
 
 NumFiles=$(find -maxdepth 1 -name "${Sample}*1.fastq" | wc -l)
 
-if [[ "$NumFiles" -eq 0 ]]: then
+if [[ "$NumFiles" -eq 0 ]]; then
 	echo "No $Sample Files in $INPUTDIR"
 else
 	echo "Concatenating $NumFiles Forward $Sample"
