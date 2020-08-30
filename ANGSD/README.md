@@ -88,3 +88,10 @@ later used the ANGSD_Job.sh script to run ^ the above
 ```bash
 ./angsd-wrapper SFS /scratch/eld72413/NSFproj/ANGSD_FILES/Site_Frequency_Spectrum_Config
 ```
+
+### A smaller subset of genome for NSF presentation:
+```bash
+module load BEDTools/2.29.2-GCC-8.2.0-2.31.1
+
+bedtools random -l 10000 -n 150 -seed 65 -g ChromosomeLengths.txt | sort -V | awk '{print $1":"$2"-"$3}' > GenomeSubset/Random150x10k_regions.txt
+```
