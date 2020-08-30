@@ -124,5 +124,18 @@ while read line; do
 done < $LIST
 ```
 
+Then I ran Cat_SRA.sh to concatenate the remaining sequences
+(I used the wrong list for the above so it concatenated the same samples twice...)
+
+Then, to move them-
+```bash
+LIST2=/scratch/eld72413/NSFproj/ancestralseqs/Annuus/WildAnnuusSubset1
+awk 'NR>1 {if ($3 !=1) {print $2}}' $LIST2 > MergedSubset.txt
+while read line; do
+Sample=$(grep $line $LIST | awk '{print $2}')
+mv ${Sample}* ./Subset1
+done < MergedSubset.txt
+```
+(even though this would give me an error every other sample since some showed up twice in that list)
 
 I ran adapter trimming on these samples
