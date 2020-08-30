@@ -15,7 +15,7 @@ OUTPUTDIR=/scratch/eld72413/NSFproj/ancestralseqs/Annuus/Raw/Merged
 
 Sample=$(sed -n ${PBS_ARRAYID}p $LIST | awk '{print $2}')
 
-NumFiles=$(find -maxdepth 1 -name "${Sample}*1.fastq" | wc -l)
+NumFiles=$(find $INPUTDIR -maxdepth 1 -name "${Sample}*1.fastq" | wc -l)
 
 if [[ "$NumFiles" -eq 0 ]]; then
 	echo "No $Sample Files in $INPUTDIR"
