@@ -17,4 +17,6 @@ module load gnuplot/5.2.2-foss-2018a
 WRAPPER="Inbreeding"
 CONFIG="/scratch/eld72413/NSFproj/ANGSD_FILES/Inbreeding_Coefficients_Config"
 
+cd /home/eld72413/ANGSD_DEV/new/angsd-wrapper
+
 ./angsd-wrapper ${WRAPPER} ${CONFIG}
