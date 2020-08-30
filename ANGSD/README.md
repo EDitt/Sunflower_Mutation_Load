@@ -61,9 +61,28 @@ Using interactive job
 qsub -I -q s_interq -l walltime=12:00:00 -l nodes=1:ppn=8 -l mem=22gb
 ```
 
+Subset 1 - 138 samples
+```bash
+find $(pwd -P) -name "*.bam" | sort -V > Subset1_BamRealigned.txt
+
+# some samples needed to be re-indexed
+parallel/20200422-GCCcore-8.3.0
+module load SAMtools/1.10-GCC-8.3.0
+
+find -maxdepth 1 -name "*.bam" | parallel samtools index {}
+
+
+for f in `find -maxdepth 1 -name "*.bam"`; do
+	echo $f
+	samtools index $f
+done
+
+```
+
 ```bash
 ./angsd-wrapper Inbreeding /scratch/eld72413/NSFproj/ANGSD_FILES/Inbreeding_Coefficients_Config
 ```
+later used the ANGSD_Job.sh script to run ^ the above
 
 #### 3. SFS
 ```bash

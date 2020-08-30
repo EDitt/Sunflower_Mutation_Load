@@ -7,11 +7,11 @@ set -o pipefail
 #   A simple script to hold common variables for angsd-wrapper
 
 #   Define a list of samples
-SAMPLE_LIST=/scratch/eld72413/SAM_seq/results2/Group7/Indel_Realigner/Group7_realignedBAMs.txt
+SAMPLE_LIST=/scratch/eld72413/SAM_seq/BAM_realigned/Subset1_BamRealigned.txt
 
 #   Define a list of inbreeding coefficients
 #	This should end in '_.indF'
-SAMPLE_INBREEDING=/scratch/eld72413/NSFproj/ANGSD_FILES/SunflowerResults/Sunflower_Mutational_load_Test/Inbreeding_Coefficients/Sunflower_Mutational_load_Test.indF
+SAMPLE_INBREEDING=
 
 #   Ancestral sequence
 ANC_SEQ=/scratch/eld72413/NSFproj/ancestralseqs/Debilis/Indel_Realigner/SRS2413741_0.03_realigned.fa
@@ -20,7 +20,7 @@ ANC_SEQ=/scratch/eld72413/NSFproj/ancestralseqs/Debilis/Indel_Realigner/SRS24137
 REF_SEQ=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
 
 #   Name the project
-PROJECT=Sunflower_Mutational_load_Test
+PROJECT=Sunflower_Mutational_load_Set1
 
 #   Where do we put the outfiles?
     #   Note, the final outdirectory will be
@@ -29,7 +29,7 @@ SCRATCH=/scratch/eld72413/NSFproj/ANGSD_FILES/SunflowerResults
 
 #   Define the region being looked at
 #       Optional, but ANGSD is expensive to run without specifying regions to look at
-REGIONS=/scratch/eld72413/NSFproj/ANGSD_FILES/Chromosome_regionsTest.txt
+REGIONS=/scratch/eld72413/NSFproj/ANGSD_FILES/Random250x100k_regions.txt
 
 #   Set common parameters for all methods
 #       Use only uniquely-mapped reads
