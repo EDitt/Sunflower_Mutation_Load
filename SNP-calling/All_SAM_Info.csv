@@ -1,4 +1,4 @@
-,PPN,Ames,UGA.SAM1.last.three.digits.PPN.,source.PI.or.INRA..,source.line.name,origin,type,Line,NumFiles,Concatenated..if.applicable.,Sequence.Encoding,Special_Notes,ProcessingGroup,PercHet_XRQ
+,PPN,Ames,UGA.SAM1.last.three.digits.PPN.,source.PI.or.INRA.,source.line.name,origin,type,Line,NumFiles,Concatenated..if.applicable.,Sequence.Encoding,Special_Notes,ProcessingGroup,PercHet_XRQ
 2,PPN002,31695,UGA-SAM1-002,PI 664212,HA 853,NPGS,HA-Oil,PPN002,6,X,Sanger/Illumina 1.9,,1,12.98053165
 8,PPN008,31701,UGA-SAM1-008,PI 552943,RHA 280,NPGS,RHA-NonOil,PPN008,2,,Illumina 1.5,seq files end in .txt.gz,1,10.2148791
 33,PPN033,31726,UGA-SAM1-033,PI 633746,RHA 436,NPGS,RHA-Oil,PPN033,2,X,Sanger/Illumina 1.9,,1,11.40314279
