@@ -14,9 +14,9 @@
 #     The VCF
 #Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset/Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz
 #Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset/Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz
-Compressed_VCF=/scratch/eld72413/NSFproj/VEP/Missense/WILD_MISSENSE.recode.vcf.gz
-OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/Missense
-OUTPUTPREFIX=wild_missense
+Compressed_VCF=/scratch/eld72413/NSFproj/VEP/Synon/WILD_SYNON.recode.vcf.gz
+OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/Synon
+OUTPUTPREFIX=wild_synonymous
 
 #    Variant sets should be either 'deletions', 'insertions', or 'snps'
 VARIANT_SET=all
