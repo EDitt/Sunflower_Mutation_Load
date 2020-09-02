@@ -46,10 +46,16 @@ bgzip SAM_SYNON.recode.vcf
 
 
 ### Wild lines
-
 WILDANN=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset/Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz
+WILD_MISSENSE_POS=/scratch/eld72413/NSFproj/VEP/Missense/wildenv_missense_positions.txt
 
+vcftools --gzvcf $WILDANN --positions $WILD_MISSENSE_POS --recode --recode-INFO-all --out WILD_MISSENSE
+bgzip WILD_MISSENSE.recode.vcf
 
+WILD_SYNON_POS=/scratch/eld72413/NSFproj/VEP/Synon/wildenv_synon_positions.txt
+
+vcftools --gzvcf $WILDANN --positions $WILD_SYNON_POS --recode --recode-INFO-all --out WILD_SYNON
+bgzip WILD_SYNON.recode.vcf
 
 ```
 
