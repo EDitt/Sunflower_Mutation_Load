@@ -16,7 +16,7 @@
 #Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset/Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz
 Compressed_VCF=/scratch/eld72413/NSFproj/VEP/Missense/SAM_MISSENSE.recode.vcf.gz
 OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/Missense
-OUTPUTPREFIX=fullsam_missense
+OUTPUTPREFIX=sam_missense
 
 #    Variant sets should be either 'deletions', 'insertions', or 'snps'
 VARIANT_SET=all
@@ -35,5 +35,5 @@ vep \
     --verbose \
     --format vcf \
     --warning_file ${OUTPUTDIR}/${OUTPUTPREFIX}_WARN.txt \
-    -o ${OUTPUTDIR}/${OUTPUTPREFIX}.txt
+    -o ${OUTPUTDIR}/${OUTPUTPREFIX}
 
