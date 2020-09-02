@@ -12,7 +12,7 @@ tabix -p gff Ha412HOv2.0.gff3.gz
 ```
 Ran VeP.sh on cultivated and wild H. annuus VCF files using VeP.sh script
 
-Filtered output
+Filter output
 ```bash
 module load VEP/95.0-foss-2018b-Perl-5.28.0
 INPUT=/scratch/eld72413/NSFproj/VEP/fullsam_remappedHa412HO_all.txt
@@ -22,33 +22,6 @@ filter_vep -i ${INPUT} -o Synon/fullsam_synon.txt -filter "Consequence is synony
 INPUT2=/scratch/eld72413/NSFproj/VEP/wild_env_remappedHa412HO_all.txt
 filter_vep -i ${INPUT2} -o Missense/wildenv_missense.txt -filter "Consequence is missense_variant"
 filter_vep -i ${INPUT2} -o Synon/wildenv_synon.txt -filter "Consequence is synonymous_variant"
-```
-
-Filter VCF files
-```bash
-# list of positions
-grep -v "#" fullsam_missense.txt | awk '{print $2}' | awk -F ":" -v OFS="\t" '{$1=$1; print $0}' > fullsam_missense_positions.txt
-grep -v "#" fullsam_synon.txt | awk '{print $2}' | awk -F ":" -v OFS="\t" '{$1=$1; print $0}' > fullsam_synon_positions.txt
-SAMVCF=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset/Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz
-
-module load VCFtools/0.1.15-foss-2016b-Perl-5.24.1
-
-vcftools --gzvcf $SAMVCF --freq --positions fullsam_missense_positions.txt --out SAM_MISSENSE
-# After filtering, kept 119,332 out of a possible 2155376 Sites
-vcftools --gzvcf $SAMVCF --freq --positions fullsam_synon_positions.txt --out SAM_SYNON
-# After filtering, kept 184,668 out of a possible 2155376 Sites
-
-grep -v "#" wildenv_missense.txt | awk '{print $2}' | awk -F ":" -v OFS="\t" '{$1=$1; print $0}' > wildenv_missense_positions.txt
-grep -v "#" wildenv_synon.txt | awk '{print $2}' | awk -F ":" -v OFS="\t" '{$1=$1; print $0}' > wildenv_synon_positions.txt
-
-WILDANN=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset/Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz
-
-vcftools --gzvcf $WILDANN --freq --positions wildenv_missense_positions.txt --out WILD_MISSENSE
-# After filtering, kept 306,904 out of a possible 4,882,321 Sites
-
-vcftools --gzvcf $WILDANN --freq --positions wildenv_synon_positions.txt --out WILD_SYNON
-# After filtering, kept 468,294 out of a possible 4,882,321 Sites
-
 ```
 
 ## Prep
