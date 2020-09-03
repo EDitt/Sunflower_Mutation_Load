@@ -1,0 +1,140 @@
+---
+title: "SFS Figure"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Data/Preliminary_Aug2020")
+```
+
+The following functions were written by Chaochih Liu and available here: https://github.com/MorrellLAB/Barley_Inversions/blob/master/analyses/ANGSD-wrapper/figures/sfs_plots.R
+```{r functions}
+
+###reading in file as a data frame
+readFile <- function(filename) {
+    #   Define headers
+    sfs.headers <- c("Allele_Freq")
+    #   Read in file and convert to matrix
+    tmp.derived <- as.matrix(fread(
+        input = filename,
+        header = FALSE
+    ))
+    sfs.data <- as.data.frame(t(tmp.derived))
+    setnames(sfs.data, sfs.headers)
+    return(sfs.data)
+}
+
+#   Removes 0th and nth classes
+cleanAlleles <- function(sfs.df) {
+    alleles <- sfs.df$Allele_Freq[seq(2, nrow(sfs.df) - 1)]
+    #   Proportion to plot
+    alleles.prop <- as.data.frame(alleles / sum(alleles))
+    colnames(x = alleles.prop) <- "allele.prop"
+    return(alleles.prop)
+}
+
+#This takes the original data read in and does what the cleanAlleles function does but also generates the barplot
+plotSFS <- function(data, plot.title) {
+    #   Throw out 0th and nth classes
+    alleles <- data$Allele_Freq[seq(2, nrow(data) - 1)]
+    #   Proportion to plot
+    alleles.prop <- alleles / sum(alleles)
+    #   Generate barplot
+    sfs.plot <- barplot(
+        height = alleles.prop,
+        xaxt = "n",
+        xlab = "Derived Allele Frequency",
+        ylab = "Proportion of SNPs",
+        #main = plot.title,
+        ylim = c(0, 0.27),
+        offset = 0,
+        axes = TRUE,
+        names = 1:length(alleles),
+        las = 1,
+        pch = 18,
+        xpd = TRUE,
+        col = "skyblue",
+        width = 2
+    )
+    #   Label x-axis
+    lab <- c(1:length(sfs.plot))
+    axis(
+        side = 1,
+        at = sfs.plot,
+        labels = lab
+    )
+}
+
+```
+
+## SFS Data
+
+```{r sfsdata}
+#read data into data frame
+SFS <- readFile("Cultivated_GenomeSubset_DerivedSFS.graph.me")
+head(SFS)
+
+plotSFS(SFS, "Sunflower")
+
+#turns frequencies into proportions
+SFS_plot <- cleanAlleles(SFS) #removes 0 and nth classes, converts to proportion
+head(SFS_plot)
+str(SFS_plot)
+
+# add column for proportion of pop
+length(SFS_plot$allele.prop) # # of chromosomes
+SFS_plot$ChromNum <- as.numeric(rownames(SFS_plot))
+SFS_plot$ChromProp <- SFS_plot$ChromNum/max(SFS_plot$ChromNum)
+```
+
+## Barplot with this data
+```{r barplot1, echo=FALSE}
+
+barplot(
+        height = SFS_plot$allele.prop,
+        #xaxt = "n",
+        xlab = "Derived Allele Proportion",
+        ylab = "Proportion of SNPs",
+        main = "SFS - Domesticated Sunflower",
+        ylim = c(0, 0.15),
+        offset = 0,
+        axes = TRUE,
+        names = SFS_plot$ChromProp,
+        las = 1,
+        pch = 18,
+        xpd = TRUE,
+        col = "skyblue",
+        width = 2
+)
+
+```
+
+### Make graph look nice by binning
+```{r Bin, echo=FALSE}
+
+SFS_plot$Bins <- cut (SFS_plot$ChromProp, c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0))
+
+Binneddf <- aggregate(SFS_plot$allele.prop, by=list(SFS_plot$Bins), sum)
+names(Binneddf) <- c("Bins", "AlleleProp")
+
+barplot(
+        height = Binneddf$AlleleProp,
+        #xaxt = "n",
+        xlab = "Derived Allele Frequency",
+        ylab = "Proportion of SNPs",
+        main = "SFS - Domesticated Sunflower",
+        ylim = c(0, 0.6),
+        offset = 0,
+        axes = TRUE,
+        #names = (1:length(Binneddf$Bins))/length(Binneddf$Bins),
+        names = Binneddf$Bins,
+        las = 1,
+        pch = 18,
+        xpd = TRUE,
+        col = "skyblue",
+        width = 2
+)
