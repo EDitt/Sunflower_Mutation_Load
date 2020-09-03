@@ -13,6 +13,7 @@ set -o pipefail
 module load GSL/2.6-GCC-8.3.0
 module load SAMtools/1.10-GCC-8.3.0
 module load gnuplot/5.2.2-foss-2018a
+module load R/3.6.1-foss-2018a-X11-20180131-GACRC
 
 WRAPPER="Inbreeding"
 CONFIG="/scratch/eld72413/NSFproj/ANGSD_FILES/Inbreeding_Coefficients_Config"
