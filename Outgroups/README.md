@@ -79,7 +79,7 @@ awk -F "," '{$1=$1; print $1,$30}' AncestralSequence/Landrace_SRArunInfo.csv > S
 ```
 
 ```bash
-awk '{print $2}' ./Sunflower_Mutation_Load/Outgroups/Annuus_Landraces > Landrace_SRA.list
+awk 'NR>1 {print $2}' Annuus_Landraces > Landrace_SRA.list
 ```
 
 Used SRA_download.sh to obtain the sequence data for 17 landraces (not included in SAM lines)
