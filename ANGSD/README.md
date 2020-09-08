@@ -102,3 +102,17 @@ module load BEDTools/2.29.2-GCC-8.2.0-2.31.1
 
 bedtools random -l 10000 -n 150 -seed 65 -g ChromosomeLengths.txt | sort -V | awk '{print $1":"$2"-"$3}' > GenomeSubset/Random150x10k_regions.txt
 ```
+
+### Combining Cultivated and Wild for Admixture analysis
+```bash
+CultBAMs=/scratch/eld72413/SAM_seq/BAM_realigned/Subset1_BamRealigned.txt
+WildBAMs=/scratch/eld72413/NSFproj/ancestralseqs/Annuus/Indel_Realigner/Wild_RealignedBams.txt
+
+Cult_INBREEDING=/scratch/eld72413/NSFproj/ANGSD_FILES/GenomeSubset/Cultivated_GenomeSubset/Inbreeding_Coefficients/Cultivated_GenomeSubset.indF
+Wild_INBREEDING=/scratch/eld72413/NSFproj/ANGSD_FILES/GenomeSubset/Wild_GenomeSubset/Wild_GenomeSubset/Inbreeding_Coefficients/Wild_GenomeSubset.indF
+
+cat $CultBAMs $WildBAMs > CultWildBAMs.txt
+cat $Cult_INBREEDING $Wild_INBREEDING > CultWildInbreeding
+```
+
+Submitted job for Genotype likelihood analysis
