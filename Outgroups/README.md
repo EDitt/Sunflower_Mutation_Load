@@ -83,6 +83,42 @@ awk 'NR>1 {print $1}' Annuus_Landraces > Landrace_SRA.list
 ```
 
 Used SRA_download.sh to obtain the sequence data for 17 landraces (not included in SAM lines)
+```bash
+# take out # character
+sed -i 's/#/_/g' Annuus_Landraces
+
+while read line; do
+	SRR=$(echo $line | awk '{print $1}')
+	Name=$(echo $line | awk '{print $2}')
+	for f in $(ls ${SRR}*); do
+		echo "Changing $f to ${Name}_${f}"
+		mv $f "${Name}_${f}"
+	done
+done < Annuus_Landraces
+
+
+done < `awk 'NR>1 {print $0}' /home/eld72413/DelMut/Sunflower_Mutation_Load/Outgroups/Annuus_Landraces`
+```
+
+Print out list of names
+```bash
+awk 'NR>1 {print $2}' Annuus_Landraces | sort -u > names
+
+# which don't need to be merged
+while read line; do
+	Num=$(ls -1 ${line}* | wc -l)
+	if [[ $Num -eq 2 ]]; then
+		echo $line
+	fi
+done < names
+# only have 1 forward + reverse: annMAN. Moved this one to "merge"
+
+# take out from list
+awk 'NR>1 {print $0}' names > names2
+
+```
+
+Then I ran adapter trimming and read mapping using sequence handling
 
 --
 
