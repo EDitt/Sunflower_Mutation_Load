@@ -15,8 +15,8 @@ module load GSL/2.6-GCC-8.3.0
 #module load gnuplot/5.2.2-foss-2018a
 #module load R/3.6.1-foss-2018a-X11-20180131-GACRC
 
-WRAPPER="Genotypes"
-CONFIG="/scratch/eld72413/NSFproj/ANGSD_FILES/Chrom10/Genotype_Chrm10_Config"
+WRAPPER="Admixture"
+CONFIG="/scratch/eld72413/NSFproj/ANGSD_FILES/Chrom10/Admixture_Chrom10_Config"
 
 cd /home/eld72413/ANGSD_DEV/new2/angsd-wrapper
 
