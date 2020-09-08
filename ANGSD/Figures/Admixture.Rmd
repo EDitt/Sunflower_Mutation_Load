@@ -7,7 +7,27 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(RColorBrewer)
+library(wesanderson)
+library(viridis)
 setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Data/Preliminary_Aug2020")
+
+
+
+
+### colors
+display.brewer.pal(n=8, name='Dark2')
+brewer.pal(n=8, name='Dark2')
+
+display.brewer.pal(n=8, name='Set1')
+brewer.pal(n=8, name='Set1')
+# orange: "#FF7F00"; blue="#377EB8"; green="#4DAF4A"; purple="#984EA3"; red= "#E41A1C"
+wes_palette("Darjeeling1", 5, type=c("discrete"))
+wes_palette("Darjeeling2", 5, type=c("discrete"))
+
+viridis(5)
+viridis_pal(5)
+scale_color_viridis(5)
 ```
 
 # Import/sort metadata
@@ -46,9 +66,7 @@ AdmixGraph <- function (admixdf, LineOrderDf, MetaData, sortFactor) {
 }
 
 AdmixPlot <- function (MatrixData, GroupLengthVector) {
-  barplot(MatrixData, col=c("#006BA4","#FF800E","#A2C8EC",
-                     "#898989","#ABABAB","#595959",
-                     "#5F9ED1","#CFCFCF","#FFBC79","#C85200"),
+  barplot(MatrixData, col=c("#377EB8", "#FF7F00", "#4DAF4A", "#984EA3","#E41A1C"),
         space = 0,
         border = NA,
         #xlab = "Individuals",
@@ -100,6 +118,15 @@ barplot(admix3_graph$admix, col=c("#006BA4","#FF800E","#A2C8EC",
         #xlab = "Individuals",
         ylab = "Admixture proportion")
 abline(v=c(admix3_graph$length$cum), lwd=2)
+
+### new color scheme
+barplot(admix3_graph$admix, col=c("#377EB8", "#FF7F00", "#4DAF4A", "#984EA3","#E41A1C"),
+        space = 0,
+        border = NA,
+        #xlab = "Individuals",
+        ylab = "Admixture proportion")
+abline(v=c(admix3_graph$length$cum), lwd=2)
+
 
 AdmixPlot(admix3_graph$admix, admix3_graph$length$cum)
 
