@@ -4,16 +4,16 @@
 #PBS -l nodes=1:ppn=1
 #PBS -l walltime=2:00:00
 #PBS -l mem=2gb
-#PBS -t 1-132
+#PBS -t 1-16
 
 #PBS -M dittmare@gmail.com
 #PBS -m abe
 
-LIST=/home/eld72413/DelMut/Sunflower_Mutation_Load/Outgroups/WildAnnuusOnePerPop
-INPUTDIR=/scratch/eld72413/NSFproj/ancestralseqs/Annuus/Raw
-OUTPUTDIR=/scratch/eld72413/NSFproj/ancestralseqs/Annuus/Raw/Merged
+LIST=/scratch/eld72413/NSFproj/ancestralseqs/Landrace/RawSeqs/names2
+INPUTDIR=/scratch/eld72413/NSFproj/ancestralseqs/Landrace/RawSeqs
+OUTPUTDIR=/scratch/eld72413/NSFproj/ancestralseqs/Landrace/RawSeqs/Merged
 
-Sample=$(sed -n ${PBS_ARRAYID}p $LIST | awk '{print $2}')
+Sample=$(sed -n ${PBS_ARRAYID}p $LIST)
 
 NumFiles=$(find $INPUTDIR -maxdepth 1 -name "${Sample}*1.fastq" | wc -l)
 
