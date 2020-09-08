@@ -8,6 +8,12 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(ggplot2)
+
+library(data.table) # to use command fread()
+
+library(dplyr)
+
 setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Data/Preliminary_Aug2020")
 ```
 
@@ -136,5 +142,87 @@ barplot(
         pch = 18,
         xpd = TRUE,
         col = "skyblue",
+        width = 2
+)
+```
+
+Combined with wild
+
+```{r Wild, echo=FALSE}
+
+SFS_wild <- readFile("Wild_GenomeSubset_DerivedSFS.graph.me")
+str(SFS_wild)
+length(SFS_wild$Allele_Freq)
+
+#turns frequencies into proportions
+SFS_plot_wild <- cleanAlleles(SFS_wild)
+head(SFS_plot_wild)
+str(SFS_plot_wild)
+
+alleles_wild <- SFS_wild$Allele_Freq[seq(2, nrow(SFS_wild) - 1)]
+head(alleles_wild)
+str(alleles_wild)
+
+
+#   Proportion to plot
+alleles.prop_wild <- alleles_wild / sum(na.omit(alleles_wild))
+str(alleles.prop_wild)
+
+Freq_wild <- 1:length(alleles.prop_wild) / length(alleles.prop_wild)
+length(Freq_wild)
+str(Freq_wild)
+
+#would be better to bin these...
+
+newdf_wild <- as.data.frame( cbind (alleles.prop_wild, Freq_wild) )
+str(newdf_wild)
+
+newdf_wild$Bins <- cut (newdf_wild$Freq_wild, c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0))
+
+summary(newdf_wild$Bins)
+str(newdf_wild)
+
+#Binneddf <- newdf %>%
+#  group_by(Bins) %>%
+#  summarise(AlleleProp = sum(alleles.prop)) ###not working with wild dataset?
+
+#alternative method:
+Binneddf_wild <- aggregate(newdf_wild$alleles.prop_wild, by=list(newdf_wild$Bins), sum)
+names(Binneddf_wild) <- c("Bins", "AllelePropWild")
+
+str(Binneddf_wild)
+length(Binneddf_wild$Bins)
+
+#combine datasets
+
+Bothsets <- cbind (Binneddf, Binneddf_wild$AllelePropWild)
+names(Bothsets) <- c("Bins", "AllelePropCrop", "AllelePropWild")
+head(Bothsets)
+
+Bothsets.matrix <- as.matrix(Bothsets)
+```
+
+
+A figure that combines these datasets
+```{r Figure, echo=FALSE}
+
+barplot(
+        #height = Binneddf$AlleleProp,
+        height = t(as.matrix(Bothsets[, 2:3])),
+        beside = TRUE,
+        #xaxt = "n",
+        xlab = "Derived Allele Frequency",
+        ylab = "Proportion of SNPs",
+        #main = "SFS - Domesticated Sunflower",
+        ylim = c(0, 0.6),
+        offset = 0,
+        axes = TRUE,
+        names = Binneddf$Bins,
+        las = 1,
+        pch = 18,
+        xpd = TRUE,
+        col = c("tomato2", "skyblue"),
+        #legend.text = TRUE,
+        space = c(0,0.25),
         width = 2
 )

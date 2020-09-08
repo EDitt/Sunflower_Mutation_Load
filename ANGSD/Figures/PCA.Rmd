@@ -1,0 +1,54 @@
+---
+title: "PCA Figure"
+author: "Emily Dittmar"
+date: "9/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(ggplot2)
+
+setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Data/Preliminary_Aug2020")
+setwd("/Users/eld72413/Google Drive/Active Projects/DelMutation/Data/Preliminary_Aug2020")
+```
+
+### PCA output from ANGSD-wrapper
+
+```{r data}
+###reading in file as a data frame
+pcadf <- as.data.frame(fread(input="Cultivated_GenomeSubset_PCA.graph.me", header = FALSE))
+
+plot(pcadf$V1, pcadf$V2, xlim=c(-0.002, 0.002), ylim=c(-0.002, 0.002))
+
+```
+
+## Combine with line info
+
+```{r data, echo=FALSE}
+LineOrder <- read.table("Subset1_BamRealigned.txt", sep = "/")
+LineOrder$V7 <- gsub("_realigned.bam", "", LineOrder$V7)
+
+pca_data <- cbind.data.frame(LineOrder$V7, pcadf$V1, pcadf$V2)
+colnames(pca_data) <- c("PPN", "PC1", "PC2")
+pca_data[which(pca_data$PC1 > 0.010),] #PPN002 (outlier)
+pca_data[which(pca_data$PC2 > 0.010),] #PPN008 (outlier)
+
+metadata <- read.csv("Inbreeding_Performance.csv", header=T)
+
+AllData <- merge(pca_data, metadata, by="PPN") #N=127
+```
+
+## Plot
+
+```{r plot, echo=FALSE}
+
+p1 <- ggplot(AllData, aes(x=PC1, y=PC2, color=het_group, shape=breeding_target))
+p1 + geom_point() + ylim(-0.003, 0.003) + xlim(-0.0025, 0.004)
+
+p2 <- ggplot(AllData, aes(x=PC1, y=PC2, color=type))
+p2 + geom_point() + ylim(-0.003, 0.003) + xlim(-0.0025, 0.004)
+
+p3 <- ggplot(AllData, aes(x=PC1, y=PC2, shape=het_group, color=breeding_target))
+p3 + geom_point() + ylim(-0.003, 0.003) + xlim(-0.0025, 0.004)

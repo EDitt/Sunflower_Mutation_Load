@@ -1,0 +1,117 @@
+---
+title: "Admixture Graphs"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Data/Preliminary_Aug2020")
+```
+
+# Import/sort metadata
+```{r metadata, echo=FALSE}
+
+# Line Order is list of filenames that went into ANGSD as input
+LineOrder <- read.table("Subset1_BamRealigned.txt", sep = "/")
+LineOrder$V7 <- gsub("_realigned.bam", "", LineOrder$V7)
+
+# read in Metadata
+meta <- read.csv("DomesticatedSubset_Metadata.csv", header=T)
+aggregate(meta$PPN, by=list(meta$type2), length)
+# re-order factor levels
+meta$type2 <- factor(meta$type2, levels=c("INRA-HA", "INRA-RHA", "HA-NonOil", "HA-Oil", "RHA-Oil", "RHA-NonOil", "introgressed-NonOil", "landrace", "OPV-NonOil", "other-NonOil", "other-Oil"))
+meta$het_group <- factor(meta$het_group, levels=c("HA", "RHA", "other", "landrace"))
+
+```
+
+
+## Function to format data for graphing
+```{r function, echo=FALSE}
+
+AdmixGraph <- function (admixdf, LineOrderDf, MetaData, sortFactor) {
+  admix_data <- cbind.data.frame(LineOrderDf, admixdf)
+  colnames(admix_data)[1] <- "PPN"
+  allAdmix <- merge(MetaData, admix_data, by = "PPN")
+  allAdmix_sort <- allAdmix[order(allAdmix[[sortFactor]]),]
+  lengths <- aggregate(allAdmix_sort$PPN, by=list(allAdmix_sort[[sortFactor]]), length)
+  lengths$cum <- cumsum(lengths$x)
+  Col1 <- length(MetaData) + 1
+  Colx <- length(allAdmix_sort)
+  admix <- t(as.matrix(allAdmix_sort[,c(Col1:Colx)]))
+  result <- list("admix" = admix, "length" = lengths)
+  #result <- list(c(admix, lengths), names=c("admixturedf", "lengths"))
+  return(result)
+}
+
+AdmixPlot <- function (MatrixData, GroupLengthVector) {
+  barplot(MatrixData, col=c("#006BA4","#FF800E","#A2C8EC",
+                     "#898989","#ABABAB","#595959",
+                     "#5F9ED1","#CFCFCF","#FFBC79","#C85200"),
+        space = 0,
+        border = NA,
+        #xlab = "Individuals",
+        ylab = "Admixture proportion")
+abline(v=c(GroupLengthVector), lwd=2)
+}
+
+# combined
+AdmixDataPlot <- function(filename, LineOrderDf, MetaData, sortFactor){
+  data <- read.table(filename)
+  graphdata <- AdmixGraph(data, LineOrderDf, MetaData, sortFactor)
+  AdmixPlot(graphdata$admix, graphdata$length$cum)
+}
+```
+
+## Two Groups
+```{r Admix2, echo=FALSE}
+
+admix2 <- read.table("Cultivated_GenomeSubset.2.qopt.graph.me")
+
+admix2_graph <- AdmixGraph(admix2, LineOrder$V7, meta[,c(2,6,8:11)], "type2")
+
+barplot(admix2_graph$admix, col=c("#006BA4","#FF800E","#A2C8EC",
+                     "#898989","#ABABAB","#595959",
+                     "#5F9ED1","#CFCFCF","#FFBC79","#C85200"),
+        space = 0,
+        border = NA,
+        #xlab = "Individuals",
+        ylab = "Admixture proportion")
+abline(v=c(admix2_graph$length$cum), lwd=2)
+
+AdmixPlot(admix2_graph$admix, admix2_graph$length$cum)
+
+```
+
+
+## Three Groups
+```{r Admix3, echo=FALSE}
+
+admix3 <- read.table("Cultivated_GenomeSubset.3.qopt.graph.me")
+
+admix3_graph <- AdmixGraph(admix3, LineOrder$V7, meta[,c(2,6,8:11)], "type2")
+
+barplot(admix3_graph$admix, col=c("#006BA4","#FF800E","#A2C8EC",
+                     "#898989","#ABABAB","#595959",
+                     "#5F9ED1","#CFCFCF","#FFBC79","#C85200"),
+        space = 0,
+        border = NA,
+        #xlab = "Individuals",
+        ylab = "Admixture proportion")
+abline(v=c(admix3_graph$length$cum), lwd=2)
+
+AdmixPlot(admix3_graph$admix, admix3_graph$length$cum)
+
+```
+
+## Four Groups
+```{r Admix4, echo=FALSE}
+
+AdmixDataPlot("Cultivated_GenomeSubset.2.qopt.graph.me", LineOrder$V7, meta[,c(2,6,8:11)], "type2")
+
+AdmixDataPlot("Cultivated_GenomeSubset.3.qopt.graph.me", LineOrder$V7, meta[,c(2,6,8:11)], "type2")
+
+AdmixDataPlot("Cultivated_GenomeSubset.4.qopt.graph.me", LineOrder$V7, meta[,c(2,6,8:11)], "type2")
+
+AdmixDataPlot("Cultivated_GenomeSubset.5.qopt.graph.me", LineOrder$V7, meta[,c(2,6,8:11)], "type2")
