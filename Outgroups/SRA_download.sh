@@ -6,7 +6,7 @@
 #PBS -l mem=20gb
 #PBS -M dittmare@gmail.com
 #PBS -m abe
-#PBS -t 2
+#PBS -t 37
 
 ###This script downloads sequence files from the SRA
 #As of 2.9.1 fasterq-dump can be used
