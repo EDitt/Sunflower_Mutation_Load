@@ -46,6 +46,13 @@ module load BEDTools/2.29.2-GCC-8.2.0-2.31.1
 bedtools random -l 100000 -n 250 -seed 56 -g ChromosomeLengths.txt | sort -V | awk '{print $1":"$2"-"$3}' > Random250x100k_regions.txt
 ```
 
+To look at specific chromosomal regions:
+Chromosome #10 has the branching locus
+```bash
+awk -F "[:,-]" '{$1=$1; if ($1 == "Ha412HOChr10") {print $0}}' Random250x100k_regions.txt | awk '{print $1":"$2"-"$3}' > Chrom10/Random250x100k_Chrom10.txt
+
+```
+
 Then I was able to clone the repository (latest commit `6d10630`) and install dependencies
 
 #### 1. Ancestral Sequence

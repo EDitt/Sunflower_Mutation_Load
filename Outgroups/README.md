@@ -73,9 +73,13 @@ Chose accession with highest number of mapped reads (#41) to use for ancestral s
 ## Helianthus annuus Landraces
 Resequencing data for 20 H. annuus landraces is available on SRA
 - Landraces already included in SAM lines: SAM046 (Mandan #1); Hopi dye (SAM083), HOPI (SAM285). Deleted from the list of 20 ("Hopi", "SAM083", "SAM046")
+- Saved "RunInfo" for remaining lines as .csv
+```bash
+awk -F "," '{$1=$1; print $1,$30}' AncestralSequence/Landrace_SRArunInfo.csv > Sunflower_Mutation_Load/Outgroups/Annuus_Landraces
+```
 
 ```bash
-awk '{print $3}' ./Sunflower_Mutation_Load/Outgroups/Annuus_Landraces > Landrace_SRA.list
+awk 'NR>1 {print $1}' Annuus_Landraces > Landrace_SRA.list
 ```
 
 Used SRA_download.sh to obtain the sequence data for 17 landraces (not included in SAM lines)
