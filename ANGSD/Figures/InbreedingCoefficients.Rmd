@@ -1,0 +1,40 @@
+---
+title: "Inbreeding Coefficients"
+author: "Emily Dittmar"
+date: "9/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Data/Preliminary_Aug2020")
+setwd("/Users/eld72413/Google Drive/Active Projects/DelMutation/Data/Preliminary_Aug2020")
+```
+
+## Differences in Inbreeding coefficients
+
+```{r inbreeding coefficients}
+wild_inb <- read.table("Wild_GenomeSubset.indF")
+cult_inb <- read.table("Sunflower_Mutational_load_Set1.indF")
+
+
+```
+
+## Plots:
+
+```{r plots, echo=FALSE}
+c1 <- rgb(173,216,230,max = 255, alpha = 80)
+c2 <- rgb(255,192,203, max = 255, alpha = 80, names = "lt.pink")
+
+#breaks <- hist(wild_inb$V1, plot=FALSE)$breaks
+hbreaks <- seq(from=0, to=1, by=0.05)
+
+hist(wild_inb$V1, xlim=c(0,1), ylim=c(0,10), breaks=hbreaks, col=c1, freq=FALSE)
+hist(cult_inb$V1, xlim=c(0,1), ylim=c(0,10), breaks=hbreaks, col=c2, freq=FALSE, add=TRUE)
+
+boxplot(wild_inb$V1, ylim=c(0,1), xlim=c(0,2), at=1, plot=TRUE)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
