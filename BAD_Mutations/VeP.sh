@@ -12,11 +12,9 @@
 #module load BCFtools/1.6-foss-2016b
 
 #     The VCF
-#Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset/Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz
-#Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset/Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz
-Compressed_VCF=/scratch/eld72413/NSFproj/VEP/Synon/WILD_SYNON.recode.vcf.gz
-OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/Synon
-OUTPUTPREFIX=wild_synonymous
+Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/Edited/fullsam.90.remappedHa412HO_norm_biallelic.vcf.gz
+OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020
+OUTPUTPREFIX=fullsam_remappedHa412HO_norm_biallelic
 
 #    Variant sets should be either 'deletions', 'insertions', or 'snps'
 VARIANT_SET=all
@@ -30,7 +28,6 @@ vep \
     --gff /scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0.gff3.gz \
     --fasta  /scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta \
     --species  helianthus_annuus \
-    --total_length \
     --check_svs \
     --verbose \
     --format vcf \

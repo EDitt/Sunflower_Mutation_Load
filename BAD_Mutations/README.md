@@ -1,18 +1,65 @@
 # Predicting deleterious variants using BAD_Mutations: https://github.com/MorrellLAB/BAD_Mutations
 
-## Variant Effect Predictor (VeP)
+## Prepare input files
 
-#### Prepare input files
-Sort gff3 file and index with tabix
+#### Check VCF
+Normalize VCF (check if allele matches reference)
+
+```bash
+qsub -I -q s_interq -l walltime=12:00:00 -l nodes=1:ppn=4 -l mem=8gb
+
+out_dir=/scratch/eld72413/NSFproj/PublishedSNPs/Edited
+in_dir=/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset
+FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
+
+#module load SAMtools/1.9-foss-2016b-htslib
+module load BCFtools/1.9-foss-2016b
+
+bcftools norm ${in_dir}/Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz \
+--check-ref s \
+--fasta-ref $FASTA \
+--threads 4 \
+--output ${out_dir}/fullsam.90.remappedHa412HO_norm.vcf.gz \
+--output-type z
+#Lines   total/split/realigned/skipped:  2155376/0/179/0
+#REF/ALT total/modified/added:   2155376/340799/925019
+
+bcftools index ${out_dir}/fullsam.90.remappedHa412HO_norm.vcf.gz
+
+bcftools stats --threads 4 ${out_dir}/fullsam.90.remappedHa412HO_norm.vcf.gz > ${out_dir}/fullsam.90.remappedHa412HO_norm_norm.vcf.stats.txt 
+# 2,155,376 SNPs
+
+# Is this file already filtered for only biallelic SNPs?:
+bcftools view -m 3 ${out_dir}/fullsam.90.remappedHa412HO_norm.vcf.gz | wc -l #950166 - no
+# Filter for bi-allelic SNPs
+bcftools view -m2 -M2 -v snps --threads 4 ${out_dir}/fullsam.90.remappedHa412HO_norm.vcf.gz --output-type z --output-file ${out_dir}/fullsam.90.remappedHa412HO_norm_biallelic.vcf.gz
+
+# new index + stats
+bcftools index ${out_dir}/fullsam.90.remappedHa412HO_norm_biallelic.vcf.gz
+bcftools stats --threads 4 ${out_dir}/fullsam.90.remappedHa412HO_norm_biallelic.vcf.gz > ${out_dir}/fullsam.90.remappedHa412HO_norm_biallelic_stats.txt
+# 1,230,357
+
+```
+
+#### Sort gff3 file and index with tabix
 ```bash
 module load SAMtools/1.10-GCC-8.3.0
 cd /scratch/eld72413/Ha412HOv2.0
 grep -v "#" Ha412HOv2.0-20181130.gff3 | sort -k1,1 -k4,4n -k5,5n -t$'\t' | bgzip -c > Ha412HOv2.0.gff3.gz
 tabix -p gff Ha412HOv2.0.gff3.gz
 ```
-Ran VeP.sh on cultivated and wild H. annuus VCF files using VeP.sh script
 
-Filter output
+## Variant Effect Predictor (VeP)
+
+Ran VeP.sh on cultivated and wild H. annuus VCF files using VeP.sh script
+From Peter's notes:
+-    Using the `total_length` flag in VeP puts some extra information in the substitions file that BAD_Mutations does not like
+-    Removing that manually to test!
+-    This worked, so I've altered `ensembl_vep_Fagioli.sh` to run without that option. Need to regenerate substitutions and run the process again!
+
+#### VeP filter (not needed for BAD_Mutations)
+
+Filter output to look at distribution of different variant classes
 ```bash
 module load VEP/95.0-foss-2018b-Perl-5.28.0
 INPUT=/scratch/eld72413/NSFproj/VEP/fullsam_remappedHa412HO_all.txt
@@ -22,6 +69,19 @@ filter_vep -i ${INPUT} -o Synon/fullsam_synon.txt -filter "Consequence is synony
 INPUT2=/scratch/eld72413/NSFproj/VEP/wild_env_remappedHa412HO_all.txt
 filter_vep -i ${INPUT2} -o Missense/wildenv_missense.txt -filter "Consequence is missense_variant"
 filter_vep -i ${INPUT2} -o Synon/wildenv_synon.txt -filter "Consequence is synonymous_variant"
+```
+
+#### Format VeP output for BAD_Mutations
+```bash
+VEP_INPUT=
+
+#gzip input file
+gzip -c ${VEP_INPUT} > fullsam_remappedHa412HO_all.txt.gz
+
+VEP_INPUT_GZIP=/scratch/eld72413/NSFproj/VEP/fullsam_remappedHa412HO_all.txt.gz
+OUTPUTFILE="fullsam_remapped"
+OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/BADMutations_Input
+
 ```
 
 ## Prep
