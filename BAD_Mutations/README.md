@@ -73,14 +73,25 @@ filter_vep -i ${INPUT2} -o Synon/wildenv_synon.txt -filter "Consequence is synon
 
 #### Format VeP output for BAD_Mutations
 ```bash
-VEP_INPUT=
+VEP_OUTPUT=
 
 #gzip input file
-gzip -c ${VEP_INPUT} > fullsam_remappedHa412HO_all.txt.gz
+gzip -c ${VEP_OUTPUT} > fullsam_remappedHa412HO_norm_biallelic.txt.gz
 
-VEP_INPUT_GZIP=/scratch/eld72413/NSFproj/VEP/fullsam_remappedHa412HO_all.txt.gz
-OUTPUTFILE="fullsam_remapped"
-OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/BADMutations_Input
+VEP_OUTPUT_GZIP=fullsam_remappedHa412HO_norm_biallelic.txt.gz
+# output file needs to include all directory information
+OUTPUTFILE=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020/fullsam_remapped_norm_biallelic_BMsummary
+# this will be a directory that contains substitution files for every transcript
+OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020/sub_files
+
+module load Biopython/1.74-foss-2018a-Python-2.7.14
+cd /home/eld72413/DelMut/BAD_Mutations/Supporting
+python VeP_to_Subs.py $VEP_OUTPUT_GZIP $OUTPUTFILE $OUTPUTDIR
+
+```
+
+#### Generate FASTA query files
+```bash
 
 ```
 
@@ -128,3 +139,7 @@ TEST_CONFIG=/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Test_Con
 ```bash
 python /home/eld72413/DelMut/BAD_Mutations/BAD_Mutations.py -v DEBUG fetch -c $TEST_CONFIG 
 ```
+
+
+# location of genome alignments on MSI:
+/panfs/roc/groups/9/morrellp/shared/Projects/Selective_Sweeps/BAD_Mutations_Genomes
