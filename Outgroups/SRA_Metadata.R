@@ -66,9 +66,25 @@ MaxReadsPop <- annuus[which(annuus$Reads %in% MaxReads$x ),] #N = 71
 
 ### Subset to one individual per 4 population
 OnePerPop <- all[which(all$Reads %in% MaxReads$x),]
-aggregate(OnePerPop$Species, by=list(OnePerPop$Sample), length)
+PopFileNums <- aggregate(OnePerPop$Species, by=list(OnePerPop$Sample), length)
 
 write.table(OnePerPop[,c(1,3,15,16,22)], file="WildAnnuusOnePerPop", sep = "\t", quote = FALSE)
+write.table(OnePerPop, file="WildAnnuusOnePerPop_AllInfo", sep = "\t", quote = FALSE)
+
+write.table(PopFileNums, file="WildAnnuusPopsFilenums", sep = "\t", quote = FALSE)
+
+## make sure % reads aligned ok
+hist(annuus$Percent.of.reads.aligned)
+hist(OnePerPop$Percent.of.reads.aligned) #ANN1029 has 88%
+
+ANN23 <- all[which(all$Population=="ANN_23"),]
+hist(ANN23$Percent.of.reads.aligned)
+hist(ANN23$Reads)
+max(ANN23$Reads) #> 12M
+ANN23[which(ANN23$Reads==max(ANN23$Reads)),] #ANN1029
+# second-highest?
+max(ANN23[which(ANN23$Sample!="ANN1029"),"Reads"])
+
 
 ### Sequences that don't have to be merged
 
