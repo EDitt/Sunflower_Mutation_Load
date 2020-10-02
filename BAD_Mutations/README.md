@@ -73,12 +73,12 @@ filter_vep -i ${INPUT2} -o Synon/wildenv_synon.txt -filter "Consequence is synon
 
 #### Format VeP output for BAD_Mutations
 ```bash
-VEP_OUTPUT=
+VEP_OUTPUT=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020/fullsam_remappedHa412HO_norm_biallelic
 
 #gzip input file
 gzip -c ${VEP_OUTPUT} > fullsam_remappedHa412HO_norm_biallelic.txt.gz
 
-VEP_OUTPUT_GZIP=fullsam_remappedHa412HO_norm_biallelic.txt.gz
+VEP_OUTPUT_GZIP=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020/fullsam_remappedHa412HO_norm_biallelic.txt.gz
 # output file needs to include all directory information
 OUTPUTFILE=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020/fullsam_remapped_norm_biallelic_BMsummary
 # this will be a directory that contains substitution files for every transcript
@@ -91,8 +91,24 @@ python VeP_to_Subs.py $VEP_OUTPUT_GZIP $OUTPUTFILE $OUTPUTDIR
 ```
 
 #### Generate FASTA query files
+will start by testing 1 substitution region first
 ```bash
+GFF3_file=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.gff3
+region=mRNA:Ha412HOChr17g0858291
 
+Interval=$(awk '{if ($3=="CDS") {print $0}}' $GFF3_file | grep $region | awk '{print $1":"$4"-"$5}')
+
+REF_FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
+OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020/FASTA_test
+
+module load GATK/4.1.6.0-GCCcore-8.2.0-Java-1.8
+
+gatk FastaReferenceMaker \
+	-R "$REF_FASTA" \
+	-O "$OUTPUTDIR/Ha412HOChr17g0858291.fasta" \
+	-L "${Interval}"
+
+# I need to change the header on the FASTA to match...?
 ```
 
 ## Prep

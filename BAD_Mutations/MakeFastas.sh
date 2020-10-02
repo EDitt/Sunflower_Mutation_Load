@@ -5,7 +5,10 @@
 
 GFF3_file
 
-name=$(awk '{if ($3=="CDS") {print $0}}' Ha412HOv2.0-20181130.gff3 | grep mRNA:Ha412HOChr17g0858291 | awk '{print $1":"$4"-"$5}')
+Interval=$(awk '{if ($3=="CDS") {print $0}}' Ha412HOv2.0-20181130.gff3 | grep mRNA:Ha412HOChr17g0858291 | awk '{print $1":"$4"-"$5}')
+
+# use region? to replace mRNA: with _
+#Interval_name=
 
 REF_FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
 OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/BADMutationsFastas
