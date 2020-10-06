@@ -91,8 +91,22 @@ python VeP_to_Subs.py $VEP_OUTPUT_GZIP $OUTPUTFILE $OUTPUTDIR
 ```
 
 #### Generate FASTA query files
+I used the gffread utility
 ```bash
+module load gffread/0.9.12-foss-2016b
 
+GFF3=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.gff3
+FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
+OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020/FASTA_test
+
+#Started with 1 representative sequence-
+awk '{if ($3=="CDS") {print $0}}' Ha412HOv2.0-20181130.gff3 | grep mRNA:Ha412HOChr17g0858291
+
+# test gffread on same region
+gffread $GFF3 -g $FASTA -r Ha412HOChr17:205476753..205477742 -x ${OUTPUTDIR}/Ha412HOChr17g0858291_TEST.fasta
+
+#count nucleotides
+grep -v "^>" Ha412HOChr17g0858291_TEST.fasta | grep -Eo '[[:alnum:]]' | wc -l #990
 ```
 
 ## Prep
