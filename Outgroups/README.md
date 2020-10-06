@@ -106,12 +106,13 @@ awk 'NR>1 {print $2}' Annuus_Landraces | sort -u > names
 
 # which don't need to be merged
 while read line; do
-	Num=$(ls -1 ${line}* | wc -l)
+	Num=$(ls -1 ${line}_* | wc -l)
 	if [[ $Num -eq 2 ]]; then
 		echo $line
 	fi
 done < names
 # only have 1 forward + reverse: annMAN. Moved this one to "merge"
+# oops- MexCult1 has 1 forward/reverse also but the way this code was written it returned MexCult14, MexCult15. Added "_"
 
 # take out from list
 awk 'NR>1 {print $0}' names > names2

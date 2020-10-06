@@ -15,13 +15,18 @@ OUTPUTDIR=/scratch/eld72413/NSFproj/ancestralseqs/Landrace/RawSeqs/Merged
 
 Sample=$(sed -n ${PBS_ARRAYID}p $LIST)
 
-NumFiles=$(find $INPUTDIR -maxdepth 1 -name "${Sample}*1.fastq" | wc -l)
+NumFiles=$(find $INPUTDIR -maxdepth 1 -name "${Sample}_*1.fastq" | wc -l)
+
+F_Files=$(ls ${INPUTDIR}/${Sample}_*1.fastq)
+R_Files=$(ls ${INPUTDIR}/${Sample}_*2.fastq)
 
 if [[ "$NumFiles" -eq 0 ]]; then
 	echo "No $Sample Files in $INPUTDIR"
 else
 	echo "Concatenating $NumFiles Forward $Sample"
-	cat `ls ${INPUTDIR}/${Sample}*1.fastq` > ${OUTPUTDIR}/"$Sample"_R1.fastq
+	echo "Forward Files: $F_Files"
+	cat $F_Files > ${OUTPUTDIR}/"$Sample"_R1.fastq
 	echo "Concatenating $NumFiles Reverse $Sample"
-	cat `ls ${INPUTDIR}/${Sample}*2.fastq` > ${OUTPUTDIR}/"$Sample"_R2.fastq
+	echo "Reverse Files: $R_Files"
+	cat $R_Files > ${OUTPUTDIR}/"$Sample"_R2.fastq
 fi
