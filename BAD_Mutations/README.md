@@ -73,12 +73,12 @@ filter_vep -i ${INPUT2} -o Synon/wildenv_synon.txt -filter "Consequence is synon
 
 #### Format VeP output for BAD_Mutations
 ```bash
-VEP_OUTPUT=
+VEP_OUTPUT=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020/fullsam_remappedHa412HO_norm_biallelic
 
 #gzip input file
 gzip -c ${VEP_OUTPUT} > fullsam_remappedHa412HO_norm_biallelic.txt.gz
 
-VEP_OUTPUT_GZIP=fullsam_remappedHa412HO_norm_biallelic.txt.gz
+VEP_OUTPUT_GZIP=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020/fullsam_remappedHa412HO_norm_biallelic.txt.gz
 # output file needs to include all directory information
 OUTPUTFILE=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020/fullsam_remapped_norm_biallelic_BMsummary
 # this will be a directory that contains substitution files for every transcript
@@ -91,6 +91,7 @@ python VeP_to_Subs.py $VEP_OUTPUT_GZIP $OUTPUTFILE $OUTPUTDIR
 ```
 
 #### Generate FASTA query files
+
 I used the gffread utility
 ```bash
 module load gffread/0.9.12-foss-2016b
