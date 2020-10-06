@@ -91,6 +91,7 @@ python VeP_to_Subs.py $VEP_OUTPUT_GZIP $OUTPUTFILE $OUTPUTDIR
 ```
 
 #### Generate FASTA query files
+Will start by testing 1 substitution region first
 
 I used the gffread utility
 ```bash
@@ -109,6 +110,26 @@ gffread $GFF3 -g $FASTA -r Ha412HOChr17:205476753..205477742 -x ${OUTPUTDIR}/Ha4
 #count nucleotides
 grep -v "^>" Ha412HOChr17g0858291_TEST.fasta | grep -Eo '[[:alnum:]]' | wc -l #990
 ```
+
+this was the first way I tried to do it:
+```bash
+GFF3_file=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.gff3
+region=mRNA:Ha412HOChr17g0858291
+
+Interval=$(awk '{if ($3=="CDS") {print $0}}' $GFF3_file | grep $region | awk '{print $1":"$4"-"$5}')
+
+REF_FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
+OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020/FASTA_test
+
+module load GATK/4.1.6.0-GCCcore-8.2.0-Java-1.8
+
+gatk FastaReferenceMaker \
+	-R "$REF_FASTA" \
+	-O "$OUTPUTDIR/Ha412HOChr17g0858291.fasta" \
+	-L "${Interval}"
+# I need to change the header on the FASTA to match...?
+```
+
 
 ## Prep
 
