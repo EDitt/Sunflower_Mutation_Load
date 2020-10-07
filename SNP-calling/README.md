@@ -14,7 +14,7 @@ All SNP-calling was performed using sequence_handling:
 - [Create HC Subset](#create-hc-subset)
 - [Variant Recalibrator](#variant-recalibrator)
 - [Variant Filtering](#variant-filtering)
---
+---
 
 ## Pre-processing
 
@@ -23,6 +23,8 @@ Information about raw sequence data & file wrangling in: DataProcessing/FileInfo
 Many samples had more than 1 forward/reverse fastq.gz file that needed to be concatenated before beginning sequence handling - see DataProcessing/Concatenate.sh
 
 288 lines split into 9 groups of samples for processing (#1-7, "S_African_seqs", "SRA_seqs")
+
+---
 
 ## Adapter Trimming
 
@@ -35,18 +37,25 @@ Two samples had different quality encoding (Illumina 1.5 instead of Sanger/Illum
 
 After adapter trimming, quality assessment was re-run on trimmed samples to verify there was no residual adapter contamination
 
+---
+
 ## Read Mapping
 
 Used BWA v.0.7.17, default parameters
 
 Read mapping statistics-
 
+---
+
 ## SAM Processing
 
 SAM Processing was performed using Picard (v.)
 
+---
+
 ## Haplotype Caller
 
+---
 
 ## GenomicsDB Import
 
@@ -65,19 +74,71 @@ head -70 Full_Intervals.list | tail -53 > LargeScaffolds_Intervals.list
 tail -25020 Full_Intervals.list | head -520 > Med_Scaffolds_Intervals.list
 ```
 
+The chromosomal regions were parallelized, while the scaffolds were run without parallelization as the 3 separate groups
+
+---
+
 ## Genotype GVCFs
 
+---
 
 ## Create HC Subset
 
-There were several steps to this handler. First, it concatenated the split VCF file parts from Genotype GVCFs
-This handler combined the VCF parts files. I compressed this raw file to save in `jmblab/Projct`
-(this raw file also includes indels)
+(When I first ran this handler, it initially filtered out indels before it did all subsequent steps. The results from this are in the "HC_Variant_QC/SNP_Only" folder)
 
+I then ran the handler after changes were made (Sept 2020) that did all steps *with* indels included. This file was too large to get DP_per_sample files, but I used the numbers from the data from SNPs only
+
+There were several steps to this handler. 
+1.) Concatenated the split VCF file parts from Genotype GVCFs
+This handler combined the VCF parts files. 
+
+make list to concatenate split VCF part files
 ```bash
+
+```
+
+I compressed this raw file to save in `jmblab/Projct`
+(this raw file also includes indels)
+```bash
+qsub -I -q s_interq -l walltime=5:00:00 -l nodes=1:ppn=4 -l mem=2gb
+
 module load BCFtools/1.10.2-GCC-8.3.0
 bgzip -c Sunflower_SAM_SNP_Calling_raw_variants.vcf > SAM_AlignedHA412HOv2_raw_variants.vcf.gz
 ```
+
+2.) Get GQ and DP per sample percentiles
+There was not enough memory to get DP_per_sample percentiles for the raw/filtered VCFs that included indels. 
+I changed the following code in the `percentiles.R` script in sequence_handling to get this to run:
+- line 78: changed DP_file_size limit to 50798691840
+- line 81: changed print statement, "DP file is larger than 50 gb..."
+
+3.) Filter SNPs
+##### Cut-offs:
+- Depth per Sample cutoff = 5
+- GQ Cutoff = 6 (10th percentile of raw GQ table)
+- Maximum proportion of heterozygous per site = 0.15
+- Maximum proportion of missing calls per site = 0.2
+- QUAL score cutoff = 40
+
+
+Number of SNPs/Indels in raw VCF file compared to filtered?
+```bash
+grep -v "#" Sunflower_SAM_SNP_Calling_raw_variants.vcf | wc -l # 101,509,931
+
+# filtered SNPs. (Errored out at step 5 so in Intermediates directory)
+grep -v "#" "Intermediates/Sunflower_SAM_SNP_Calling_filtered.vcf" | wc -l #71,298,676
+
+# how many SNPs versus indels?
+
+```
+
+Error with GATK variant filtration:
+WARN  JexlEngine - ![0,2]: 'GQ < 6;' undefined variable GQ
+```bash
+grep "undefined variable GQ" Sunflower_SAM_SNP_Calling_Create_HC_Subset.e3336389 | wc -l # 101,509,931
+```
+
+---
 
 ## Variant Recalibrator
 
