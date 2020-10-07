@@ -138,6 +138,17 @@ WARN  JexlEngine - ![0,2]: 'GQ < 6;' undefined variable GQ
 grep "undefined variable GQ" Sunflower_SAM_SNP_Calling_Create_HC_Subset.e3336389 | wc -l # 101,509,931
 ```
 
+Look at distribution of annotations
+
+```bash
+module load GATK/4.1.2.0-GCCcore-8.2.0-Java-1.8
+
+gatk VariantsToTable \
+     -V Sunflower_SAM_SNP_Calling_raw_variants.vcf \
+     -F CHROM -F POS -F QUAL -F QD -F DP -F MQ -F MQRankSum -F FS -F ReadPosRankSum -F SOR -F GQ \
+     -O RawVariants.table
+```
+
 ---
 
 ## Variant Recalibrator
