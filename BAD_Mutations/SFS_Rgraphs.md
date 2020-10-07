@@ -96,8 +96,8 @@ head(SAM_bins)
 
 q <- ggplot(SAM_bins, aes(x=breaks, y=value, fill=variable))
 q2 <- ggplot(SAM_bins, aes(x=breaks, y=prop, fill=variable))
-q2 + geom_bar(stat="identity", position = position_dodge()) + scale_fill_manual(values= c("tomato1", "tomato4")) + theme_minimal()
-ggsave("SAM_sfs.png")
+q2 + geom_bar(stat="identity", position = position_dodge()) + scale_fill_manual(values= c("tomato1", "tomato4")) + theme_minimal() + ylim(0, 0.2)
+ggsave("SAM_sfs_newY.png")
 
 Wild_bins <- HistBinsFormat(WILD_synon_freqbins, "Wild_synon", WILD_missense_freqbins, "Wild_missense")
 p <- ggplot(Wild_bins, aes(x=breaks, y=value, fill=variable))

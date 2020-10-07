@@ -142,3 +142,29 @@ AdmixDataPlot("Cultivated_GenomeSubset.3.qopt.graph.me", LineOrder$V7, meta[,c(2
 AdmixDataPlot("Cultivated_GenomeSubset.4.qopt.graph.me", LineOrder$V7, meta[,c(2,6,8:11)], "type2")
 
 AdmixDataPlot("Cultivated_GenomeSubset.5.qopt.graph.me", LineOrder$V7, meta[,c(2,6,8:11)], "type2")
+
+```
+
+## Combined Wild/Cultivated
+```{r combined, echo=FALSE}
+LineOrder2 <- read.table("CombinedCultWild/CultWildBAMs.txt", sep = "/")
+LineOrder2$V7 <- gsub("_realigned.bam", "", LineOrder2$V7)
+LineOrder2$V8 <- gsub("_realigned.bam", "", LineOrder2$V8)
+
+LineOrder2$PPN <- ifelse(LineOrder2$V4=="SAM_seq", LineOrder2$V7, LineOrder2$V8)
+aggregate(LineOrder2$V1, by=list(LineOrder2$V5), length)
+
+MetaDat <- merge(LineOrder2[,c(8:9)], meta[,c(2,6,8:11)], by = "PPN", all=TRUE)
+aggregate(MetaDat$PPN, by=list(MetaDat$type2), length)
+length(which(is.na(MetaDat$type2))) #34
+
+MetaDat$wild <- "Wild"
+MetaDat$type3 <- ifelse(is.na(MetaDat$type2), MetaDat$wild, MetaDat$type2)
+aggregate(MetaDat$PPN, by=list(MetaDat$type3), length)
+# keeps changing to numbers?
+
+
+MetaDat$type2 <- factor(MetaDat$type2, levels=c("INRA-HA", "INRA-RHA", "HA-NonOil", "HA-Oil", "RHA-Oil", "RHA-NonOil", "introgressed-NonOil", "landrace", "OPV-NonOil", "other-NonOil", "other-Oil", "Wild"))
+aggregate(MetaDat$PPN, by=list(MetaDat$type2), length)
+
+AdmixDataPlot("CombinedCultWild/CombinedCultWild.5.qopt.graph.me", LineOrder2$PPN, MetaDat[,c(1,6)], "type2")
