@@ -80,6 +80,18 @@ The chromosomal regions were parallelized, while the scaffolds were run without 
 
 ## Genotype GVCFs
 
+These were run on exactly the same regions as GenomicsDB Import. Scaffold sequence was run separately from chromosomal regions.
+
+At the end, I made lists of the VCF chromosomal parts (Run in parallel) and the 3 groups of scaffolds (run as 3 separate jobs), and appended them into one list:
+(I also had to change the name of the scaffold .vcf files)
+
+```bash
+Chrom=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Genotype_GVCFs/vcf_split_regions/VCF_chrom_parts_list.txt
+Scaffolds=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Scaffold_Redo/ScaffoldVCF.txt
+
+cat $Chrom $Scaffolds > VCF_parts_list_new.txt
+```
+
 ---
 
 ## Create HC Subset
@@ -92,10 +104,6 @@ There were several steps to this handler.
 1.) Concatenated the split VCF file parts from Genotype GVCFs
 This handler combined the VCF parts files. 
 
-make list to concatenate split VCF part files
-```bash
-
-```
 
 I compressed this raw file to save in `jmblab/Projct`
 (this raw file also includes indels)
