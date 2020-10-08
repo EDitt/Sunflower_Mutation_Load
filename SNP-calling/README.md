@@ -100,7 +100,7 @@ make list to concatenate split VCF part files
 I compressed this raw file to save in `jmblab/Projct`
 (this raw file also includes indels)
 ```bash
-qsub -I -q s_interq -l walltime=5:00:00 -l nodes=1:ppn=4 -l mem=2gb
+qsub -I -q s_interq -l walltime=24:00:00 -l nodes=1:ppn=4 -l mem=8gb
 
 module load BCFtools/1.10.2-GCC-8.3.0
 bgzip -c Sunflower_SAM_SNP_Calling_raw_variants.vcf > SAM_AlignedHA412HOv2_raw_variants.vcf.gz
@@ -117,7 +117,7 @@ I changed the following code in the `percentiles.R` script in sequence_handling 
 - Depth per Sample cutoff = 5
 - GQ Cutoff = 6 (10th percentile of raw GQ table)
 - Maximum proportion of heterozygous per site = 0.15
-- Maximum proportion of missing calls per site = 0.2
+- Maximum proportion of missing calls (or low GQ genotypes) per site = 0.2
 - QUAL score cutoff = 40
 
 
@@ -127,6 +127,7 @@ grep -v "#" Sunflower_SAM_SNP_Calling_raw_variants.vcf | wc -l # 101,509,931
 
 # filtered SNPs. (Errored out at step 5 so in Intermediates directory)
 grep -v "#" "Intermediates/Sunflower_SAM_SNP_Calling_filtered.vcf" | wc -l #71,298,676
+ # note: there was a problem with the way the handler filtered. Will re-run after changes made
 
 # how many SNPs versus indels?
 
