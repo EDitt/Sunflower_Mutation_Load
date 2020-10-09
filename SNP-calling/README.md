@@ -158,6 +158,15 @@ gatk VariantsToTable \
      -O RawVariants.table
 ```
 
+Used data in 'Variant_annotations.R' script
+
+Second try (after fixing issue with handler- GATK wasn't actually filtering)
+```bash
+# intermediate file (after filtering for depth and quality with bcftools)
+grep -v "#" Sunflower_SAM_SNP_Calling_filtered_dp_and_qual.vcf | wc -l # 97,465,016
+
+```
+
 ---
 
 ## Variant Recalibrator
