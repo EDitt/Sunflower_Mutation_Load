@@ -167,6 +167,10 @@ grep -v "#" Sunflower_SAM_SNP_Calling_filtered_dp_and_qual.vcf | wc -l # 97,465,
 
 ```
 
+Working, but not getting past step 6 due to errors with VCFtools:
+`vcftools: /lib64/libstdc++.so.6: version 'GLIBCXX_3.4.21' not found (required by vcftools)`
+Will try running this as it's own job- "HC_Subset_step6.sh"
+
 ---
 
 ## Variant Recalibrator
