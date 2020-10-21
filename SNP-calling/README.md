@@ -169,7 +169,13 @@ grep -v "#" Sunflower_SAM_SNP_Calling_filtered_dp_and_qual.vcf | wc -l # 97,465,
 
 Working, but not getting past step 6 due to errors with VCFtools:
 `vcftools: /lib64/libstdc++.so.6: version 'GLIBCXX_3.4.21' not found (required by vcftools)`
-Will try running this as it's own job- "HC_Subset_step6.sh"
+
+Ran as it's own job- "HC_Subset_step6.sh"
+`After filtering, kept 58054334 out of a possible 58054411 Sites`
+```bash
+# intermediate file (after filtering for depth and quality with bcftools)
+grep -v "#" Sunflower_SAM_SNP_Calling_high_confidence_subset.vcf | wc -l # 58,054,334
+```
 
 ---
 
@@ -181,6 +187,39 @@ See "HC_Variant_QC" folder for VCF exploration info and information about obtain
 Training sets included:  
 1.) High Confidence subset (see HC_Variant_QC folder for raw and filtered VCF statistics)  
 2.) Truth Set of SNPs obtained from an Illumina SNP array (see "TruthSNPs" folder)
+
+Output messages-
+
+After Variant recalibrator was begun:
+```bash
+ProgressMeter - Traversal complete. Processed 87332695 total variants in 384.0 minutes.
+INFO  VariantDataManager - QD:      mean = 19.82    standard deviation = 11.58
+INFO  VariantDataManager - FS:      mean = 8.24     standard deviation = 18.99
+INFO  VariantDataManager - ReadPosRankSum:          mean = 0.14     standard deviation = 0.86
+INFO  VariantDataManager - MQ:      mean = 48.68    standard deviation = 8.97
+INFO  VariantDataManager - MQRankSum:       mean = -0.93    standard deviation = 1.18
+INFO  VariantDataManager - SOR:     mean = 1.60     standard deviation = 1.43
+INFO  VariantDataManager - DP:      mean = 2379.86  standard deviation = 1327.71
+INFO  VariantDataManager - Annotation order is: [DP, MQ, QD, FS, SOR, MQRankSum, ReadPosRankSum]
+INFO  VariantDataManager - Training with 49808820 variants after standard deviation thresholding.
+WARN  VariantDataManager - WARNING: Very large training set detected. Downsampling to 2500000 training variants.
+INFO  GaussianMixtureModel - Initializing model with 100 k-means iterations...
+...
+INFO  VariantRecalibratorEngine - Convergence after 75 iterations!
+INFO  VariantRecalibratorEngine - Evaluating full set of 87332695 variants...
+INFO  VariantDataManager - Selected worst 11871283 scoring variants --> variants with LOD <= -5.0000
+INFO  VariantRecalibratorEngine - Finished iteration 0.
+INFO  VariantRecalibratorEngine - Finished iteration 5.    Current change in mixture coefficients = 0.14029
+INFO  VariantRecalibratorEngine - Finished iteration 10.   Current change in mixture coefficients = 0.03250
+INFO  VariantRecalibratorEngine - Convergence after 13 iterations!
+INFO  VariantRecalibratorEngine - Evaluating full set of 87332695 variants...
+INFO  TrancheManager - Finding 12 tranches for 87332695 variants
+
+```
+
+Exit status 127 even though it finished all steps-
+At end:
+`/var/spool/torque/mom_priv/jobs/3399078.sapelo2.SC: line 2: 0: command not found`
 
 ## Variant Filtering
 
