@@ -407,6 +407,26 @@ grep -v "^len=" MapUniqueSNP_idt90_rename.vcf > MapUniqueSNP_idt90_rename_rmCont
 grep -v "#" MapUniqueSNP_idt90_rename_rmContigs.vcf | wc -l #6524
 ```
 
+Sort by Position
+```bash
+qsub -I -q s_interq -l walltime=8:00:00 -l nodes=1:ppn=8 -l mem=22gb
+
+module load picard/2.16.0-Java-1.8.0_144
+PICARD_JAR=/usr/local/apps/eb/picard/2.16.0-Java-1.8.0_144/picard.jar
+module load GATK/4.1.2.0-GCCcore-8.2.0-Java-1.8
+GATK_JAR=/usr/local/apps/eb/GATK/4.1.2.0-GCCcore-8.2.0-Java-1.8/gatk
+
+TMP=/scratch/eld72413/SAM_seq/results2/Temp
+DIR=/scratch/eld72413/SNParray
+
+gatk SortVcf \
+--TMP_DIR ${TMP} \
+-I ${DIR}/MapUniqueSNP_idt90_rename_rmContigs.vcf \
+-SD /scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.dict \
+-O ${DIR}/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf
+```
+
+
 gzip for QC with bcftools
 ```bash
 bgzip $Truth_Set
