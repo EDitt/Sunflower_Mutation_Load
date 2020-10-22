@@ -25,6 +25,6 @@ gatk --java-options "-Xmx22g" SelectVariants \
 -V ${INPUT_VCF} \
 -O ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_snps.filtered.vcf \
 --select-type-to-include SNP \
---exclude-filtered \
---exclude-non-variants \
+--exclude-filtered true \
+--exclude-non-variants true \
 --tmp-dir ${TEMP_DIR}
