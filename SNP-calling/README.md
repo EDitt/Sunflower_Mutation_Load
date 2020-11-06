@@ -223,4 +223,5 @@ At end:
 
 ## Variant Filtering
 
+After getting rid of indels and filtered sites, 81,431,704 variants remain
 ## Variant Analysis
