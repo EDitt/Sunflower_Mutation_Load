@@ -223,4 +223,11 @@ At end:
 
 ## Variant Filtering
 
+This part of the handler has not been updated yet, so I will modify. 
+
+Using GATK's SelectVariants, (`gatk_SelectVariants.sh`), I will:
+1. Filter out indels
+2. Excluded sites marked as filtered by ApplyVQSR
+3. Exclude non-variant sites
+
 ## Variant Analysis
