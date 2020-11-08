@@ -230,4 +230,6 @@ Using GATK's SelectVariants, (`gatk_SelectVariants.sh`), I will:
 2. Excluded sites marked as filtered by ApplyVQSR
 3. Exclude non-variant sites
 
+After getting rid of indels and filtered sites, 81,431,704 variants remain
+
 ## Variant Analysis
