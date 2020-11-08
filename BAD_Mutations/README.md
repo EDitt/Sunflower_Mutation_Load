@@ -111,6 +111,21 @@ gffread $GFF3 -g $FASTA -r Ha412HOChr17:205476753..205477742 -x ${OUTPUTDIR}/Ha4
 grep -v "^>" Ha412HOChr17g0858291_TEST.fasta | grep -Eo '[[:alnum:]]' | wc -l #990
 ```
 
+gffread info:
+`gffread <input_gff> [-g <genomic_seqs_fasta> | <dir>][-s <seq_info.fsize>] 
+ [-o <outfile.gff>] [-t <tname>] [-r [[<strand>]<chr>:]<start>..<end> [-R]]
+ [-CTVNJMKQAFGUBHZWTOLE] [-w <exons.fa>] [-x <cds.fa>] [-y <tr_cds.fa>]
+ [-i <maxintron>] `
+
+-s  #<seq_info.fsize> is a tab-delimited file providing this info
+    # for each of the mapped sequences:
+    # <seq-name> <seq-length> <seq-description>
+    # (useful for -A option with mRNA/EST/protein mappings)
+-C # coding only: discard mRNAs that have no CDS feature
+-x # write a fasta file with spliced CDS for each GFF transcript
+-W  #	for -w and -x options, also write for each fasta record the exon coordinates projected onto the spliced sequence
+ -y   # write a protein fasta file with the translation of CDS for each record
+
 this was the first way I tried to do it:
 ```bash
 GFF3_file=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.gff3
