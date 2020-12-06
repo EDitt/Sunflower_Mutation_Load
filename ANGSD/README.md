@@ -116,3 +116,18 @@ cat $Cult_INBREEDING $Wild_INBREEDING > CultWildInbreeding
 ```
 
 Submitted job for Genotype likelihood analysis
+
+
+## NEW ANALYSES- DEC 2020
+```bash
+module load GSL/2.6-iccifort-2019.5.281
+
+# other dependencies needed:
+#module load SAMtools/1.10-GCC-8.3.0
+module load gnuplot/5.2.8-GCCcore-8.3.0
+
+./angsd-wrapper setup dependencies
+```
+
+Intervals file.
+- break up by N's and look at highest mappable regions?
