@@ -14,9 +14,11 @@
 
 module load BCFtools/1.10.2-GCC-8.3.0
 
-SNP_set="/scratch/bp26123/UBC_snps/Annuus.tranche90.snp.remappedHa412.vcf.gz"
-OUTPUT_DIR="/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset_Raw"
-#tabix $SNP_set
+#SNP_set="/scratch/bp26123/UBC_snps/Annuus.tranche90.snp.remappedHa412.vcf.gz"
+#OUTPUT_DIR="/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset_Raw"
 
-bcftools stats --threads 4 $SNP_set > ${OUTPUT_DIR}/UBC_Dataset_Stats.txt
+SNP_set="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter1_102120/Sunflower_SAM_SNP_Calling_snps.filtered.vcf"
+OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter1_102120/QC"
+
+bcftools stats --threads 4 $SNP_set > ${OUTPUT_DIR}/SAM_SNPs_filtered_Stats.txt
 
