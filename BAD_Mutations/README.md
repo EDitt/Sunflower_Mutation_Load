@@ -195,20 +195,3 @@ python /home/eld72413/DelMut/BAD_Mutations/BAD_Mutations.py -v DEBUG fetch -c $T
 # location of genome alignments on MSI:
 /panfs/roc/groups/9/morrellp/shared/Projects/Selective_Sweeps/BAD_Mutations_Genomes
 
-
-############## 
-
-### Received raw version of SNP set from Greg Owens
-Brian put in directory `/scratch/bp26123/UBC_snps`
-
-I want to look at basic stats, SFS, and run VeP
-
-```bash
-SNPs="/scratch/bp26123/UBC_snps/Annuus.tranche90.snp.remappedHa412.vcf.gz"
-```
-
-Made a script to run bcftools (need to also test out SLURM as the queuing system was recently changed)
-Number of samples: 1293
-Number of records: 20,948,148
-ts/tv: 1.32
-number of singletons: 2,003,528

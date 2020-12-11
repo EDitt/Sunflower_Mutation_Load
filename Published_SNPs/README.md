@@ -1,88 +1,42 @@
-Download SNP set from UBC Sunflower Genome aws bucket
+### Received raw version of SNP set from Greg Owens
+Brian put in directory `/scratch/bp26123/UBC_snps`
 
-install modules needed
+I want to look at basic stats, SFS, and run VeP
+
 ```bash
-module load Anaconda3/2020.02
-pip install --upgrade pip
-pip install boto3 awscli
-
-# set path environmental variable
-export PATH=$PATH:/home/eld72413/.local/bin
+SNPs="/scratch/bp26123/UBC_snps/Annuus.tranche90.snp.remappedHa412.vcf.gz"
 ```
 
-configure AWS
-```bash
-aws configure
-# put in access key ID, secret access key, us-west-2 as region, json as default output format
-```
+Made a script to run bcftools (need to also test out SLURM as the queuing system was recently changed)
+Number of samples: 1293
+Number of records: 20,948,148
+ts/tv: 1.32
+number of singletons: 2,003,528
 
-download files
-```bash
-# "environmental" sample set contains 719 wild H. annuus individuals
-aws s3 ls s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/env/
+### Subset VCF by group (wild vs. SAM lines vs landrace)
 
-# copied in a tmux environment
-aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/env/Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz .
+First, subset for SAM lines
 
-#also copy the vcf index
-aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/env/Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz.tbi .
-
-# SAM SNPs
-aws s3 ls s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/fullsam/
-
-aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/fullsam/Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz .
-
-aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/fullsam/Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz.tbi .
-
-```
-
-### Basic Stats
 ```bash
 module load BCFtools/1.10.2-GCC-8.3.0
 
-bcftools stats Annuus.tranche90.snp.env.90.bi.remappedHa412HO_reheader.vcf.gz > WildAnnVCF_stats.txt
+bcftools query -l $SNPs > SampleNames.txt #full set of samples in this SNP set (includes wild Annuus, SAM lines, and landraces)
 
-bcftools stats Annuus.tranche90.snp.fullsam.90.bi.remappedHa412HO_reheader.vcf.gz > CultAnnVCF_stats.txt
+# Used my VCF file to get sample names of SAM lines
+SAM_SNPs_new="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter1_102120/Sunflower_SAM_SNP_Calling_snps.filtered.vcf"
+bcftools query -l $SAM_SNPs_new > SAM_SampleNames288.txt
+
+# need to change SAM to PPN to match 
+sed -i 's/PPN/SAM/g' SAM_SampleNames288.txt
+# changed RHA415-4_SAM251, Hopi_SAM285, NMS373_SAM136 manually
 ```
-Wild H. annuus: 719 samples; 4,882,321 sites; ts/tv=2.33
-	- smallest allele frequency = 0.0097376 (N=7), 119,544 SNPs
 
-Cultivated H. annuus: 287 samples; 2,155,376 sites; ts/tv=2.29
-	- smallest allele frequency = 0.006969 (N=2), 4478 SNPs
-
----
-H. argophyllus SNPs
+Subset VCF
 ```bash
-aws s3 ls s3://ubc-sunflower-genome/haploblocks/processed_snps/all_arg1/gwas/
+module load VCFtools/0.1.16-GCC-8.3.0-Perl-5.30.0
+
+OUTPUTDIR="/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset_Raw"
+vcftools --gzvcf $SNPs --keep ${OUTPUTDIR}/SAM_SampleNames288.txt --recode --recode-INFO-all --out ${OUTPUTDIR}/SAM_lines/UBC_Dataset_SAMlines
+# After filtering, kept 288 out of 1293 Individuals
+
 ```
-
-download files
-```bash
-aws s3 cp s3://ubc-sunflower-genome/cohorts/ha412v2/wgs_all/sample-names.tsv .
-
-#list of files to download
-aws s3 ls s3://ubc-sunflower-genome/haploblocks/processed_snps/
-aws s3 ls s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/
-
-aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/listing.sorted.txt .
-
-aws s3 ls s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/fullsam/
-aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/fullsam/fullsam_sample.list . #the 287 samples
-aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/fullsam/sam_sample.list . #264
-
-aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/sample_sets/env_sample.list . #719 samples
-
-aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/sample_sets/herb_sample.list . #323 samples
-
-aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/sample_sets/gwas_sample.list . #614 samples
-
-aws s3 cp s3://ubc-sunflower-genome/haploblocks/processed_snps/all_ann1/sample_sets/ww_samples.list . #163 samples
-
-https://ubc-sunflower-genome.s3-us-west-2.amazonaws.com/haploblocks/processed_snps/listing.sorted.txt  
-# used tmux session for longer download:
-aws s3 cp s3://ubc-sunflower-genome/cohorts/ha412v2/wgs_all/samples.json .
-```
-
-### Wild Annuus data from Todesco et al.
-- 719 re-sequenced individuals (listed in "Coverage and analyses")
-	- 265 were "samples from other studies"
