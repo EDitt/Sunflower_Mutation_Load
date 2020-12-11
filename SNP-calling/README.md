@@ -230,6 +230,12 @@ Using GATK's SelectVariants, (`gatk_SelectVariants.sh`), I will:
 2. Excluded sites marked as filtered by ApplyVQSR
 3. Exclude non-variant sites
 
-After getting rid of indels and filtered sites, 81,431,704 variants remain
+After getting rid of indels and filtered sites, 81,431,704 variants remain (file in directory `Filter1_102120`)
+
+#### Testing out how much remaining filtering I want to do-
+1.) minimal approach (above)
+2.) Using sequence handling's Variant Filtration
+3.) Some filtering above minimum- max # of reads, ...?
+
 
 ## Variant Analysis
