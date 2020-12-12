@@ -220,6 +220,7 @@ INFO  TrancheManager - Finding 12 tranches for 87332695 variants
 Exit status 127 even though it finished all steps-
 At end:
 `/var/spool/torque/mom_priv/jobs/3399078.sapelo2.SC: line 2: 0: command not found`
+(this was confirmed by GACRC to be a bug that wasn't affecting the job status)
 
 ## Variant Filtering
 
@@ -234,8 +235,14 @@ After getting rid of indels and filtered sites, 81,431,704 variants remain (file
 
 #### Testing out how much remaining filtering I want to do-
 1.) minimal approach (above)
-2.) Using sequence handling's Variant Filtration
+	Number of records: 81,431,704
+	ts/tv: 1.71
+2.) Using sequence handling's Variant Filtration. 
+	Default settings except
+	- 1.0 for max % deveiation allowed in heterozygotes (not filtering based on this parameter due to sample pooling)
+	- Max. proportion of heterozygote genotypes = 0.2 (accounting for ~ 10% of lines that highly heterozygous)
 3.) Some filtering above minimum- max # of reads, ...?
+
 
 
 ## Variant Analysis
