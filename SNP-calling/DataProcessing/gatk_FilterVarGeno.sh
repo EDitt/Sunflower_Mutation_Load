@@ -19,7 +19,7 @@ REF_FASTA="/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta"
 INPUT_VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter1_102120/Sunflower_SAM_SNP_Calling_snps.filtered.vcf"
 OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter2_122828"
 
-gatk VariantFiltration \
+gatk --java-options "-Xmx22g" VariantFiltration \
 	-R ${REF_FASTA} \
 	-V ${INPUT_VCF} \
 	-O ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_GenoField.vcf \
