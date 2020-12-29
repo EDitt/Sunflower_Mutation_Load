@@ -22,7 +22,7 @@ OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/
 gatk VariantFiltration \
 	-R ${REF_FASTA} \
 	-V ${INPUT_VCF} \
-	-O ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_Filter2.vcf \
+	-O ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_GenoField.vcf \
 	--genotype-filter-name "below6GQ" --genotype-filter-expression "GQ < 6"  \
 	--genotype-filter-name "above50DP" --genotype-filter-expression "DP > 50" \
 	--tmp-dir ${TEMP_DIR}
