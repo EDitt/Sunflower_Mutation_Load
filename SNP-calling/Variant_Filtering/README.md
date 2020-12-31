@@ -10,7 +10,7 @@
 		-chromosome 1 before and after filtering: 4386393 v. 3245650
 	- 63,739,304 out of 81431704 (78% kept)
 
-3.)Evaluate for QUAL and % heterozygous metrics
+3.) Evaluate for QUAL and % heterozygous metrics
 	- QUAL vs. ts/tv statistics
 	- Use vcftools --het to calculate a measure of heterozygosity on a per-individual basis
 	- Distribution of ExcessHet
@@ -37,6 +37,10 @@ grep "^QUAL" SAM_SNPs_GTfilteredStats.txt > SAM_SNPs_GTfilteredStatsQUAL.txt
 QUAL <- read.table("SAM_SNPs_GTfilteredStatsQUAL.txt", header = FALSE, sep = "\t")
 colnames(QUAL)[3:6] <- c("Quality", "Num_SNPs", "Num_ts", "Num_tv")
 QUAL$tstv <- QUAL$Num_ts / QUAL$Num_tv
+plot(QUAL$tstv ~ QUAL$Quality, cex=0.5)
+abline(v=40, lty=2)
+abline(h=1.71)
+
 ```
 
 Highly heterozygous individuals:
@@ -44,3 +48,5 @@ Highly heterozygous individuals:
 module load VCFtools/0.1.16-GCC-8.3.0-Perl-5.30.0
 vcftools --vcf $VCF --het --out SAM_hetIND_GTfiltered
 ```
+
+4.) Filter for min QUAL and remove highly heterozygous individuals
