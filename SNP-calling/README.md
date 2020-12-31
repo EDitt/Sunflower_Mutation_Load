@@ -233,16 +233,51 @@ Using GATK's SelectVariants, (`gatk_SelectVariants.sh`), I will:
 
 After getting rid of indels and filtered sites, 81,431,704 variants remain (file in directory `Filter1_102120`)
 
+
 #### Testing out how much remaining filtering I want to do-
 1.) minimal approach (above)
 	Number of records: 81,431,704
 	ts/tv: 1.71
 2.) Using sequence handling's Variant Filtration. 
 	Default settings except
-	- 1.0 for max % deveiation allowed in heterozygotes (not filtering based on this parameter due to sample pooling)
+	- 1.0 for max % deviation allowed in heterozygotes (not filtering based on this parameter due to sample pooling)
 	- Max. proportion of heterozygote genotypes = 0.2 (accounting for ~ 10% of lines that highly heterozygous)
 3.) Some filtering above minimum- max # of reads, ...?
 
+### Sequence handling
+- After step 1: 81,431,704
+- After step 3: 76,700,323
+- After step 4: 65,208,272
+- After step 6: 116
+- After step 7: 116
+
+### My "Custom" Filtering
+- First, filtered out sites that didn't pass variant recalibrator and non-variant sites (and selected only snps)
+	- 81431704 out of 87332695 (93% kept)
+- Second, filtered based on genotype fields:
+	- GQ values less than 6 (10th percentile)
+	- DP more than 50 (99th percentile is 25 but based on uneven coverage among samples as observed in sequence coverage graph, used a higher number)
+	- Number of sites: 81,431,704 (has not changed as expected- sites just marked as filtered)
+	- After filter flags in place, filtered for no more than 0.2 genotypes marked as filtered or no-call and set filtered genotypes to no-call
+		-chromosome 1 before and after filtering: 4386393 v. 3245650
+- Evaluate for QUAL and % heterozygous metrics
+	- QUAL vs. ts/tv statistics
+	- Use vcftools --het to calculate a measure of heterozygosity on a per-individual basis
+	- Distribution of ExcessHet
+- Filter ...(QUAL heterozygosity)
+- Biallelic, remove highly heterozygous individuals
+
+### QC Statistics:
+- QUAL vs. ts/tv
+using file SAM_SNPs_filtered_Stats.txt from bcftools stat function
+```bash
+grep "^QUAL" SAM_SNPs_filtered_Stats.txt > SAM_SNPs_filtered_StatsQUAL.txt
+```
+
+```R
+
+```
+- Distribution of 
 
 
 ## Variant Analysis
