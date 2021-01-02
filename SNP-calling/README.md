@@ -243,7 +243,7 @@ After getting rid of indels and filtered sites, 81,431,704 variants remain (file
 	- 1.0 for max % deviation allowed in heterozygotes (not filtering based on this parameter due to sample pooling)
 	- Max. proportion of heterozygote genotypes = 0.2 (accounting for ~ 10% of lines that highly heterozygous)
 3.) Some filtering above minimum- max # of reads, max number of samples un-called or low GQ, 
-	minimum QUAL
+	minimum QUAL: 40
 
 ### Sequence handling
 - After step 1: 81,431,704
