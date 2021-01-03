@@ -10,13 +10,10 @@
 		-chromosome 1 before and after filtering: 4386393 v. 3245650
 	- 63,739,304 out of 81431704 (78% kept)
 
-3.) Evaluate for QUAL and % heterozygous metrics
+2b.) Evaluate for QUAL and % heterozygous metrics
 	- QUAL vs. ts/tv statistics
 	- Use vcftools --het to calculate a measure of heterozygosity on a per-individual basis
 	- Distribution of ExcessHet
-- Filter ...(QUAL heterozygosity)
-- Biallelic, remove highly heterozygous individuals
-
 
 ### QC Statistics:
 ```bash
@@ -43,10 +40,41 @@ abline(h=1.71)
 
 ```
 
+3.) Filter for QUAL > 40
+
+- 61,182,383 out of 63,739,304 (96%); ts/tv=1.72
+
+QC Stats
+```bash
+# run interactive job
+srun --pty  -p inter_p  --mem=2G --nodes=1 --ntasks-per-node=1 --time=12:00:00 --job-name=qlogin /bin/bash -l # Job 728964
+module load BCFtools/1.10.2-GCC-8.3.0\
+VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter3_123120/Sunflower_SAM_SNP_Calling_QUALFiltered.vcf"
+bcftools stats $VCF > SAM_SNPs_QUALfilteredStats.txt
+```
+
+4.) Filter out heterozygous sites
+
+This will be done in multiple steps.
+First, I will 'filter' variants to mark the genotypes that are heterozygous at each site. ~~I will also use the flag "invalidate previous filters" (for the next step).~~ <- this doesn't appear to work. Will need to start from "Filter 1" (before applying the genotype quality/depth filters)
+
+Then, I will 'select' the sites that have less than 20% of genotypes marked as heterozygous. I will then perform select Variants on the output from step 3 to select concordant sites (that aren't in the list of highly heterozygous sites).
+- the 20% was selected based on: 2 rounds of inbreeding so no more than 12.5% of samples expected to be heterozygous at any given locus, however ~ 10% samples are more heterozygous than expected. 
+
+Inbreeding coefficient (F) for all individuals
+
 Highly heterozygous individuals:
 ```bash
 module load VCFtools/0.1.16-GCC-8.3.0-Perl-5.30.0
 vcftools --vcf $VCF --het --out SAM_hetIND_GTfiltered
-```
 
-4.) Filter for min QUAL and remove highly heterozygous individuals
+module load R/3.5.0-foss-2019b
+R
+```
+```R
+het <- read.table("SAM_hetIND_GTfiltered.het", header = TRUE, sep = "\t")
+
+het[which(het$F < 0.5),] # 35 genotypes
+
+```
+- Biallelic, remove highly heterozygous individuals
