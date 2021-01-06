@@ -69,7 +69,7 @@ het[which(het$F < 0.5),] # 35 genotypes
 
 ```
 
-4.) Filter out heterozygous sites
+4.) Filter out highly heterozygous sites
 
 This will be done in multiple steps.
 First, I will 'filter' variants to mark the genotypes that are heterozygous at each site. ~~I will also use the flag "invalidate previous filters" (for the next step).~~ <- this doesn't appear to work. Will need to start from "Filter 1" (before applying the genotype quality/depth filters)
@@ -82,4 +82,18 @@ Used `Het_filter.sh`
 Number of variatns after filtering: (`Sunflower_SAM_SNP_Calling_HetFieldFiltered.vcf`): 
 81,431,704 (did not filter any variants...?). Did this not work or were there no sites with >20% heterozygotes?
 
+Use data obtained from GATK's VariantsToTable to count the number of heterozygous genotypes for each variant
+```bash
+srun --pty  -p inter_p  --mem=2G --nodes=1 --ntasks-per-node=1 --time=12:00:00 --job-name=qlogin /bin/bash -l # Job 766736
+module load GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
+GATK_JAR=/apps/eb/GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8/gatk
+INPUT_VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter1_102120/Sunflower_SAM_SNP_Calling_snps.filtered.vcf
+INTERVALS=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Create_HC_Subset/Intermediates/Genome_Random_Intervals.bed
+OUTPUT_DIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Het_Filter_010121
+gatk --java-options "-Xmx2g" VariantsToTable \
+     -V "${INPUT_VCF}" \
+     -L "${INTERVALS}" \
+     -F CHROM -F POS -F TYPE -F DP -F ExcessHet -F InbreedingCoeff -F HET -F HOM-REF -F HOM-VAR -F NCALLED \
+     -O "${OUTPUT_DIR}/Variants_HetInfo.table"
+```
 5.) Biallelic, remove highly heterozygous individuals
