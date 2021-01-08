@@ -71,17 +71,6 @@ het[which(het$F < 0.5),] # 35 genotypes
 
 4.) Filter out highly heterozygous sites
 
-This will be done in multiple steps.
-First, I will 'filter' variants to mark the genotypes that are heterozygous at each site. ~~I will also use the flag "invalidate previous filters" (for the next step).~~ <- this doesn't appear to work. Will need to start from "Filter 1" (before applying the genotype quality/depth filters)
-
-Then, I will 'select' the sites that have less than 20% of genotypes marked as heterozygous. I will then perform select Variants on the output from step 3 to select concordant sites (that aren't in the list of highly heterozygous sites).
-- the 20% was selected based on: 2 rounds of inbreeding so no more than 12.5% of samples expected to be heterozygous at any given locus, however ~ 10% samples are more heterozygous than expected. 
-
-Used `Het_filter.sh`
-
-Number of variatns after filtering: (`Sunflower_SAM_SNP_Calling_HetFieldFiltered.vcf`): 
-81,431,704 (did not filter any variants...?). Did this not work or were there no sites with >20% heterozygotes?
-
 Use data obtained from GATK's VariantsToTable to count the number of heterozygous genotypes for each variant
 ```bash
 srun --pty  -p inter_p  --mem=2G --nodes=1 --ntasks-per-node=1 --time=12:00:00 --job-name=qlogin /bin/bash -l # Job 766736
@@ -96,4 +85,29 @@ gatk --java-options "-Xmx2g" VariantsToTable \
      -F CHROM -F POS -F TYPE -F DP -F ExcessHet -F InbreedingCoeff -F HET -F HOM-REF -F HOM-VAR -F NCALLED \
      -O "${OUTPUT_DIR}/Variants_HetInfo.table"
 ```
+
+Using GATK to filter out sites with a high proportion of heterozygotes did not work (`Het_filter.sh`)
+
+Instead I used bcftools
+Here, I'm testing it
+```bash
+tmux new -s bcftools_test
+srun --pty  -p inter_p  --mem=2G --nodes=1 --ntasks-per-node=1 --time=12:00:00 --job-name=qlogin /bin/bash -l
+
+INPUT_VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Het_Filter_010121/Sunflower_SAM_SNP_Calling_HetFieldFiltered.vcf"
+OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Het_Filter_010121/test_bcftools"
+
+module load BCFtools/1.10.2-GCC-8.3.0
+
+bcftools filter -i 'COUNT(GT="het")/(N_SAMPLES-N_MISSING) < 0.2' $INPUT_VCF -o ${OUTPUT_DIR}/bcftools_Het_filtered2.vcf
+
+grep -v "^#" bcftools_Het_filtered2.vcf | wc -l # 78,629,492
+grep -v "^#" $INPUT_VCF | wc -l # 81,431,704
+```
+This filtered out 3.4% of sites. I checked to make sure it did this properly using the Variants-to-Table function again from GATK.
+
+Used script `Het_filter_bcftools.sh` on output from step 3
+
+
+
 5.) Biallelic, remove highly heterozygous individuals
