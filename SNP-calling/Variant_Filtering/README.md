@@ -19,7 +19,7 @@
 ```bash
 # run interactive job
 srun --pty  -p inter_p  --mem=2G --nodes=1 --ntasks-per-node=1 --time=12:00:00 --job-name=qlogin /bin/bash -l # Job 727860
-module load BCFtools/1.10.2-GCC-8.3.0\
+module load BCFtools/1.10.2-GCC-8.3.0
 VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter2_122828/Sunflower_SAM_SNP_Calling_GenoFieldFiltered.vcf"
 bcftools stats $VCF > SAM_SNPs_GTfilteredStats.txt
 ```
@@ -108,6 +108,6 @@ This filtered out 3.4% of sites. I checked to make sure it did this properly usi
 
 Used script `Het_filter_bcftools.sh` on output from step 3
 
-
+58,390,842 variants, ts/tv 1.72
 
 5.) Biallelic, remove highly heterozygous individuals
