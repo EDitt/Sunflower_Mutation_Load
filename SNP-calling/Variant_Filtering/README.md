@@ -2,6 +2,8 @@
 1.) filtered out sites that didn't pass variant recalibrator and non-variant sites (and selected only snps)
 	- 81431704 out of 87332695 (93% kept)
 
+Used `gatk_SelectVariants.sh`
+
 2.) Second, filtered based on genotype fields:
 	- GQ values less than 6 (10th percentile)
 	- DP more than 50 (99th percentile is 25 but based on uneven coverage among samples as observed in sequence coverage graph, used a higher number)
@@ -9,6 +11,8 @@
 	- After filter flags in place, filtered for no more than 0.2 genotypes marked as filtered or no-call and set filtered genotypes to no-call
 		-chromosome 1 before and after filtering: 4386393 v. 3245650
 	- 63,739,304 out of 81431704 (78% kept)
+
+Used `gatk_FilterVarGeno.sh` and `gatk_SelectVarGeno.sh`
 
 2b.) Evaluate for QUAL and % heterozygous metrics
 	- QUAL vs. ts/tv statistics
@@ -41,6 +45,8 @@ abline(h=1.71)
 ```
 
 3.) Filter for QUAL > 40
+
+Used `gatk_SelectVariantsQUAL.sh`
 
 - 61,182,383 out of 63,739,304 (96%); ts/tv=1.72
 
@@ -104,10 +110,36 @@ bcftools filter -i 'COUNT(GT="het")/(N_SAMPLES-N_MISSING) < 0.2' $INPUT_VCF -o $
 grep -v "^#" bcftools_Het_filtered2.vcf | wc -l # 78,629,492
 grep -v "^#" $INPUT_VCF | wc -l # 81,431,704
 ```
-This filtered out 3.4% of sites. I checked to make sure it did this properly using the Variants-to-Table function again from GATK.
 
-Used script `Het_filter_bcftools.sh` on output from step 3
+I checked to make sure it did this properly using the Variants-to-Table function again from GATK.
 
+```bash
+module load GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
+GATK_JAR=/apps/eb/GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8/gatk
+
+INPUT_VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Het_Filter_010121/test_bcftools/bcftools_Het_filtered2.vcf
+INTERVALS=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Create_HC_Subset/Intermediates/Genome_Random_Intervals.bed
+OUTPUT_DIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Het_Filter_010121/test_bcftools
+
+# need to index first
+gatk --java-options "-Xmx2g" IndexFeatureFile \
+-F $INPUT_VCF
+
+gatk --java-options "-Xmx2g" VariantsToTable \
+     -V "${INPUT_VCF}" \
+     -L "${INTERVALS}" \
+     -F CHROM -F POS -F TYPE -F DP -F ExcessHet -F InbreedingCoeff -F HET -F HOM-REF -F HOM-VAR -F NCALLED \
+     -O "${OUTPUT_DIR}/bcftools_Variants_HetInfo.table"
+```
+
+Since this worked, I used script `Het_filter_bcftools.sh` on output from step 3
+
+This filtered out 3.4% of sites. 
 58,390,842 variants, ts/tv 1.72
 
-5.) Biallelic, remove highly heterozygous individuals
+5.) Will also filter out variants with high ExcessHet (>5). This number was chosen based on looking at distribution of variants in a table (see `Heterozygosity_exploration.R`).
+
+Used script `gatk_SelectVariantsExcessHet.sh`
+
+
+6.) Biallelic, remove highly heterozygous individuals
