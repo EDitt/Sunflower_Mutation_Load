@@ -139,6 +139,8 @@ This filtered out 3.4% of sites.
 
 5.) Will also filter out variants with high ExcessHet (>5). This number was chosen based on looking at distribution of variants in a table (see `Heterozygosity_exploration.R`).
 
+These are sites with a lot of heterozygotes, but not many homozygous variant sites
+
 Used script `gatk_SelectVariantsExcessHet.sh`
 
 
