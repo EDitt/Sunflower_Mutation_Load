@@ -97,6 +97,17 @@ hist(hets2_sub$het_prop)
 hist(hets2_5EH$InbreedingCoeff)
 hist(hets2_5EHfilt$InbreedingCoeff)
 
+# are most of the heterozygotes with high ExcessHet those that have few homozygous variant sites?
+hets5EHfilt_highHetprop <- subset(hets2_5EHfilt, het_prop > 0.05)
+hets5EH_highHetprop <- subset(hets2_5EH, het_prop > 0.05)
+
+hist(hets5EHfilt_highHetprop$HOM.VAR)
+max(hets5EHfilt_highHetprop$HOM.VAR) #263
+max(hets5EHfilt_highHetprop[which(hets5EHfilt_highHetprop$HOM.VAR < 144),"HOM.VAR"]) #27
+hist(hets5EH_highHetprop$HOM.VAR)
+max(hets5EH_highHetprop$HOM.VAR) #273
+max(hets5EH_highHetprop[which(hets5EH_highHetprop$HOM.VAR < 144),"HOM.VAR"]) #143
+
 # how many have ExcessHet values greater than 5? 10?
 length(hets2_1Het[which(hets2_1Het$ExcessHet > 5),"CHROM"]) #7842
 length(hets2_1Het[which(hets2_1Het$ExcessHet > 10),"CHROM"]) #2381
