@@ -5,7 +5,7 @@ I ran VeP on the full set (including multi-allelic sites).
 
 Calculate site frequency spectrum with vcftools
 - Used `Freq.sh`
-- Took output from that and graphed in R. 
+- ~~Took output from that and graphed in R~~ file too big
 ```bash
 cd /scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221
 
@@ -22,10 +22,14 @@ out="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Fi
 name="Sunflower_SAM_SNP_Calling_Final"
 
 python3 "${seqhand}/HelperScripts/VCF_MAF.py" "${vcf}" > "${out}/${name}_MAF.txt"
-Rscript "${seqhand}/HelperScripts/plot_maf.R" "${out}/${name}_MAF.txt" "${name}" "${out}/${name}_MAF.pdf"
 
+# this did not complete
+srun: Force Terminated job 1027971
+srun: error: c1-7: task 0: Out Of Memory
+```
 
-# also trying bcftools stats
+Try bcftools stats plotting functions
+```bash
 module load BCFtools/1.10.2-GCC-8.3.0
 module load matplotlib/3.1.1-intel-2019b-Python-3.7.4 #need for this function
 plot-vcfstats -p ${out} Sunflower_SAM_SNP_FinalStats.txt
@@ -67,13 +71,18 @@ OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/
 VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Sunflower_SAM_SNP_Calling_Final_Filtered.vcf"
 
 bcftools view -m2 -M2 -v snps --threads 4 ${VCF} --output-type v --output-file ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf
+
+# this completed
+# how many sites?
+bcftools stats ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf > BiallelicSTATS.txt
 ```
 
-Compress the file
-
+Compress the file (including multi-allelic sites)
 ```bash
 # tmux window: gzip (?)
 module load BCFtools/1.10.2-GCC-8.3.0
 bcftools view Sunflower_SAM_SNP_Calling_Final_Filtered.vcf -Oz -o Sunflower_SAM_SNP_Calling_Final_Filtered.vcf.gz
 
 ```
+
+Compress the file that includes only biallelic sites
