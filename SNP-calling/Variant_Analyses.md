@@ -101,7 +101,7 @@ Number of shared SNPs: 5,028
 
 Recovered 77% of SNPs in array
 I should figure out what the annotation values are for the 1,496 SNPs that aren't recovered
-
+- Ran script `gatk_SelectConcordant.sh`
 
 ## Biallelic sites only
 
@@ -121,7 +121,7 @@ bcftools view -m2 -M2 -v snps --threads 4 ${VCF} --output-type v --output-file $
 bcftools stats ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf > BiallelicSTATS.txt
 # 51,014,412, ts/tv ratio is 1.82
 
-# compress biallelic site vcf file
+# compress biallelic site vcf file *** currently in progress
 bcftools view ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf -Oz -o ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf.gz
 
 # look at concordance with truth set

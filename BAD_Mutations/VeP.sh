@@ -36,3 +36,5 @@ vep \
     --warning_file ${OUTPUTDIR}/${OUTPUTPREFIX}_WARN.txt \
     -o ${OUTPUTDIR}/${OUTPUTPREFIX}
 
+## can use flag --buffer_size [number] to decreae run time. (# of variants that are read into memory). Default=5000
+## flag --no_intergenic does not include intergenic consequences in the output
