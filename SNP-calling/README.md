@@ -256,17 +256,3 @@ After getting rid of indels and filtered sites, 81,431,704 variants remain (file
 
 
 
-## Variant Analysis
-
-I ran VeP on the full set (including multi-allelic sites). 
-- Used `VeP.sh` script
-
-Calculate site frequency spectrum with vcftools
-- Used `Freq.sh`
-
-Compress the file
-```bash
-module load BCFtools/1.10.2-GCC-8.3.0
-bcftools view Sunflower_SAM_SNP_Calling_Final_Filtered.vcf -Oz -o Sunflower_SAM_SNP_Calling_Final_Filtered.vcf.gz
-
-```

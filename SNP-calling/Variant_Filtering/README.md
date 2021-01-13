@@ -146,10 +146,13 @@ Used script `gatk_SelectVariantsExcessHet.sh`
 After filtering:
 54,145,780 variants, ts/tv 1.72
 
-6.) Select only biallelic, make sure non-variant sites removed
+6.) Make sure non-variant sites removed
 
 First, filter out non-variant and filtered sites (just a precautionary measure)
 Used `gatk_SelectVarRemoveNonVar.sh`
 
+54,145,780 variants remain (did not remove any, which was expected)
+ 
+7.) Select only biallelic
 
-7.) Remove highly heterozygous individuals?
+Remove highly heterozygous individuals?
