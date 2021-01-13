@@ -1,30 +1,32 @@
-#PBS -S /bin/bash
-#PBS -q batch
-#PBS -N VEP
-#PBS -l nodes=1:ppn=1
-#PBS -l walltime=18:00:00
-#PBS -l mem=22gb
-#PBS -m abe
-#PBS -M dittmare@gmail.com
+#!/bin/bash
 
-#module load HTSlib/1.9-foss-2018b
-#module load perl/modules.centos7.5.26.1
-#module load BCFtools/1.6-foss-2016b
+#SBATCH --job-name=VeP
+#SBATCH --partition=batch
 
-#     The VCF
-Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/Edited/fullsam.90.remappedHa412HO_norm_biallelic.vcf.gz
-OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/NewOutputOct2020
-OUTPUTPREFIX=fullsam_remappedHa412HO_norm_biallelic
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=22G
+#SBATCH --time=36:00:00
+#SBATCH --export=None 
+#SBATCH --mail-user=dittmare@gmail.com
+#SBATCH --mail-type=BEGIN,END,FAIL
+
+
+#Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/Edited/fullsam.90.remappedHa412HO_norm_biallelic.vcf.gz
+VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Sunflower_SAM_SNP_Calling_Final_Filtered.vcf"
+OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221
+OUTPUTPREFIX=SAM_SNP_Final_FullSet
 
 #    Variant sets should be either 'deletions', 'insertions', or 'snps'
 VARIANT_SET=all
 
-module load VEP/95.0-foss-2018b-Perl-5.28.0
+module load VEP/101.0-foss-2019b-Perl-5.30.0
 # cd /usr/local/singularity-images/
 # singularity exec ./ensembl-vep.simg vep \
 
 vep \
-    -i ${Compressed_VCF} \
+    -i ${VCF} \
     --gff /scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0.gff3.gz \
     --fasta  /scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta \
     --species  helianthus_annuus \
