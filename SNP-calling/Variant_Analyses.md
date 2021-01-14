@@ -99,9 +99,42 @@ Number of SNPs only in my set: 54,140,752
 Number of SNPs only in truth set: 1,496
 Number of shared SNPs: 5,028
 
-Recovered 77% of SNPs in array
+Recovered 77% of SNPs in array (251 are multi-allelic so will become 71%)
+Only 5583 out of the 6524 were in the raw SNP set though
+
 I should figure out what the annotation values are for the 1,496 SNPs that aren't recovered
 - Ran script `gatk_SelectConcordant.sh`
+
+```bash
+CONCORD_VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Concordance/Sunflower_SAM_SNP_Calling_TruthConcordant.vcf"
+
+grep -v "^#" ${CONCORD_VCF} | wc -l #5583 out of 6524 85.6%
+# out of this number, my final filtered set recovered 5028/5583 = 90%
+
+# put annotation variables that I filtered on in table
+tmux new -s VarTable
+srun --pty  -p inter_p  --mem=2G --nodes=1 --ntasks-per-node=1 --time=4:00:00 --job-name=qlogin /bin/bash -l
+module load GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
+
+OUTPUT_DIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Concordance
+
+gatk VariantsToTable \
+     -V "${CONCORD_VCF}" \
+     -F CHROM -F POS -F MULTI-ALLELIC -F QUAL -F FILTER -F NCALLED -F HET -F ExcessHet -F DP -F InbreedingCoeff -F QD \
+     -GF GQ \
+     --show-filtered \
+     -O "${OUTPUT_DIR}/ConcordantVariants.table"
+
+# need also depth values
+gatk VariantsToTable \
+     -V "${CONCORD_VCF}" \
+     -F CHROM -F POS \
+     -GF DP \
+     --show-filtered \
+     -O "${OUTPUT_DIR}/ConcordantVariantsDP.table"
+```
+
+
 
 ## Biallelic sites only
 
