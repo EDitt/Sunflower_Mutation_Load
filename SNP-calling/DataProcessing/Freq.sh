@@ -13,11 +13,11 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 
 
-VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Sunflower_SAM_SNP_Calling_Final_Filtered.vcf"
-OUTPUTDIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221"
+VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/VeP/SAM_Sunflower_Subset.vcf.qz"
+OUTPUTDIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/VeP"
 
 module load VCFtools/0.1.16-GCC-8.3.0-Perl-5.30.0
 
-vcftools --vcf $VCF \
+vcftools --gzvcf $VCF \
 --freq \
---out ${OUTPUTDIR}/SAM_SNPs_FULLFINAL
+--out ${OUTPUTDIR}/SAM_SNPs_SUBSETFINAL

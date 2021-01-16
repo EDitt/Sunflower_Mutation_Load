@@ -18,7 +18,7 @@ VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Fil
 module load BCFtools/1.10.2-GCC-8.3.0
 
 bcftools filter -R ${Bed} ${VCF} -o ${OUTPUTDIR}/SAM_Sunflower_Subset.vcf.qz
-bcftools stats ${OUTPUTDIR}/SAM_Sunflower_Subset.vcf.qz
+bcftools stats ${OUTPUTDIR}/SAM_Sunflower_Subset.vcf.qz #3,264,946 variants
 ```
 
 Normalize VCF (make sure allele matches reference)
