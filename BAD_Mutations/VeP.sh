@@ -1,12 +1,12 @@
 #!/bin/bash
 
 #SBATCH --job-name=VeP
-#SBATCH --partition=batch
+#SBATCH --partition=highmem_p
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=22G
+#SBATCH --mem=200G
 #SBATCH --time=36:00:00
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
@@ -14,9 +14,9 @@
 
 
 #Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/Edited/fullsam.90.remappedHa412HO_norm_biallelic.vcf.gz
-VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/VeP/SAM_Sunflower_Subset.vcf.qz"
-OUTPUTDIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/VeP"
-OUTPUTPREFIX=SAM_SNP_Final_SubSet
+VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Sunflower_SAM_SNP_Calling_Final_Filtered.vcf"
+OUTPUTDIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221"
+OUTPUTPREFIX=SAM_SNP_Final_FullSet
 
 #    Variant sets should be either 'deletions', 'insertions', or 'snps'
 VARIANT_SET=all
@@ -34,7 +34,10 @@ vep \
     --verbose \
     --format vcf \
     --warning_file ${OUTPUTDIR}/${OUTPUTPREFIX}_WARN.txt \
-    -o ${OUTPUTDIR}/${OUTPUTPREFIX}
+    -o ${OUTPUTDIR}/${OUTPUTPREFIX} \
+    --buffer_size 1000000 \
+    --fork 4 \
+    --force_overwrite
 
 ## can use flag --buffer_size [number] to decreae run time. (# of variants that are read into memory). Default=5000
 ## flag --no_intergenic does not include intergenic consequences in the output
