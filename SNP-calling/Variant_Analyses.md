@@ -156,10 +156,12 @@ bcftools stats ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf > Biallelic
 
 # compress biallelic site vcf file *** currently in progress
 bcftools view ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf -Oz -o ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf.gz
+### bcftools says this might be truncated
 
 # look at concordance with truth set
 Truth_zip="/scratch/eld72413/SNParray/FinalFiles/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf.gz"
-
+OutputDir="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic"
+bcftools stats ${OutputDir}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf.gz $Truth_zip > ${OutputDir}/ConcordanceStats_SNParray6524.txt
 ```
 
 

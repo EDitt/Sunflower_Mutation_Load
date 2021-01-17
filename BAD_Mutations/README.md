@@ -19,6 +19,10 @@ module load BCFtools/1.10.2-GCC-8.3.0
 
 bcftools filter -R ${Bed} ${VCF} -o ${OUTPUTDIR}/SAM_Sunflower_Subset.vcf.qz
 bcftools stats ${OUTPUTDIR}/SAM_Sunflower_Subset.vcf.qz #3,264,946 variants
+# number multi-allelic
+awk '{if ($3 > 2) {print $0}}' SAM_SNPs_SUBSETFINAL.frq | wc -l #189,373
+
+awk '{if ($3 == 2) {print $0}}' SAM_SNPs_SUBSETFINAL.frq > SAM_SNPs_SUBSETFINAL_Biallelic.frq
 ```
 
 Normalize VCF (make sure allele matches reference)

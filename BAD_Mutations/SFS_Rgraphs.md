@@ -2,7 +2,7 @@
 
 ```bash
 cd /scratch/eld72413/NSFproj/VEP
-module load R/3.6.1-foss-2018a-X11-20180131-GACRC
+module load R/3.6.2-foss-2019b
 R
 ```
 
@@ -112,3 +112,20 @@ b + geom_bar(stat="identity", position = position_dodge()) + scale_fill_manual(v
 Miss_bins <- HistBinsFormat(WILD_missense_freqbins, "Wild_missense", SAM_missense_freqbins, "SAM_missense")
 g <- ggplot(Miss_bins, aes(x=breaks, y=prop, fill=variable))
 g + geom_bar(stat="identity", position = position_dodge()) + scale_fill_manual(values= c("#1B9E77", "#D95F02")) + theme_minimal()
+```
+
+Testing on subset - 01/15/21
+```R
+SAM_freq <- vcftoolsFreqFormat("SAM_SNPs_SUBSETFINAL_Biallelic.frq")
+SAM_freqbins <- hist(SAM_freq$freq, plot=FALSE)
+save(SAM_freqbins, file="SAM_subsetFreqBins.RData")
+
+Freqbins_df <- as.data.frame(cbind(SAM_freqbins$breaks[-1], SAM_freqbins$counts))
+colnames(Freqbins_df) <- c("breaks", "counts")
+sumcount <- sum(Freqbins_df$counts)
+Freqbins_df$prop <- Freqbins_df$counts/sumcount
+
+p <- ggplot(Freqbins_df, aes(x=breaks, y=prop))
+p + geom_bar(stat="identity") + theme_minimal()
+
+```
