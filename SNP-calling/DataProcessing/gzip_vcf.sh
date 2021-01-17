@@ -14,7 +14,7 @@
 # a script to gzip and index a vcf file. Must specify file variable in command line:
 #sbatch --export=file=<file> gzip_vcf.sh
 
-module load SAMtools/1.10-iccifort-2019.5.281
+module load HTSlib/1.10.2-GCC-8.3.0
 
 bgzip -c --threads 4 $file > ${file}.gz
 tabix -p vcf ${file}.gz
