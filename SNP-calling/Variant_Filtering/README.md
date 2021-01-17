@@ -155,4 +155,19 @@ Used `gatk_SelectVarRemoveNonVar.sh`
  
 7.) Select only biallelic
 
-Remove highly heterozygous individuals?
+Filter to biallelic sites
+```bash
+tmux new -s biallelic
+srun --pty  -p inter_p  --mem=8G --nodes=1 --ntasks-per-node=4 --time=24:00:00 --job-name=qlogin /bin/bash -l #1027883
+
+module load BCFtools/1.10.2-GCC-8.3.0
+OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic"
+VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Sunflower_SAM_SNP_Calling_Final_Filtered.vcf"
+
+bcftools view -m2 -M2 -v snps --threads 4 ${VCF} --output-type v --output-file ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf
+
+# this completed-  51,014,412, ts/tv ratio is 1.82
+```
+
+
+8.) Remove highly heterozygous individuals?

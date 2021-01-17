@@ -137,31 +137,18 @@ gatk VariantsToTable \
 
 
 ## Biallelic sites only
-
-Filter to biallelic sites
 ```bash
-tmux new -s biallelic
-srun --pty  -p inter_p  --mem=8G --nodes=1 --ntasks-per-node=4 --time=24:00:00 --job-name=qlogin /bin/bash -l #1027883
-
-module load BCFtools/1.10.2-GCC-8.3.0
-OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic"
-VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Sunflower_SAM_SNP_Calling_Final_Filtered.vcf"
-
-bcftools view -m2 -M2 -v snps --threads 4 ${VCF} --output-type v --output-file ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf
-
-# this completed
 # how many sites?
 bcftools stats ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf > BiallelicSTATS.txt
 # 51,014,412, ts/tv ratio is 1.82
 
-# compress biallelic site vcf file *** currently in progress
-bcftools view ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf -Oz -o ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf.gz
-### bcftools says this might be truncated
+# compress biallelic site vcf file **in progress
+sbatch --export=file='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf' gzip_vcf.sh
+
 
 # look at concordance with truth set
 Truth_zip="/scratch/eld72413/SNParray/FinalFiles/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf.gz"
 OutputDir="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic"
 bcftools stats ${OutputDir}/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf.gz $Truth_zip > ${OutputDir}/ConcordanceStats_SNParray6524.txt
 ```
-
 
