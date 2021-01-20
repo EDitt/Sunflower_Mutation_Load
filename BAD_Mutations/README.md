@@ -28,9 +28,16 @@ awk '{if ($3 == 2) {print $0}}' SAM_SNPs_SUBSETFINAL.frq > SAM_SNPs_SUBSETFINAL_
 Normalize VCF (make sure allele matches reference)
 Used `NormalizeVCF.sh` script
 
-#### Check VCF
-Normalize VCF (check if allele matches reference)
+New index + stats on normalized vcf:
 ```bash
+tmux new -s bcftools_biallelic
+srun --pty  -p inter_p  --mem=4G --nodes=1 --ntasks-per-node=4 --time=6:00:00 --job-name=qlogin /bin/bash -l
+
+module load BCFtools/1.10.2-GCC-8.3.0
+
+bcftools index --threads 4 Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz
+
+bcftools stats --threads 4 Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz > Sunflower_SAM_SNP_Calling_norm_biallelic_stats.txt
 
 ```
 
