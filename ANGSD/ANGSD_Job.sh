@@ -1,12 +1,12 @@
 #!/bin/bash
 
 #SBATCH --job-name=ANGSD
-#SBATCH --partition=batch
+#SBATCH --partition=highmem_p
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=32
-#SBATCH --mem=100G
+#SBATCH --mem=150G
 #SBATCH --time=36:00:00
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
