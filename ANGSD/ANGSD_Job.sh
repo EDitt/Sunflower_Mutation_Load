@@ -11,6 +11,7 @@
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --tmp=10g
 
 set -o pipefail
 
