@@ -92,6 +92,6 @@ aggregate(ConcAnnSite$CHROM, by=list(ConcAnnSite$MULTI.ALLELIC), length) # 251 (
 # 3 removed due to QUAL < 40 filter
 # 154 had higher than 20% heterozygosity
 # 95 had high ExcessHet
-# (why does this only total 477?)
+# (why does this only total 477?) (update: 246 are shared sites, different alleles)
 
 # 251 are multi-allelic

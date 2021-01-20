@@ -42,3 +42,15 @@ vcftools --gzvcf $SNPs --keep ${OUTPUTDIR}/SAM_SampleNames288.txt --recode --rec
 ```
 
 Look at consensus with truth set. Used gatk_SelectConcordant.sh script
+```bash
+grep -v "#" UBC_SAM_TruthConcordant.vcf | wc -l #252 out of 6524 ~ 4%
+
+#gzip + index
+sbatch --export=file='/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset_Raw/SAM_lines/UBC_Dataset_SAMlines.recode.vcf' gzip_vcf.sh #1132204
+### in progress
+module load BCFtools/1.10.2-GCC-8.3.0
+Truth_zip="/scratch/eld72413/SNParray/FinalFiles/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf.gz"
+INPUT_VCF="/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset_Raw/SAM_lines/UBC_Dataset_SAMlines.recode.vcf.gz"
+
+bcftools stats $Truth_zip $INPUT_VCF > UBC_snps_Truth_STATS.txt
+```
