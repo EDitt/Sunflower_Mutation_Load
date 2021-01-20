@@ -17,79 +17,54 @@ module load SAMtools/1.10-GCC-8.3.0
 module load gnuplot/5.2.2-foss-2018a
 ```
 
-Interval List
-Format interval list for chromosomal sequence for ANGSD
 
-(below is when testing)
+##### Genomic Regions File
+###### Update 01/20/21:
+Will focus on gene space. Make genome file with all gene space plus 20% around the edges. 
+Gene Regions + 20% of region on both sides
+
 ```bash
-INTERVALS20k=/scratch/eld72413/SAM_seq/results2/VCF_results_new/N_Intervals/INTERVALS_20k_atNs.bed
+OUTPUTDIR="/scratch/eld72413/SAM_seq/ANGSD/Intervals"
+# make a genome file:
+awk -v OFS='\t' {'print $1,$2'} "/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta.fai" > "${OUTPUTDIR}/GenomeFile.txt"
+# take genic regions
+awk '{if ($3 == "gene") {print $0}}' /scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.gff3 > "${OUTPUTDIR}/GeneRegions.gff3"
 
-awk '{print $1":"$2"-"$3}' $INTERVALS20k > Chromsome_regions.txt
+module load BEDTools/2.29.2-GCC-8.3.0
 
-# for testing (first 5 chromosomes):
-head -49 Chromsome_regions.txt > Chromosome_regionsTest.txt
+bedtools merge -i "${OUTPUTDIR}/GeneRegions.gff3" > "${OUTPUTDIR}/GeneRegionsMerged.bed" 
 
+bedtools slop -i "${OUTPUTDIR}/GeneRegionsMerged.bed" -g "${OUTPUTDIR}/GenomeFile.txt" -b 0.2 -pct > "${OUTPUTDIR}/GenicIntervals.bed"
+
+
+# convert to regions file for angsd
+awk '{print $1":"$2"-"$3}' "${OUTPUTDIR}/GenicIntervals.bed" > RegionsFile_genes.txt
 ```
 
-Interval list for chromosomal sequence for ANGSD
-It is highly recommended to use an intervals file, as ANGSD is computationally expensive. I will use bedtools to choose random intervals for this. (later I might pipe into `bedtools shuffle` to exclude strings of N's)  
-The genome file here is chromosomal sequence only
+##### Sample List
+Using 288 cultivated sunflower alignment files for which indel realignment has been performed with GATK
 ```bash
-FASTA_INDEX=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta.fai
+BAMDIR="/scratch/eld72413/SAM_seq/BAM_realigned"
 
-# genome file for bedtools that contains only chromosomal sequence
-head -17 $FASTA_INDEX | awk -v OFS='\t' '{print $1,$2}' > ChromosomeLengths.txt
-
-# use bedtools random
-module load BEDTools/2.29.2-GCC-8.2.0-2.31.1
-
-bedtools random -l 100000 -n 250 -seed 56 -g ChromosomeLengths.txt | sort -V | awk '{print $1":"$2"-"$3}' > Random250x100k_regions.txt
-```
-
-To look at specific chromosomal regions:
-Chromosome #10 has the branching locus
-```bash
-awk -F "[:,-]" '{$1=$1; if ($1 == "Ha412HOChr10") {print $0}}' Random250x100k_regions.txt | awk '{print $1":"$2"-"$3}' > Chrom10/Random250x100k_Chrom10.txt
+find ${BAMDIR} -name "*.bam"  | sort -V > "/scratch/eld72413/SAM_seq/ANGSD/SampleList.txt"
 
 ```
-
-Then I was able to clone the repository (latest commit `6d10630`) and install dependencies
 
 #### 1. Ancestral Sequence
 
 ```bash
 ./angsd-wrapper Ancestral /home/eld72413/DelMut/Sunflower_Mutation_Load/ANGSD/ConfigFiles/Ancestral_Sequence_Config 
 ```
+* this was saved in my Project folder from previous analyses and I copied it into the Scratch working directory
+
 
 #### 2. Inbreeding
-Tested with subset of samples (Group 7, N=9) using the first 5 chromosomes as a regions file
-Using interactive job
+Edited Angsd script to reflect Slurm
 ```bash
-qsub -I -q s_interq -l walltime=12:00:00 -l nodes=1:ppn=8 -l mem=22gb
+sbatch --export=WRAPPER='Inbreeding',CONFIG='/scratch/eld72413/SAM_seq/ANGSD/Configuration_Files/Inbreeding_Coefficients_Config' ANGSD_Job.sh
 ```
 
-Subset 1 - 138 samples
-```bash
-find $(pwd -P) -name "*.bam" | sort -V > Subset1_BamRealigned.txt
 
-# some samples needed to be re-indexed
-parallel/20200422-GCCcore-8.3.0
-module load SAMtools/1.10-GCC-8.3.0
-
-find -maxdepth 1 -name "*.bam" | parallel samtools index {}
-
-
-for f in `find -maxdepth 1 -name "*.bam"`; do
-	echo $f
-	samtools index $f
-done
-
-```
-
-```bash
-./angsd-wrapper Inbreeding /scratch/eld72413/NSFproj/ANGSD_FILES/Inbreeding_Coefficients_Config
-```
-later used the ANGSD_Job.sh script to run ^ the above
 
 #### 3. SFS
 ```bash
@@ -129,5 +104,60 @@ module load gnuplot/5.2.8-GCCcore-8.3.0
 ./angsd-wrapper setup dependencies
 ```
 
-Intervals file.
-- break up by N's and look at highest mappable regions?
+
+## PREVIOUS ANALYSES WITH DATA SUBSETS:
+
+Interval List
+Format interval list for chromosomal sequence for ANGSD
+(below is when testing)
+```bash
+INTERVALS20k=/scratch/eld72413/SAM_seq/results2/VCF_results_new/N_Intervals/INTERVALS_20k_atNs.bed
+
+awk '{print $1":"$2"-"$3}' $INTERVALS20k > Chromsome_regions.txt
+
+# for testing (first 5 chromosomes):
+head -49 Chromsome_regions.txt > Chromosome_regionsTest.txt
+
+```
+
+Interval list for chromosomal sequence for ANGSD
+It is highly recommended to use an intervals file, as ANGSD is computationally expensive. I will use bedtools to choose random intervals for this. (later I might pipe into `bedtools shuffle` to exclude strings of N's)  
+The genome file here is chromosomal sequence only
+```bash
+FASTA_INDEX=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta.fai
+
+# genome file for bedtools that contains only chromosomal sequence
+head -17 $FASTA_INDEX | awk -v OFS='\t' '{print $1,$2}' > ChromosomeLengths.txt
+
+# use bedtools random
+module load BEDTools/2.29.2-GCC-8.2.0-2.31.1
+
+bedtools random -l 100000 -n 250 -seed 56 -g ChromosomeLengths.txt | sort -V | awk '{print $1":"$2"-"$3}' > Random250x100k_regions.txt
+```
+
+To look at specific chromosomal regions:
+Chromosome #10 has the branching locus
+```bash
+awk -F "[:,-]" '{$1=$1; if ($1 == "Ha412HOChr10") {print $0}}' Random250x100k_regions.txt | awk '{print $1":"$2"-"$3}' > Chrom10/Random250x100k_Chrom10.txt
+
+```
+
+Then I was able to clone the repository (latest commit `6d10630`) and install dependencies
+
+Subset 1 - 138 samples
+```bash
+find $(pwd -P) -name "*.bam" | sort -V > Subset1_BamRealigned.txt
+
+# some samples needed to be re-indexed
+parallel/20200422-GCCcore-8.3.0
+module load SAMtools/1.10-GCC-8.3.0
+
+find -maxdepth 1 -name "*.bam" | parallel samtools index {}
+
+
+for f in `find -maxdepth 1 -name "*.bam"`; do
+	echo $f
+	samtools index $f
+done
+
+```
