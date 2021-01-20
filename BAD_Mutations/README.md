@@ -26,33 +26,19 @@ awk '{if ($3 == 2) {print $0}}' SAM_SNPs_SUBSETFINAL.frq > SAM_SNPs_SUBSETFINAL_
 ```
 
 Normalize VCF (make sure allele matches reference)
+Used `NormalizeVCF.sh` script
+
+#### Check VCF
+Normalize VCF (check if allele matches reference)
 ```bash
-#qsub -I -q s_interq -l walltime=12:00:00 -l nodes=1:ppn=4 -l mem=8gb
-# *** waiting for compression
-
-OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic
-INPUT_VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/Sunflower_SAM_SNP_Calling_BIALLELIC.vcf.gz
-FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
-
-module load BCFtools/1.9-foss-2016b
-
-bcftools norm ${INPUT_VCF} \
---check-ref s \
---fasta-ref ${FASTA} \
---threads 4 \
---output ${OUTPUTDIR}/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz \
---output-type z
-
 
 ```
+
 
 
 # UBC SNPs
 
 ## Prepare input files
-
-#### Check VCF
-Normalize VCF (check if allele matches reference)
 
 ```bash
 #qsub -I -q s_interq -l walltime=12:00:00 -l nodes=1:ppn=4 -l mem=8gb
