@@ -40,3 +40,5 @@ vcftools --gzvcf $SNPs --keep ${OUTPUTDIR}/SAM_SampleNames288.txt --recode --rec
 # After filtering, kept 288 out of 1293 Individuals
 
 ```
+
+Look at consensus with truth set. Used gatk_SelectConcordant.sh script
