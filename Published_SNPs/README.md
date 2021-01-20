@@ -54,3 +54,5 @@ INPUT_VCF="/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset_Raw/SAM_lines/UBC
 
 bcftools stats $Truth_zip $INPUT_VCF > UBC_snps_Truth_STATS.txt
 ```
+
+

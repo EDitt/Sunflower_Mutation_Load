@@ -93,11 +93,27 @@ OutputDir="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/N
 bcftools index $VCF
 
 bcftools stats $VCF $Truth_zip > ${OutputDir}/ConcordanceStats_SNParray6524.txt
+# do these consider non-reference allele?
+
+# 5028 are shared. Does this mean same site AND same allele?
+# Use GATK select variants to check- (gatk_SelectConcordant.sh)
+grep -v "#" Sunflower_SAM_SNP_Calling_FINALTruthConcordant.vcf | wc -l #5274 95% of shared sites are same allele(s)
+
+module load GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
+GEN_FASTA="/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta"
+gatk IndexFeatureFile \
+     -F ${VCF}
+
+gatk Concordance \
+   -R ${GEN_FASTA} \
+   -eval /scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Sunflower_SAM_SNP_Calling_Final_Filtered.vcf \
+   --truth /scratch/eld72413/SNParray/FinalFiles/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf \
+   --summary ${OutputDir}/ConcordGATK_summary.tsv
 ```
 
 Number of SNPs only in my set: 54,140,752
 Number of SNPs only in truth set: 1,496
-Number of shared SNPs: 5,028
+Number of shared SNPs: 5,028 (shared *sites*: 5274)
 
 Recovered 77% of SNPs in array (251 are multi-allelic so will become 71%)
 Only 5583 out of the 6524 were in the raw SNP set though
@@ -135,6 +151,26 @@ gatk VariantsToTable \
 ```
 
 
+What really matters is genotype concordance. Since I don't have the genotype calls from the SNP array, I will use the genotype calls that are concordant from the previous SNP set (aligned to XRQ, re-aligned to HA412HOv2).
+```bash
+tmux new -s concordance
+srun --pty  -p inter_p  --mem=4G --nodes=1 --ntasks-per-node=1 --time=6:00:00 --job-name=qlogin /bin/bash -l
+
+vcf1="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Concordance/Sunflower_SAM_SNP_Calling_TruthConcordant.vcf"
+
+# sample names differ - in conver SAM in vcf2 to PPN
+sed -i 's|SAM|PPN|g' UBC_SAM_TruthConcordant.vcf
+vcf2="/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset_Raw/SAM_lines/Consensus/UBC_SAM_TruthConcordant.vcf"
+
+
+module load BCFtools/1.10.2-GCC-8.3.0
+
+# ran gzip_vcf_sh commans on these files
+
+bcftools gtcheck -g ${vcf2}.gz ${vcf1}.gz > /scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Concordance/ConcordanceXRQcalls
+
+bcftools stats ${vcf2}.gz ${vcf1}.gz --verbose > /scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Concordance/StatsConcordanceXRQcalls
+```
 
 ## Biallelic sites only
 ```bash
