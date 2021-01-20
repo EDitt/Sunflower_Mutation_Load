@@ -16,9 +16,9 @@ module load GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
 GATK_JAR=/apps/eb/GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8/gatk
 
 GEN_FASTA="/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta"
-INPUT_VCF="/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset_Raw/SAM_lines/UBC_Dataset_SAMlines.recode.vcf"
+INPUT_VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Sunflower_SAM_SNP_Calling_Final_Filtered.vcf"
 TRUTH_VCF="/scratch/eld72413/SNParray/FinalFiles/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf"
-OUTPUT_DIR="/scratch/eld72413/NSFproj/PublishedSNPs/UBC_Dataset_Raw/SAM_lines/Consensus"
+OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Concordance"
 TEMP_DIR="/scratch/eld72413/Tmp"
 
 # this will output variants that are also in the truth set. Then I can see what their annotation values are to see if my filtering was too stringent
@@ -26,6 +26,6 @@ TEMP_DIR="/scratch/eld72413/Tmp"
 gatk --java-options "-Xmx22g" SelectVariants \
 -R ${GEN_FASTA} \
 -V ${INPUT_VCF} \
--O ${OUTPUT_DIR}/UBC_SAM_TruthConcordant.vcf \
+-O ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_FINALTruthConcordant.vcf \
 --concordance ${TRUTH_VCF} \
 --tmp-dir ${TEMP_DIR}
