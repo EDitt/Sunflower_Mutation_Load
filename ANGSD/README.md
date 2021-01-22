@@ -61,6 +61,11 @@ find ${BAMDIR} -name "*.bam"  | sort -V > "/scratch/eld72413/SAM_seq/ANGSD/Sampl
 #### 2. Inbreeding
 Edited Angsd script to reflect Slurm
 ```bash
+
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+
+./angsd-wrapper Inbreeding /scratch/eld72413/SAM_seq/ANGSD/Configuration_Files/Inbreeding_Coefficients_Config
+
 sbatch --export=WRAPPER='Inbreeding',CONFIG='/scratch/eld72413/SAM_seq/ANGSD/Configuration_Files/Inbreeding_Coefficients_Config' ANGSD_Job.sh
 ```
 
