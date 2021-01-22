@@ -111,7 +111,7 @@ find $Dir -name "*list-*.txt" | sort -V > all_mRNA_list_of_lists.txt
 # 57
 
 #Used script 'MakeFastas.sh' as array job
-sbatch --export=List_of_lists='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/all_mRNA_list_of_lists.txt' MakeFastas.sh
+sbatch --export=List_of_lists='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/all_mRNA_list_of_lists.txt' MakeFastas.sh #1209188
 ```
 
 #############
