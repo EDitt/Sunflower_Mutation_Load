@@ -96,9 +96,22 @@ for seq in $mRNA; do
 			sed -i 's/>mRNA:/>/' ${OUTPUTDIR}/${seq#mRNA:}.fasta
 		fi
 done
-
+# job terminated before doing all- I deleted the last 2 files created
 # also need to remove the "mRNA:" from the .subs files
 
+# need to parallelize this
+# make a list of all unique mRNA names
+awk '{print $1}' ${OUTPUTFILE} | sort -u > mRNA_names_unique.txt #56030
+
+#split into groups of 1000
+Dir="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/mRNA_lists"
+split -l 1000 --numeric-suffixes mRNA_names_unique.txt ${Dir}/SAM_mRNA_list- --suffix-length=3 --additional-suffix=.txt
+# Create list of lists
+find $Dir -name "*list-*.txt" | sort -V > all_mRNA_list_of_lists.txt
+# 57
+
+#Used script 'MakeFastas.sh' as array job
+sbatch --export=List_of_lists='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/all_mRNA_list_of_lists.txt' MakeFastas.sh
 ```
 
 #############

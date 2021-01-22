@@ -1,24 +1,39 @@
+#!/bin/bash
 
-#filename is mRNA:Ha412HOChr17g0858291.subs
+#SBATCH --job-name=makeFASTA_cds
+#SBATCH --partition=batch
 
-# loop through list of files, take out .subs and mRNA/ prefix
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=22G
+#SBATCH --time=36:00:00
+#SBATCH --export=None 
+#SBATCH --mail-user=dittmare@gmail.com
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH -o MakeFastas.sh.%A_%a.out
+#SBATCH -e MakeFastas.sh.%A_%a.err
 
-GFF3_file
+#SBATCH --array=1-57
 
-Interval=$(awk '{if ($3=="CDS") {print $0}}' Ha412HOv2.0-20181130.gff3 | grep mRNA:Ha412HOChr17g0858291 | awk '{print $1":"$4"-"$5}')
 
-# use region? to replace mRNA: with _
-#Interval_name=
+module load gffread/0.11.6-GCCcore-8.3.0
+# gffread will make a FASTA file out of the CDS that falls within a specified genomic region
 
-REF_FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
-OUTPUTDIR=/scratch/eld72413/NSFproj/VEP/BADMutationsFastas
+GFF3=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.gff3
+FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
+OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/FASTAs
 
-module load GATK/4.1.6.0-GCCcore-8.2.0-Java-1.8
+List_to_Process=$(sed -n ${SLURM_ARRAY_TASK_ID}p $List_of_lists)
+echo "Processing List ${List_to_Process}"
 
-gatk FastaReferenceMaker \
-	-R "$REF_FASTA" \
-	-O "$OUTPUTDIR/Ha412HOChr17g0858291.fasta" \
-	-L "${name}"
-
-# adds a "1 " to the sequence name- need to change
-grep ">1 " Ha412HOChr17g0858291.fasta
+while read line; do
+	coord=$(grep "${line}" $GFF3 | awk '{if ($3=="mRNA") {print $1":"$4".."$5}}')
+	num=$(for i in ${coord}; do echo $i; done | wc -l)
+	if [[ $num > 1 ]]; then
+		echo "ERROR: There are ${num} lines matching for ${line}"
+	else
+		gffread $GFF3 -g $FASTA -r ${coord} -x ${OUTPUTDIR}/${seq#mRNA:}.fasta
+		sed -i 's/>mRNA:/>/' ${OUTPUTDIR}/${seq#mRNA:}.fasta
+	fi
+done < $List_to_Process
