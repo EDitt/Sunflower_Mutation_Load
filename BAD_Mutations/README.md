@@ -41,7 +41,67 @@ bcftools stats --threads 4 Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz > Sun
 
 ```
 
+#### Sort gff3 file and index with tabix
+```bash
+module load SAMtools/1.10-GCC-8.3.0
+cd /scratch/eld72413/Ha412HOv2.0
+grep -v "#" Ha412HOv2.0-20181130.gff3 | sort -k1,1 -k4,4n -k5,5n -t$'\t' | bgzip -c > Ha412HOv2.0.gff3.gz
+tabix -p gff Ha412HOv2.0.gff3.gz
+```
 
+Ran `VeP.sh`
+
+#### Format VeP output for BAD_Mutations
+```bash
+tmux new -s bad_mutations
+srun --pty  -p inter_p  --mem=4G --nodes=1 --ntasks-per-node=4 --time=6:00:00 --job-name=qlogin /bin/bash -l
+
+VEP_OUTPUT=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/SAM_SNP_Final_BiallelicNorm
+
+#gzip input file
+gzip -c ${VEP_OUTPUT} > SAM_SNP_Final_BiallelicNorm.txt.gz
+
+VEP_OUTPUT_GZIP=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/SAM_SNP_Final_BiallelicNorm.txt.gz
+# output file needs to include all directory information
+OUTPUTFILE=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/SAM_SNP_BadMut_Summary
+# this will be a directory that contains substitution files for every transcript
+OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/BadMutationsSubs
+
+module load Biopython/1.75-foss-2019b-Python-2.7.16
+cd /home/eld72413/DelMut/BAD_Mutations/Supporting
+python VeP_to_Subs.py $VEP_OUTPUT_GZIP $OUTPUTFILE $OUTPUTDIR
+
+```
+
+#### Generate FASTA query files
+I used the gffread utility
+```bash
+module load gffread/0.11.6-GCCcore-8.3.0
+
+GFF3=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.gff3
+FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
+OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/FASTAs
+
+# output file variable is the summary output from the VeP_to_Subs.py script (above)
+mRNA=$(awk '{print $1}' ${OUTPUTFILE} | sort -u) #N= 56030 (number of .subs files)
+
+# script to output FASTA files for CDs from each mRNA. Need to remove special characters for Bad Mutations
+for seq in $mRNA; do
+	coord=$(grep "${seq}" $GFF3 | awk '{if ($3=="mRNA") {print $1":"$4".."$5}}')
+	num=$(for i in ${coord}; do echo $i; done | wc -l)
+	if [[ $num > 1 ]]; then
+		echo "ERROR: There are ${num} lines matching"
+	else
+			gffread $GFF3 -g $FASTA -r ${coord} -x ${OUTPUTDIR}/${seq#mRNA:}.fasta
+			sed -i 's/>mRNA:/>/' ${OUTPUTDIR}/${seq#mRNA:}.fasta
+		fi
+done
+
+# also need to remove the "mRNA:" from the .subs files
+
+```
+
+#############
 
 # UBC SNPs
 
