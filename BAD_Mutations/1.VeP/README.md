@@ -92,12 +92,11 @@ for seq in $mRNA; do
 	if [[ $num > 1 ]]; then
 		echo "ERROR: There are ${num} lines matching"
 	else
-			gffread $GFF3 -g $FASTA -r ${coord} -x ${OUTPUTDIR}/${seq#mRNA:}.fasta
-			sed -i 's/>mRNA:/>/' ${OUTPUTDIR}/${seq#mRNA:}.fasta
-		fi
+		gffread $GFF3 -g $FASTA -r ${coord} -x ${OUTPUTDIR}/${seq#mRNA:}.fasta
+		sed -i 's/>mRNA:/>/' ${OUTPUTDIR}/${seq#mRNA:}.fasta
+	fi
 done
-# job terminated before doing all- I deleted the last 2 files created
-# also need to remove the "mRNA:" from the .subs files
+# job terminated before doing all
 
 # need to parallelize this
 # make a list of all unique mRNA names
@@ -113,6 +112,10 @@ find $Dir -name "*list-*.txt" | sort -V > all_mRNA_list_of_lists.txt
 #Used script 'MakeFastas.sh' as array job
 sbatch --export=List_of_lists='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/all_mRNA_list_of_lists.txt' MakeFastas.sh #1209188
 ```
+
+also need to remove the "mRNA:" from the .subs files
+
+
 
 #############
 
