@@ -82,4 +82,12 @@ Ha412HOChr12g0573161
 DEBUG   bash /panfs/roc/groups/9/morrellp/shared/Software/BAD_Mutations/Shell_Scripts/Prediction.sh /home/morrellp/liux1299/.conda/envs/bad_mutations/bin/HYPHYMP /panfs/roc/groups/9/morrellp/shared/Software/BAD_Mutations/Shell_Scripts/LRT.hyphy /tmp/BAD_Mutations_HYHPY_In_9bq3ai4t.txt /tmp/BAD_Mutations_HYPHY_Out_2u5sepgn.txt
 ```
 
+### Entire dataset
 
+Uploaded .tar.gz archive to MSI (`~shared/Projects/Sunflower`)
+
+Extracted
+```bash
+cd /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower
+tar -xf Bad_mutations.tar.gz
+```

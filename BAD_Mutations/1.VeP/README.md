@@ -113,8 +113,24 @@ find $Dir -name "*list-*.txt" | sort -V > all_mRNA_list_of_lists.txt
 sbatch --export=List_of_lists='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/all_mRNA_list_of_lists.txt' MakeFastas.sh #1209188
 ```
 
-also need to remove the "mRNA:" from the .subs files
+Need to remove the "mRNA:" from the .subs files
+```bash
+Subs_Dir="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/BadMutationsSubs"
+cd $Subs_Dir
+for i in *; do 
+echo "changing $i to ${i#mRNA:}"
+mv $i ${i#mRNA:}
+done
 
+```
+
+Create tar archive for uploading to UMN cluster
+```bash
+tmux new -s tar_archive
+tar -czf Bad_mutations.tar.gz ./BadMutationsSubs ./FASTAs ./mRNA_lists
+
+# also uploading documents: mRNA_names_unique.txt, SAM_SNP_BadMut_Summary
+```
 
 
 #############
