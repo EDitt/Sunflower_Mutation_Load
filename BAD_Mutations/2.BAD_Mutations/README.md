@@ -158,3 +158,6 @@ find $(pwd -P) -name "*list-*.txt" | sort -V > all_cds_Hannuus_list_of_lists.txt
 ```
 
 Used Chaochih's script: `bad_mut_align.sh`. I only changed the User-defined input variables
+```bash
+sbatch --array=0-112 bad_mut_align.sh
+```
