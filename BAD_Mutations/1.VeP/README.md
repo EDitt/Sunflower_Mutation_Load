@@ -98,7 +98,11 @@ for seq in $mRNA; do
 done
 # job terminated before doing all
 
+# can check to makes sure number of nucleotides is divisible by 3:
+grep -v "^>" Ha412HOChr17g0858291.fasta | grep -Eo '[[:alnum:]]' | wc -l
+
 # need to parallelize this
+
 # make a list of all unique mRNA names
 awk '{print $1}' ${OUTPUTFILE} | sort -u > mRNA_names_unique.txt #56030
 
