@@ -74,7 +74,7 @@ python VeP_to_Subs.py $VEP_OUTPUT_GZIP $OUTPUTFILE $OUTPUTDIR
 ```
 
 #### Generate FASTA query files
-I used the gffread utility
+I used the gffread utility. This will make a FASTA file of CDs within a given genomic range
 ```bash
 module load gffread/0.11.6-GCCcore-8.3.0
 
