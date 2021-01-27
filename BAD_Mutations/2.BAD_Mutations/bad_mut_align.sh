@@ -4,7 +4,7 @@
 #SBATCH --mem=16gb
 #SBATCH -t 16:00:00
 #SBATCH --mail-type=ALL
-#SBATCH --mail-user=dittmare@gmail.com
+#SBATCH --mail-user=edittmar@umn.edu
 #SBATCH -p small,ram256g,ram1t,max
 #SBATCH -o bad_mut_align.sh.%A_%a.out
 #SBATCH -e bad_mut_align.sh.%A_%a.err
