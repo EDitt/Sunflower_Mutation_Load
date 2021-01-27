@@ -80,6 +80,16 @@ DEBUG   HyPhy input file:
 Ha412HOChr12g0573161
 ===2021-01-23 01:49:53,856 - LRT_Prediction===
 DEBUG   bash /panfs/roc/groups/9/morrellp/shared/Software/BAD_Mutations/Shell_Scripts/Prediction.sh /home/morrellp/liux1299/.conda/envs/bad_mutations/bin/HYPHYMP /panfs/roc/groups/9/morrellp/shared/Software/BAD_Mutations/Shell_Scripts/LRT.hyphy /tmp/BAD_Mutations_HYHPY_In_9bq3ai4t.txt /tmp/BAD_Mutations_HYPHY_Out_2u5sepgn.txt
+===2021-01-23 02:14:37,134 - LRT_Prediction===
+DEBUG   stdout:
+
+===2021-01-23 02:14:37,135 - LRT_Prediction===
+DEBUG   stderr:
+
+Check messages.log details of this run.
+
+===2021-01-23 02:14:37,155 - LRT_Predict===
+INFO    Prediction in /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/Tests/Ha412HOChr12g0573161/Prediction/Ha412HOChr12g0573161_Predictions.txt
 ```
 
 ### Entire dataset
@@ -90,4 +100,18 @@ Extracted
 ```bash
 cd /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower
 tar -xf Bad_mutations.tar.gz
+
+### Compile
+```bash
+cd /panfs/roc/groups/9/morrellp/shared/Software/BAD_Mutations
+./BAD_Mutations.py compile \
+	--pred-dir /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/Tests/Ha412HOChr12g0573161/Prediction \
+	--long-subs /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/Tests/Ha412HOChr12g0573161.subs
+
+```
+
+Error message: (wiki should be edited to reflect the required commands)
+```
+usage: BAD_Mutations.py compile [-h] --pred-dir PRED_DIR --long-subs LONG_SUBS
+BAD_Mutations.py compile: error: the following arguments are required: --pred-dir/-P, --long-subs/-S
 ```
