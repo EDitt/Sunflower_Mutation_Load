@@ -1,6 +1,6 @@
 # Using BAD_Mutations on UMN cluster
 
-Started with test regions
+## Testing 1 region
 
 ### Set up software environment
 ```bash
@@ -92,22 +92,12 @@ Check messages.log details of this run.
 INFO    Prediction in /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/Tests/Ha412HOChr12g0573161/Prediction/Ha412HOChr12g0573161_Predictions.txt
 ```
 
-### Entire dataset
-
-Uploaded .tar.gz archive to MSI (`~shared/Projects/Sunflower`)
-
-Extracted
-```bash
-cd /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower
-tar -xf Bad_mutations.tar.gz
-
 ### Compile
 ```bash
 cd /panfs/roc/groups/9/morrellp/shared/Software/BAD_Mutations
 ./BAD_Mutations.py compile \
 	--pred-dir /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/Tests/Ha412HOChr12g0573161/Prediction \
 	--long-subs /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/Tests/Ha412HOChr12g0573161.subs
-
 ```
 
 Error message: (wiki should be edited to reflect the required commands)
@@ -115,3 +105,56 @@ Error message: (wiki should be edited to reflect the required commands)
 usage: BAD_Mutations.py compile [-h] --pred-dir PRED_DIR --long-subs LONG_SUBS
 BAD_Mutations.py compile: error: the following arguments are required: --pred-dir/-P, --long-subs/-S
 ```
+
+## Entire dataset
+
+Uploaded .tar.gz archive to MSI (`~shared/Projects/Sunflower`)
+(See README.md from 1.VeP for how files were prepared)
+
+Extracted
+```bash
+cd /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower
+tar -xf Bad_mutations.tar.gz
+```
+
+### Create config file
+The database of CDS files has already been created in: `/panfs/roc/groups/9/morrellp/shared/Projects/Selective_Sweeps/BAD_Mutations_Genomes`
+
+Conda software environment has been setup: `/home/morrellp/liux1299/.conda/envs/bad_mutations`
+
+```bash
+ssh mesabi
+module load python3/3.6.3_anaconda5.0.1
+source activate /home/morrellp/liux1299/.conda/envs/bad_mutations
+
+cd /panfs/roc/groups/9/morrellp/shared/Software/BAD_Mutations
+./BAD_Mutations.py setup \
+    -b /panfs/roc/groups/9/morrellp/shared/Projects/Selective_Sweeps/BAD_Mutations_Genomes \
+    -t 'Hannuus' \
+    -e 0.05 \
+    -c /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/config.txt
+```
+
+Result:
+```bash
+===2021-01-27 13:52:22,612 - Setup_Env===
+INFO	Wrote configuration into /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/config.txt
+```
+
+### Align
+
+Chaochih Liu created scripts for parallelizing the alignment and prediction steps across many regions. See: https://github.com/MorrellLAB/Barley_Mutated/tree/master/02_analysis/bad_mutations
+
+Chaochih created a list of the individual FASTA files for each CD and then split that into lists containing 500 sequence records for each file, then created a list of the lists
+
+Create a list of all fasta files, break into sublists of 500 each, make list of these lists
+```bash
+FASTA_DIR="/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/FASTAs"
+find ${FASTA_DIR} -name "Ha*.fasta" | sort -V > /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/fasta_lists/All_Fasta.txt #56031
+
+split -l 500 --numeric-suffixes All_Fasta.txt Hannuus_cds_list- --suffix-length=3 --additional-suffix=.txt
+
+find $(pwd -P) -name "*list-*.txt" | sort -V > all_cds_Hannuus_list_of_lists.txt
+```
+
+Used Chaochih's script: `bad_mut_align.sh`. I only changed the User-defined input variables
