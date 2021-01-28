@@ -161,3 +161,5 @@ Used Chaochih's script: `bad_mut_align.sh`. I only changed the User-defined inpu
 ```bash
 sbatch --array=0-112 bad_mut_align.sh
 ```
+sbatch: Setting account: morrellp
+Submitted batch job 740887
