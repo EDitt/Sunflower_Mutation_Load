@@ -150,7 +150,7 @@ Chaochih created a list of the individual FASTA files for each CD and then split
 Create a list of all fasta files, break into sublists of 500 each, make list of these lists
 ```bash
 FASTA_DIR="/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/FASTAs"
-find ${FASTA_DIR} -name "Ha*.fasta" | sort -V > /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/fasta_lists/All_Fasta.txt #56031
+find ${FASTA_DIR} -name "Ha*.fasta" | sort -V > /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/fasta_lists/All_Fasta.txt #56030
 
 split -l 500 --numeric-suffixes All_Fasta.txt Hannuus_cds_list- --suffix-length=3 --additional-suffix=.txt
 
@@ -163,3 +163,5 @@ sbatch --array=0-112 bad_mut_align.sh
 ```
 sbatch: Setting account: morrellp
 Submitted batch job 740887
+
+array 71 had errors ("more than 1 record found in handle"). Need to check others for this error. (still running after 9 hours) Ha412HOChr12g0550871.fasta
