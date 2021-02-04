@@ -11,6 +11,7 @@
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH--chdir=/scratch/eld72413/Tmp
 
 set -o pipefail
 
@@ -19,7 +20,7 @@ module load GSL/2.6-iccifort-2019.5.281
 #module load gnuplot/5.2.2-foss-2018a
 #module load R/3.6.1-foss-2018a-X11-20180131-GACRC
 
-TMPDIR="/scratch/eld72413/Tmp"
+#TMPDIR="/scratch/eld72413/Tmp"
 
 cd /home/eld72413/ANGSD_DEV/new3_afterMaintenance/angsd-wrapper
 
