@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=100G
+#SBATCH --mem=50G
 #SBATCH --time=36:00:00
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
@@ -23,4 +23,6 @@ SLURM_TMPDIR="/scratch/eld72413/Tmp"
 
 cd /home/eld72413/ANGSD_DEV/new3_afterMaintenance/angsd-wrapper
 
-./angsd-wrapper ${WRAPPER} ${CONFIG}
+#./angsd-wrapper ${WRAPPER} ${CONFIG}
+
+./angsd-wrapper Inbreeding /scratch/eld72413/SAM_seq/ANGSD/Configuration_Files/Inbreeding_Coefficients_Config
