@@ -152,6 +152,9 @@ First, filter out non-variant and filtered sites (just a precautionary measure)
 Used `gatk_SelectVarRemoveNonVar.sh`
 
 54,145,780 variants remain (did not remove any, which was expected)
+
+* new: decided to filter for min DP per sample
+Make a script `gatk_FilterMinDP.sh` to run
  
 7.) Select only biallelic
 
@@ -171,3 +174,14 @@ bcftools view -m2 -M2 -v snps --threads 4 ${VCF} --output-type v --output-file $
 
 
 8.) Remove highly heterozygous individuals?
+
+
+## All steps at once
+
+Will direct standard output to be saved here:
+`/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/ErrorFiles`
+
+```bash
+ERROR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/ErrorFiles
+sbatch -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err <script>
+```
