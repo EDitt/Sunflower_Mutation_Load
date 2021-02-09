@@ -50,7 +50,7 @@ gatk SelectVariants \
 	--tmp-dir ${TEMP_DIR} \
 	-O ${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_recalibrated_pass_sites.vcf
 
-num_sites1=$(grep -v "#" "${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}.recalibrated.pass_sites.vcf" | wc -l)
+num_sites1=$(grep -v "#" "${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_recalibrated_pass_sites.vcf" | wc -l)
 
 echo "After filtering out sites that failed variant recalibrator, there are ${num_sites1} sites left"
 
