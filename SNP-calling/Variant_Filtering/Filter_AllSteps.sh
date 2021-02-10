@@ -98,8 +98,7 @@ echo "Removing sites with QUAL values below ${QUAL} and/or ExcessHet values abov
 
 # first index file
 gatk --java-options "-Xmx2g" IndexFeatureFile \
--F ${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_HETFiltered.vcf \
---output
+-F ${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_HETFiltered.vcf
 
 gatk --java-options "-Xmx22g" SelectVariants \
 -R ${GEN_FASTA} \
