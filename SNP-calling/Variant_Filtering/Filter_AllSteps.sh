@@ -21,8 +21,8 @@ GATK_JAR=/apps/eb/GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8/gatk
 module load BCFtools/1.10.2-GCC-8.3.0
 
 GEN_FASTA="/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta"
-#OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All"
-OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test"
+OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All"
+#OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test"
 TEMP_DIR="/scratch/eld72413/Tmp"
 OUT_PREFIX="Sunflower_SAM_SNP"
 
@@ -31,7 +31,7 @@ GQ=6
 MinDP=3
 MaxDP=50
 QUAL=40.0
-het_prop=0.2
+het_prop=0.2 # I get errors when I try to use the variable in the bcftools filter statement
 MaxExcessHet=5.0
 
 mkdir -p ${OUTPUT_DIR}/Intermediates
