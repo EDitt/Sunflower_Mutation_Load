@@ -87,7 +87,7 @@ echo "After filtering out sites with too many low quality or missing variants, t
 
 echo "Filtering out sites with more than ${het_prop} heterozygous genotypes"
 
-bcftools filter -i 'COUNT(GT="het")/(N_SAMPLES-N_MISSING) < ${het_prop}' ${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_GenoFieldFiltered.vcf -o ${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_HETFiltered.vcf
+bcftools filter -i 'COUNT(GT="het")/(N_SAMPLES-N_MISSING) < 0.2' ${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_GenoFieldFiltered.vcf -o ${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_HETFiltered.vcf
 
 num_sites3=$(grep -v "#" "${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_HETFiltered.vcf" | wc -l)
 echo "After filtering out sites with more than ${het_prop} heterozygous sites, there are ${num_sites3} sites remaining"
