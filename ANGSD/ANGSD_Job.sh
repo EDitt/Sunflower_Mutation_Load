@@ -1,6 +1,7 @@
 #!/bin/bash -l
 
 #SBATCH --job-name=ANGSD
+#SBATCH --partition=batch
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=16
