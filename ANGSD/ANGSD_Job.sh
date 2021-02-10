@@ -1,11 +1,11 @@
 #!/bin/bash -l
 
 #SBATCH --job-name=ANGSD
-#SBATCH --partition=batch
+#SBATCH --partition=highmem_p
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=16
-#SBATCH --mem=22G
+#SBATCH --mem=500G
 #SBATCH --time=6:00:00
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
