@@ -22,12 +22,17 @@ INPUT_VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/N
 OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter7_020921"
 TEMP_DIR="/scratch/eld72413/Tmp"
 
+echo "Assigning filter labels to genotypes with a depth below 3"
+
 gatk --java-options "-Xmx22g" VariantFiltration \
 	-R ${REF_FASTA} \
 	-V ${INPUT_VCF} \
 	-O ${OUTPUT_DIR}/Sunflower_SAM_SNP_Calling_GenoDPField.vcf \
 	--genotype-filter-name "below3DP" --genotype-filter-expression "DP < 3" \
 	--tmp-dir ${TEMP_DIR}
+
+echo "Done assigning filter labels"
+echo "Setting filtered genotypes to no-call & removing sites with more than 20% missing data"
 
 gatk --java-options "-Xmx22g" SelectVariants \
 -R ${REF_FASTA} \
@@ -39,3 +44,5 @@ gatk --java-options "-Xmx22g" SelectVariants \
 --exclude-non-variants true \
 --remove-unused-alternates true \
 --tmp-dir ${TEMP_DIR}
+
+echo "Done removing filtered genotypes and sites with more than 20% missing data"
