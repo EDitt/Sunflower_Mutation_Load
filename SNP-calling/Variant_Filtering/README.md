@@ -155,6 +155,10 @@ Used `gatk_SelectVarRemoveNonVar.sh`
 
 * new: decided to filter for min DP per sample
 Make a script `gatk_FilterMinDP.sh` to run
+```bash
+ERROR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter7_020921"
+sbatch -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err gatk_FilterMinDP.sh #1542394
+```
  
 7.) Select only biallelic
 
@@ -176,6 +180,8 @@ bcftools view -m2 -M2 -v snps --threads 4 ${VCF} --output-type v --output-file $
 8.) Remove highly heterozygous individuals?
 
 
+----
+
 ## All steps at once
 
 Subset VCF to test first
@@ -187,11 +193,19 @@ bcftools view /scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subse
 # 34,859 sites
 ```
 
-Will direct standard output to be saved here:
-`/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/ErrorFiles`
-
 test on small file
 ```bash
 ERROR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test/ErrorFiles
-sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test/Test.vcf' -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err Filter_AllSteps.sh #1541275
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test/Test.vcf' -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err Filter_AllSteps.sh #1542038
+# [filter.c:2491 filters_init1] Error: the tag "${het_prop}" is not defined in the VCF header
+```
+
+Run on recalibrated file
+Will direct standard output to be saved here:
+`/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/ErrorFiles`
+
+```bash
+ERROR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/ErrorFiles
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Variant_Recalibrator/Sunflower_SAM_SNP_Calling_snps.recalibrated.vcf.gz' -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err Filter_AllSteps.sh #1542380
+
 ```
