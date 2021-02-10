@@ -13,6 +13,7 @@
 #SBATCH -o %j.out
 #SBATCH -e %j.err
 #SBATCH --chdir=/scratch/eld72413/Tmp
+#SBATCH --tmp=10gb
 
 set -o pipefail
 
