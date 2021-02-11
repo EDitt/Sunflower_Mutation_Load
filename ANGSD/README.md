@@ -74,9 +74,12 @@ srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 -
 
 sbatch --export=WRAPPER='Inbreeding',CONFIG='/scratch/eld72413/SAM_seq/ANGSD/Configuration_Files/Inbreeding_Coefficients_Config' ANGSD_Job.sh
 ```
-
-
-
+check processor architecture from running interactive job:
+```bash
+lscpu
+# 2 threads per core
+# tried setting N_Cores=2 in common config
+```
 #### 3. SFS
 ```bash
 ./angsd-wrapper SFS /scratch/eld72413/NSFproj/ANGSD_FILES/Site_Frequency_Spectrum_Config
