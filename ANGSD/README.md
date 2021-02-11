@@ -11,10 +11,13 @@ The resulting .bam files were then used in 'Realigner_Target_Creator' and 'Indel
 To install dependencies, first needed to load gsl module
 ```bash
 module load GSL/2.6-GCC-8.3.0
+module load GSL/2.6-iccifort-2019.5.281 # trying this after having complition issues
 
 # other dependencies needed:
-module load SAMtools/1.10-GCC-8.3.0
-module load gnuplot/5.2.2-foss-2018a
+#module load SAMtools/1.10-GCC-8.3.0
+#module load gnuplot/5.2.2-foss-2018a
+module load SAMtools/1.10-iccifort-2019.5.281
+module load gnuplot/5.2.8-GCCcore-8.3.0
 ```
 
 
@@ -64,7 +67,10 @@ Edited Angsd script to reflect Slurm
 
 srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
 
+--chdir=/scratch/eld72413/Tmp
+
 ./angsd-wrapper Inbreeding /scratch/eld72413/SAM_seq/ANGSD/Configuration_Files/Inbreeding_Coefficients_Config
+./angsd-wrapper Inbreeding /home/eld72413/DelMut/Sunflower_Mutation_Load/ANGSD/ConfigFiles/...
 
 sbatch --export=WRAPPER='Inbreeding',CONFIG='/scratch/eld72413/SAM_seq/ANGSD/Configuration_Files/Inbreeding_Coefficients_Config' ANGSD_Job.sh
 ```
