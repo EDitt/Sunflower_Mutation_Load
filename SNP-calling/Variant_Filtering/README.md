@@ -159,7 +159,8 @@ Make a script `gatk_FilterMinDP.sh` to run
 ERROR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter7_020921"
 sbatch -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err gatk_FilterMinDP.sh #1542394
 ```
- 
+45,973,312 variants remain
+
 7.) Select only biallelic
 
 Filter to biallelic sites
