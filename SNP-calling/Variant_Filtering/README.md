@@ -209,6 +209,6 @@ Will direct standard output to be saved here:
 ERROR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/ErrorFiles
 sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Variant_Recalibrator/Sunflower_SAM_SNP_Calling_snps.recalibrated.vcf.gz' -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err Filter_AllSteps.sh #1542380
 # job ran out of walltime (48 hours)
-# restarted after commenting out steps that had been completed
+# restarted after commenting out steps that had been completed- new: 1566818
 
 ```
