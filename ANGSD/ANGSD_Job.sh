@@ -26,7 +26,8 @@ module load gnuplot/5.2.8-GCCcore-8.3.0
 
 SLURM_TMPDIR="/scratch/eld72413/Tmp"
 
-cd /home/eld72413/ANGSD_DEV/new4_recompileREDO/angsd-wrapper
+#cd /home/eld72413/ANGSD_DEV/new4_recompileREDO/angsd-wrapper
+cd /home/eld72413/ANGSD_DEV/new2/angsd-wrapper
 
 ./angsd-wrapper ${WRAPPER} ${CONFIG}
 
