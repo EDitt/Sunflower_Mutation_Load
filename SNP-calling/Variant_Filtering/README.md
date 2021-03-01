@@ -161,6 +161,8 @@ sbatch -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err gatk_FilterMinDP.sh #
 ```
 45,973,312 variants remain
 
+
+
 7.) Select only biallelic
 
 Filter to biallelic sites
@@ -210,5 +212,72 @@ ERROR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/V
 sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Variant_Recalibrator/Sunflower_SAM_SNP_Calling_snps.recalibrated.vcf.gz' -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err Filter_AllSteps.sh #1542380
 # job ran out of walltime (48 hours)
 # restarted after commenting out steps that had been completed- new: 1566818
+
+# with multi-allelic sites, had 52707200 sites; biallelic= 49596706
+
+```
+
+Output:
+Selecting Pass Sites from Variant Recalibrator
+After filtering out sites that failed variant recalibrator, there are 81431704 sites left
+
+Adding Filter labels to low quality genotypes. Cut-offs are as follows: MinGQ is 6; MinDP is 3; MaxDP is 50
+Done adding filter labels to low quality genotypes. Removing sites with more than 0.2 low quality or missing genotypes
+After filtering out sites with too many low quality or missing variants, there are 62245682 sites left
+
+Filtering out sites with more than 0.2 heterozygous genotypes
+After filtering out sites with more than 0.2 heterozygous sites, there are 59273737 sites remaining
+
+Removing sites with QUAL values below 40.0 and/or ExcessHet values above 5.0
+After filtering for QUAL and ExcessHet annotations, there are 52707200 sites remaining
+
+Selecting biallelic sites
+After selecting only biallelic sites, there are 49596706 variants
+
+Why is there this discrepancy? Filtering with a different order (see step 7) gave me 45,973,312 multi-allelic sites
+(compared to 52707200)
+
+Look at differences with variants to table
+```bash
+#tmux window: count
+module load BCFtools/1.10.2-GCC-8.3.0
+bcftools stats Sunflower_SAM_SNP_FINALFilter.vcf > SAM_SNPs_FINAL_multiallelic.txt
+
+srun --pty  -p inter_p  --mem=8G --nodes=1 --ntasks-per-node=4 --time=24:00:00 --job-name=qlogin /bin/bash -l
+
+module load GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
+GATK_JAR=/apps/eb/GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8/gatk
+INPUT_VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_FINALFilter.vcf
+INTERVALS=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Create_HC_Subset/Intermediates/Genome_Random_Intervals.bed
+OUTPUT_DIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All
+gatk --java-options "-Xmx2g" VariantsToTable \
+     -V "${INPUT_VCF}" \
+     -L "${INTERVALS}" \
+     -F CHROM -F POS -F FILTER -F DP -F ExcessHet -F QUAL -F InbreedingCoeff -F HET -F HOM-REF -F HOM-VAR -F NCALLED -F NO-CALL -F MULTI-ALLELIC \
+     -GF GQ -GF DP \
+     --show-filtered \
+     -O "${OUTPUT_DIR}/Variants_VarFilterAllFINAL.table"
+```
+
+and on new filter:
+```bash
+INPUT_VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter7_020921/Sunflower_SAM_SNP_Calling_DP_min3Filtered.vcf
+INTERVALS=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Create_HC_Subset/Intermediates/Genome_Random_Intervals.bed
+OUTPUT_DIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter7_020921
+gatk --java-options "-Xmx2g" VariantsToTable \
+     -V "${INPUT_VCF}" \
+     -L "${INTERVALS}" \
+     -F CHROM -F POS -F FILTER -F DP -F ExcessHet -F QUAL -F InbreedingCoeff -F HET -F HOM-REF -F HOM-VAR -F NCALLED -F NO-CALL -F MULTI-ALLELIC \
+     -GF GQ -GF DP \
+     --show-filtered \
+     -O "${OUTPUT_DIR}/Variants_DPmin3Filtered.table"
+```
+
+One problem I uncovered for both sets was the degree of missingness. They both have sites with a much higher number of missing data than 0.2. This might be to GATK performing that filtering step *before* it sets filtered genotypes to no-call.
+
+I made a script - `bcftools_missingfilter.sh` to filter missing data from some of the intermediate vcf files
+
+```bash
+sbatch --export=vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Intermediates/Sunflower_SAM_SNP_GenoFieldFiltered.vcf',out_dir='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Intermediates',out_prefix='Sunflower_SAM_SNP' bcftools_missingfilter.sh
 
 ```
