@@ -286,3 +286,13 @@ I will also do this on the other vcf file (different order):
 ```bash
 sbatch --export=vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter7_020921/Sunflower_SAM_SNP_Calling_DP_min3Filtered.vcf',out_dir='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter7_020921',out_prefix='Sunflower_SAM_SNP' bcftools_missingfilter.sh # 1892342
 ```
+Number = 39,245,434 (previously was 45,973,312)
+
+# Re-ran after adding new step 3 (bcftools) to filter out sites with too many missing variants (set to no-call by GATK):
+```bash
+# test first
+ERROR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test/ErrorFiles
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test/Test.vcf' -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err Filter_AllSteps.sh #1897190
+
+# deleted the "Het filtered", "FINAL filter", and "Biallelic filter" vcf files and restarted from the new intermediate "missing filtered" 
+```

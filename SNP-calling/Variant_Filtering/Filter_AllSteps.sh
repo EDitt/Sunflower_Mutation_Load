@@ -21,8 +21,8 @@ GATK_JAR=/apps/eb/GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8/gatk
 module load BCFtools/1.10.2-GCC-8.3.0
 
 GEN_FASTA="/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta"
-#OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All"
-OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test"
+OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All"
+#OUTPUT_DIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test"
 TEMP_DIR="/scratch/eld72413/Tmp"
 OUT_PREFIX="Sunflower_SAM_SNP"
 
@@ -38,7 +38,7 @@ mkdir -p ${OUTPUT_DIR}/Intermediates
 
 # Step 1: Removing sites that failed variant recalibrator
 
-if [[ -f "${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_recalibrated_pass_sites.vcf" ]]; then
+if [[ -f "${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_recalibrated_pass_sites.vcf.idx" ]]; then
 	echo "Recalibrated pass sites already selected, proceeding to step 2"
 else
 	echo "Selecting Pass Sites from Variant Recalibrator"
@@ -139,7 +139,6 @@ else
 	num_sites5=$(grep -v "#" "${OUTPUT_DIR}/${OUT_PREFIX}_FINALFilter.vcf" | wc -l)
 	echo "After filtering for QUAL and ExcessHet annotations, there are ${num_sites5} sites remaining"
 fi
-
 
 # Step 6: Select only biallelic sites
 if [[ -f ${OUTPUT_DIR}/${OUT_PREFIX}_BIALLELIC.vcf ]]; then
