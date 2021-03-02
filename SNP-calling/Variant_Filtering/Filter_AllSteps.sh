@@ -83,6 +83,9 @@ gatk --java-options "-Xmx22g" SelectVariants \
 num_sites2=$(grep -v "#" "${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_GenoFieldFiltered.vcf" | wc -l)
 echo "After filtering out sites with too many low quality or missing variants, there are ${num_sites2} sites left"
 
+### NOTE: It was discovered that the order of filtering by gatk was that it removed nocall-fraction genotypes *before* it set filtered genotypes to no-call,
+# necessitating an intermediate step here to filter out missing data - used bcftools (see bcftools_missingfilter.sh)
+
 # Step 3: Filtering out sites with too many heterozygous genotypes
 
 echo "Filtering out sites with more than ${het_prop} heterozygous genotypes"

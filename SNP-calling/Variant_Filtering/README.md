@@ -278,6 +278,11 @@ One problem I uncovered for both sets was the degree of missingness. They both h
 I made a script - `bcftools_missingfilter.sh` to filter missing data from some of the intermediate vcf files
 
 ```bash
-sbatch --export=vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Intermediates/Sunflower_SAM_SNP_GenoFieldFiltered.vcf',out_dir='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Intermediates',out_prefix='Sunflower_SAM_SNP' bcftools_missingfilter.sh
+sbatch --export=vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Intermediates/Sunflower_SAM_SNP_GenoFieldFiltered.vcf',out_dir='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Intermediates',out_prefix='Sunflower_SAM_SNP' bcftools_missingfilter.sh # 1892317
+```
+Number = 44,689,089 (previously was 62,245,682)
 
+I will also do this on the other vcf file (different order):
+```bash
+sbatch --export=vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter7_020921/Sunflower_SAM_SNP_Calling_DP_min3Filtered.vcf',out_dir='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter7_020921',out_prefix='Sunflower_SAM_SNP' bcftools_missingfilter.sh # 1892342
 ```
