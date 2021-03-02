@@ -292,7 +292,15 @@ Number = 39,245,434 (previously was 45,973,312)
 ```bash
 # test first
 ERROR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test/ErrorFiles
-sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test/Test.vcf' -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err Filter_AllSteps.sh #1897190
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Test/Test.vcf' -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err Filter_AllSteps.sh # 1897190
 
-# deleted the "Het filtered", "FINAL filter", and "Biallelic filter" vcf files and restarted from the new intermediate "missing filtered" 
+# deleted the "Het filtered", "FINAL filter", and "Biallelic filter" vcf files and restarted from the new intermediate "missing filtered" - step 4 (redo Het filter, QUAL filter + ExcessHet, Biallelic filters)
+ERROR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/ErrorFiles
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Variant_Recalibrator/Sunflower_SAM_SNP_Calling_snps.recalibrated.vcf.gz' -o ${ERROR}/Filter.%j.out -e ${ERROR}/Filter.%j.err Filter_AllSteps.sh # 1897249
 ```
+#### Output:
+Recalibrated pass sites already selected, proceeding to step 2
+Filter labels already added to low quality genotypes
+Filtered genotypes already set to no call, proceeding to step 3
+Sites with too many low quality genotypes (set to missing by GATK in previous step) already filtered out, proceeding to step 4
+Filtering out sites with more than 0.2 heterozygous genotypes
