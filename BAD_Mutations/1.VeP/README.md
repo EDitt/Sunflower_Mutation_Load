@@ -4,29 +4,8 @@
 
 ## Prepare input files
 
-This takes a really long time with full set of SNPs. To QC data, will first subset using my regions file with 1M random intervals of 200 bp regions
-```bash
-# for bcftools need a 3-column regions file
-Bed="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Create_HC_Subset/Intermediates/Genome_Random_Intervals.bed"
-OUTPUTDIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/VeP"
-
-awk '{print $1,$2,$3}' $Bed > ${OUTPUTDIR}/RegionsFile1M.bed
-
-srun --pty  -p inter_p  --mem=2G --nodes=1 --ntasks-per-node=1 --time=12:00:00 --job-name=qlogin /bin/bash -l
-regions="${OUTPUTDIR}/RegionsFile1M.bed"
-VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Sunflower_SAM_SNP_Calling_Final_Filtered.vcf.gz
-module load BCFtools/1.10.2-GCC-8.3.0
-
-bcftools filter -R ${Bed} ${VCF} -o ${OUTPUTDIR}/SAM_Sunflower_Subset.vcf.qz
-bcftools stats ${OUTPUTDIR}/SAM_Sunflower_Subset.vcf.qz #3,264,946 variants
-# number multi-allelic
-awk '{if ($3 > 2) {print $0}}' SAM_SNPs_SUBSETFINAL.frq | wc -l #189,373
-
-awk '{if ($3 == 2) {print $0}}' SAM_SNPs_SUBSETFINAL.frq > SAM_SNPs_SUBSETFINAL_Biallelic.frq
-```
-
 Normalize VCF (make sure allele matches reference)
-Used `NormalizeVCF.sh` script
+Used `NormalizeVCF.sh` script #1902501
 
 New index + stats on normalized vcf:
 ```bash
@@ -333,3 +312,26 @@ python /home/eld72413/DelMut/BAD_Mutations/BAD_Mutations.py -v DEBUG fetch -c $T
 # location of genome alignments on MSI:
 /panfs/roc/groups/9/morrellp/shared/Projects/Selective_Sweeps/BAD_Mutations_Genomes
 
+
+##### ARCHIVE
+
+This takes a really long time with full set of SNPs. To QC data, will first subset using my regions file with 1M random intervals of 200 bp regions
+```bash
+# for bcftools need a 3-column regions file
+Bed="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Create_HC_Subset/Intermediates/Genome_Random_Intervals.bed"
+OUTPUTDIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/VeP"
+
+awk '{print $1,$2,$3}' $Bed > ${OUTPUTDIR}/RegionsFile1M.bed
+
+srun --pty  -p inter_p  --mem=2G --nodes=1 --ntasks-per-node=1 --time=12:00:00 --job-name=qlogin /bin/bash -l
+regions="${OUTPUTDIR}/RegionsFile1M.bed"
+VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Sunflower_SAM_SNP_Calling_Final_Filtered.vcf.gz
+module load BCFtools/1.10.2-GCC-8.3.0
+
+bcftools filter -R ${Bed} ${VCF} -o ${OUTPUTDIR}/SAM_Sunflower_Subset.vcf.qz
+bcftools stats ${OUTPUTDIR}/SAM_Sunflower_Subset.vcf.qz #3,264,946 variants
+# number multi-allelic
+awk '{if ($3 > 2) {print $0}}' SAM_SNPs_SUBSETFINAL.frq | wc -l #189,373
+
+awk '{if ($3 == 2) {print $0}}' SAM_SNPs_SUBSETFINAL.frq > SAM_SNPs_SUBSETFINAL_Biallelic.frq
+```

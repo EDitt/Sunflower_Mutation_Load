@@ -14,8 +14,8 @@
 
 
 #Compressed_VCF=/scratch/eld72413/NSFproj/PublishedSNPs/Edited/fullsam.90.remappedHa412HO_norm_biallelic.vcf.gz
-VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz"
-OUTPUTDIR="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP"
+VCF="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz"
+OUTPUTDIR="/scratch/eld72413/SAM_seq/VeP"
 OUTPUTPREFIX=SAM_SNP_Final_BiallelicNorm
 
 #    Variant sets should be either 'deletions', 'insertions', or 'snps'
