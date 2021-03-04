@@ -304,3 +304,110 @@ Filter labels already added to low quality genotypes
 Filtered genotypes already set to no call, proceeding to step 3
 Sites with too many low quality genotypes (set to missing by GATK in previous step) already filtered out, proceeding to step 4
 Filtering out sites with more than 0.2 heterozygous genotypes
+After filtering out sites with more than 0.2 heterozygous sites, there are 43034250 sites remaining
+Removing sites with QUAL values below 40.0 and/or ExcessHet values above 5.0
+Tool returned:
+/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Intermediates/Sunflower_SAM_SNP_HETFiltered.vcf.idx
+After filtering for QUAL and ExcessHet annotations, there are 39226506 sites remaining
+Selecting biallelic sites
+After selecting only biallelic sites, there are 37129915 variants
+
+## Check filtering
+```bash
+tmux new -s VarTable
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=1 --time=4:00:00 --job-name=qlogin /bin/bash -l
+module load GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
+
+OUTPUT_DIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All
+INTERVALS=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Create_HC_Subset/Intermediates/Genome_Random_Intervals.bed
+
+gatk --java-options "-Xmx2g" IndexFeatureFile \
+     -F /scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_BIALLELIC.vcf
+
+gatk VariantsToTable \
+     -V /scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_BIALLELIC.vcf \
+     -F CHROM -F POS -F MULTI-ALLELIC -F QUAL -F FILTER -F NCALLED -F HET -F ExcessHet -F DP -F InbreedingCoeff -F QD \
+     -GF GQ -GF DP \
+      -L "${INTERVALS}" \
+     --show-filtered \
+     -O "${OUTPUT_DIR}/BIALLELIC_Variants.table"
+
+# break up df to load into R
+cut -f1-11 BIALLELIC_Variants.table > BIALLELIC_Variants_SITEFIELDs.table
+
+module load R/4.0.0-foss-2019b
+R
+
+# GQ and DP values
+# GQ
+GQ_columns=$(head -n 1 BIALLELIC_Variants.table | tr '\t' '\n' | cat -n | grep -E *.GQ | awk '{print $1}' | paste -s -d, -)
+cat BIALLELIC_Variants.table | cut -f${GQ_columns} > BIALLELIC_Variants_GQvalues.table
+
+#DP
+DP_columns=$(head -n 1 BIALLELIC_Variants.table | tr '\t' '\n' | cat -n | grep -E *.DP | awk '{print $1}' | paste -s -d, -)
+cat BIALLELIC_Variants.table | cut -f${DP_columns} > BIALLELIC_Variants_DPvalues.table
+```
+Use R on table data
+```R
+NewFilter <- read.table("BIALLELIC_Variants_SITEFIELDs.table", header = T, na.strings=c("","NA"), sep = "\t")
+# check filters:
+# make sure no multi-allelic or failed sites
+aggregate(NewFilter$POS, by=list(NewFilter$MULTI.ALLELIC, NewFilter$FILTER), length) # all "false" for multi-allelic and "PASS" for filter
+
+# number of called genotypes
+min(NewFilter$NCALLED) # 231 
+
+# proportion of heterozygotes
+NewFilter$PropHET <- NewFilter$HET / NewFilter$NCALLED
+max(NewFilter$PropHET) # 0.1992883
+
+# QUAL & ExcessHet values
+min(NewFilter$QUAL) # 40.01
+max(NewFilter$ExcessHet) # 4.9994
+
+GQvals <- read.table("BIALLELIC_Variants_GQvalues.table", header = T, na.strings=c("","NA"), sep = "\t") # 2.61 GB memory
+# there are values below 6 here. are those genotypes missing but GQ value still there?
+
+GQvals[GQvals < 6] <- NA # replace with NA (assuming annotation is there even if genotype is not?)
+
+# length of GQ values lower than the threshold
+GQvals$lengthGQ <- apply(GQvals, 1, function(x) sum(is.na(x)))
+# there shouldn't be more than 57
+max(GQvals$lengthGQ) # 57
+
+GQvals$MeanGQ <- rowMeans(GQvals, na.rm=T)
+
+GQ_Info <- GQvals[,c("lengthGQ", "MeanGQ")]
+colnames(GQ_Info) <- c("Num_LowQQ", "MeanGQ")
+
+rm(GQvals) # to free up memory
+
+DPvals <- read.table("BIALLELIC_Variants_DPvalues.table", header = T, na.strings=c("","NA"), sep = "\t")
+DPvals[DPvals < 3] <- NA
+DPvals$Num_LowDP <- apply(DPvals, 1, function(x) sum(is.na(x)))
+
+DPvals[DPvals > 50] <- NA
+DPvals$Num_filteredDP <- apply(DPvals, 1, function(x) sum(is.na(x))) # all filtered
+max(DPvals$Num_filteredDP) # 59 ???????
+
+DPvals$Num_HighDP <- DPvals$Num_filteredDP - DPvals$Num_LowDP
+
+DPvals$MeanDP <- rowMeans(DPvals, na.rm=T)
+
+### make a new dataframe
+
+GT_summaries <- cbind(DPvals[,c("Num_LowDP", "Num_HighDP", "Num_filteredDP", "MeanDP")], GQ_Info[,c("Num_LowQQ", "MeanGQ")])
+
+write.csv(GT_summaries, "GT_summarySTATS.csv")
+
+### average for each accession
+Ave_DP <- apply(DPvals[,c(2:289)], 2, function(x) {mean(x, na.rm=TRUE)})
+write.table(Ave_DP, "AverageDP_perLine.txt")
+
+```
+Other than having 59 NA's (max should be 57) for the depth genotype fields, everything looks as expected-
+
+## Gzip and Index VCF for VeP steps
+```bash
+sbatch --export=file='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_BIALLELIC.vcf' gzip_vcf.sh # 1902364
+```
