@@ -36,16 +36,16 @@ job# 1905309
 tmux new -s bad_mutations
 srun --pty  -p inter_p  --mem=4G --nodes=1 --ntasks-per-node=4 --time=6:00:00 --job-name=qlogin /bin/bash -l
 
-VEP_OUTPUT=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/SAM_SNP_Final_BiallelicNorm
+VEP_OUTPUT=/scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm
 
 #gzip input file
 gzip -c ${VEP_OUTPUT} > SAM_SNP_Final_BiallelicNorm.txt.gz
 
-VEP_OUTPUT_GZIP=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/SAM_SNP_Final_BiallelicNorm.txt.gz
+VEP_OUTPUT_GZIP=/scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm.txt.gz
 # output file needs to include all directory information
-OUTPUTFILE=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/SAM_SNP_BadMut_Summary
+OUTPUTFILE=/scratch/eld72413/SAM_seq/BAD_Mut_Files/SAM_SNP_BadMut_Summary
 # this will be a directory that contains substitution files for every transcript
-OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/BadMutationsSubs
+OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/BadMutationsSubs
 
 module load Biopython/1.75-foss-2019b-Python-2.7.16
 cd /home/eld72413/DelMut/BAD_Mutations/Supporting

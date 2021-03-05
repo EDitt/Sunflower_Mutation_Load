@@ -14,7 +14,7 @@
 #SBATCH -o MakeFastas.sh.%A_%a.out
 #SBATCH -e MakeFastas.sh.%A_%a.err
 
-#SBATCH --array=1-57
+#SBATCH --array=1-51
 
 
 module load gffread/0.11.6-GCCcore-8.3.0
@@ -22,7 +22,7 @@ module load gffread/0.11.6-GCCcore-8.3.0
 
 GFF3=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.gff3
 FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
-OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/FASTAs
+OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/BadMutationsFASTAs
 
 List_to_Process=$(sed -n ${SLURM_ARRAY_TASK_ID}p $List_of_lists)
 echo "Processing List ${List_to_Process}"
