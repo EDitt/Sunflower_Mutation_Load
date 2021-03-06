@@ -53,67 +53,71 @@ python VeP_to_Subs.py $VEP_OUTPUT_GZIP $OUTPUTFILE $OUTPUTDIR
 
 ```
 
+#### Check to make sure there is only 1 transcript per gene
+Parse GFF3 file to count the number of unique genes/transcripts for each mRNA
+```bash
+# column 2=mRNA, column4=gene
+awk '{if ($3=="mRNA") {print $9}}' $GFF3 | awk -F "[;:]" '{$1 = $1; print $2}' | sort -u | wc -l # 72995
+
+awk '{if ($3=="mRNA") {print $9}}' $GFF3 | awk -F "[;:]" '{$1 = $1; print $4}' | sort -u | wc -l # 72995
+```
+
+
 #### Generate FASTA query files
 I used the gffread utility. This will make a FASTA file of CDs within a given genomic range
 ```bash
-module load gffread/0.11.6-GCCcore-8.3.0
-
-GFF3=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.gff3
-FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
-OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/FASTAs
-
 # output file variable is the summary output from the VeP_to_Subs.py script (above)
-mRNA=$(awk '{print $1}' ${OUTPUTFILE} | sort -u) #N= 56030 (number of .subs files)
-
-# script to output FASTA files for CDs from each mRNA. Need to remove special characters for Bad Mutations
-for seq in $mRNA; do
-	coord=$(grep "${seq}" $GFF3 | awk '{if ($3=="mRNA") {print $1":"$4".."$5}}')
-	num=$(for i in ${coord}; do echo $i; done | wc -l)
-	if [[ $num > 1 ]]; then
-		echo "ERROR: There are ${num} lines matching"
-	else
-		gffread $GFF3 -g $FASTA -r ${coord} -x ${OUTPUTDIR}/${seq#mRNA:}.fasta
-		sed -i 's/>mRNA:/>/' ${OUTPUTDIR}/${seq#mRNA:}.fasta
-	fi
-done
-# job terminated before doing all
-
-# can check to makes sure number of nucleotides is divisible by 3:
-grep -v "^>" Ha412HOChr17g0858291.fasta | grep -Eo '[[:alnum:]]' | wc -l
-
-# need to parallelize this
+awk '{print $1}' ${OUTPUTFILE} | sort -u | wc -l #N= 50838 (number of .subs files)
 
 # make a list of all unique mRNA names
-awk '{print $1}' ${OUTPUTFILE} | sort -u > mRNA_names_unique.txt #56030
+awk '{print $1}' ${OUTPUTFILE} | sort -u > mRNA_names_unique.txt #50838
+
+# This needs to be parallelized
 
 #split into groups of 1000
-Dir="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/mRNA_lists"
+Dir="/scratch/eld72413/SAM_seq/BAD_Mut_Files/mRNA_lists"
 split -l 1000 --numeric-suffixes mRNA_names_unique.txt ${Dir}/SAM_mRNA_list- --suffix-length=3 --additional-suffix=.txt
+
 # Create list of lists
 find $Dir -name "*list-*.txt" | sort -V > all_mRNA_list_of_lists.txt
-# 57
+# 51
 
 #Used script 'MakeFastas.sh' as array job
-sbatch --export=List_of_lists='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/all_mRNA_list_of_lists.txt' MakeFastas.sh #1209188
+sbatch --export=List_of_lists='/scratch/eld72413/SAM_seq/BAD_Mut_Files/all_mRNA_list_of_lists.txt' MakeFastas.sh # 1913319
+
+# make sure correct number of files
+cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/BadMutationsFASTAs
+ls -1 | wc -l # 50838
+
+# can check to makes sure number of nucleotides is divisible by 3:
+grep -v "^>" Ha412HOChr11g0505281.fasta | grep -Eo '[[:alnum:]]' | wc -l
+
+## check all fasta files:
+for file in `ls -1`; do
+num=$(grep -v "^>" Ha412HOChr11g0505281.fasta | grep -Eo '[[:alnum:]]' | wc -l)
+if (( $num % 3 != 0)); then
+echo "$file is not Divisible by 3"
+fi
+done
+
 ```
 
 Need to remove the "mRNA:" from the .subs files
 ```bash
-Subs_Dir="/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Filter6_011221/Biallelic/VeP/BadMutationsSubs"
+Subs_Dir="/scratch/eld72413/SAM_seq/BAD_Mut_Files/BadMutationsSubs"
 cd $Subs_Dir
 for i in *; do 
 echo "changing $i to ${i#mRNA:}"
 mv $i ${i#mRNA:}
 done
-
 ```
 
 Create tar archive for uploading to UMN cluster
 ```bash
 tmux new -s tar_archive
-tar -czf Bad_mutations.tar.gz ./BadMutationsSubs ./FASTAs ./mRNA_lists
+tar -czf Bad_mutations.tar.gz ./BadMutationsSubs ./BadMutationsFASTAs
 
-# also uploading documents: mRNA_names_unique.txt, SAM_SNP_BadMut_Summary
+# also uploading documents: SAM_SNP_BadMut_Summary
 ```
 
 
