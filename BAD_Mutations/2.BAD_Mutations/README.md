@@ -162,6 +162,7 @@ Used Chaochih's script: `bad_mut_align.sh`. I only changed the User-defined inpu
 sbatch --array=0-102 bad_mut_align.sh
 ```
 sbatch: Setting account: morrellp
-Submitted batch job 740887
+Submitted batch job 1430109
 
-array 71 had errors ("more than 1 record found in handle"). Need to check others for this error. (still running after 9 hours) Ha412HOChr12g0550871.fasta
+(on previous SNP set- JobID: 740887): array 71 had errors ("more than 1 record found in handle"). Need to check others for this error. (still running after 9 hours) Ha412HOChr12g0550871.fasta
+- jobs 740887_107 and 740887_96 stayed on pending ("launch failed requeued held"). Deleted these jobs
