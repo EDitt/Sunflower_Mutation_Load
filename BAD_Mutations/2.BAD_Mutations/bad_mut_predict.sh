@@ -7,8 +7,8 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=edittmar@umn.edu
 #SBATCH -p small,ram256g,ram1t,max
-#SBATCH -o bad_mut_align.sh.%A_%a.out
-#SBATCH -e bad_mut_align.sh.%A_%a.err
+#SBATCH -o bad_mut_predict.sh.%A_%a.out
+#SBATCH -e bad_mut_predict.sh.%A_%a.err
 
 ### *** NOTE: This script was written by Chaochih Liu for Barley project ****
 
@@ -48,7 +48,7 @@ SAMPLE_NAME=
 OUT_DIR=
 
 # Full path to the BAD_Mutations.py script
-BAD_MUT_SCRIPT=
+BAD_MUT_SCRIPT=/panfs/roc/groups/9/morrellp/shared/Software/BAD_Mutations/BAD_Mutations.py
 
 # Full path to where we want to store the log files output from parallel
 LOG_FILE_DIR=${OUT_DIR}/all_log_files
