@@ -108,7 +108,7 @@ BAD_Mutations.py compile: error: the following arguments are required: --pred-di
 
 ## Entire dataset
 
-Uploaded .tar.gz archive to MSI (`~shared/Projects/Sunflower`)
+Uploaded .tar.gz archive to MSI (`~shared/Projects/Sunflower`) as well as the Bad Mutaions summary file
 (See README.md from 1.VeP for how files were prepared)
 
 Extracted
@@ -123,7 +123,7 @@ The database of CDS files has already been created in: `/panfs/roc/groups/9/morr
 Conda software environment has been setup: `/home/morrellp/liux1299/.conda/envs/bad_mutations`
 
 ```bash
-ssh mesabi
+ssh mesabi # no longer need to do this because no login anymore on MSI
 module load python3/3.6.3_anaconda5.0.1
 source activate /home/morrellp/liux1299/.conda/envs/bad_mutations
 
@@ -149,17 +149,17 @@ Chaochih created a list of the individual FASTA files for each CD and then split
 
 Create a list of all fasta files, break into sublists of 500 each, make list of these lists
 ```bash
-FASTA_DIR="/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/FASTAs"
-find ${FASTA_DIR} -name "Ha*.fasta" | sort -V > /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/fasta_lists/All_Fasta.txt #56030
+FASTA_DIR="/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/BadMutationsFASTAs"
+find ${FASTA_DIR} -name "Ha*.fasta" | sort -V > /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/fasta_lists/All_Fasta.txt #50838
 
-split -l 500 --numeric-suffixes All_Fasta.txt Hannuus_cds_list- --suffix-length=3 --additional-suffix=.txt
+split -l 500 --numeric-suffixes All_Fasta.txt Hannuus_cds_list- --suffix-length=3 --additional-suffix=.txt #102 files
 
 find $(pwd -P) -name "*list-*.txt" | sort -V > all_cds_Hannuus_list_of_lists.txt
 ```
 
 Used Chaochih's script: `bad_mut_align.sh`. I only changed the User-defined input variables
 ```bash
-sbatch --array=0-112 bad_mut_align.sh
+sbatch --array=0-102 bad_mut_align.sh
 ```
 sbatch: Setting account: morrellp
 Submitted batch job 740887
