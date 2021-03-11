@@ -163,7 +163,42 @@ sbatch --array=0-102 bad_mut_align.sh
 ```
 sbatch: Setting account: morrellp
 Submitted batch job 1430109
+Job successfully completed
 
+check number of files
+```bash
+cd /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_output
+find -name "*.tree" | wc -l # 41665
+find -name "*_MSA.fasta" | wc -l # 41665
+
+# why are 9173 regions missing? which ones are they?
+find -maxdepth 1 -name "*list-*" | wc -l #102
+
+Input=/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_output
+
+find $Input -maxdepth 1 -type d -name "*list-*" | while read dir; do
+cd $dir
+filenum=$(find -name "*.tree" | wc -l)
+if [[ $filenum -ne 500 ]]; then
+echo "$dir has $filenum files"
+fi
+done
+# none of them have 500 files
+```
+
+How many are scaffold sequence?
+```bash
+# in the FASTA directory
+find -maxdepth 1 -name "Ha412HOChr00c*" | wc -l # 34
+
+# in the MSA output directory
+find -name "Ha412HOChr00c*tree" | wc -l #32
+
+
+```
+One sequence that failed: Ha412HOChr00c00023g0859521.fasta
+
+##
 (on previous SNP set- JobID: 740887): array 71 had errors ("more than 1 record found in handle"). Need to check others for this error. (still running after 9 hours) Ha412HOChr12g0550871.fasta
 - jobs 740887_107 and 740887_96 stayed on pending ("launch failed requeued held"). Deleted these jobs
 
