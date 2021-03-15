@@ -85,6 +85,8 @@ find $Dir -name "*list-*.txt" | sort -V > all_mRNA_list_of_lists.txt
 
 #Used script 'MakeFastas.sh' as array job
 sbatch --export=List_of_lists='/scratch/eld72413/SAM_seq/BAD_Mut_Files/all_mRNA_list_of_lists.txt' MakeFastas.sh # 1913319
+# redo after fixing FASTA problem with sometimes getting multiple sequences: 2039863
+# Note: still multi-sequence FASTA files
 
 # make sure correct number of files
 cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/BadMutationsFASTAs
@@ -95,9 +97,17 @@ grep -v "^>" Ha412HOChr11g0505281.fasta | grep -Eo '[[:alnum:]]' | wc -l
 
 ## check all fasta files:
 for file in `ls -1`; do
-num=$(grep -v "^>" Ha412HOChr11g0505281.fasta | grep -Eo '[[:alnum:]]' | wc -l)
-if (( $num % 3 != 0)); then
+num=$(grep -v "^>" $file | grep -Eo '[[:alnum:]]' | wc -l)
+if (( $num % 3 != 0 )); then
 echo "$file is not Divisible by 3"
+fi
+done
+
+## check all fasta files for multiple sequences (again):
+for file in `ls -1`; do
+num=$(grep "^>" $file | wc -l)
+if [[ $num -ne 1 ]]; then
+echo "$num sequences in $file"
 fi
 done
 
@@ -135,6 +145,7 @@ echo "${y%.fasta}"
 fi
 done > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Seqs_to_redo.txt
 
+# there are 8936 lines in here
 ```
 
 
