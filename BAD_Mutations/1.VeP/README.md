@@ -56,6 +56,7 @@ python VeP_to_Subs.py $VEP_OUTPUT_GZIP $OUTPUTFILE $OUTPUTDIR
 #### Check to make sure there is only 1 transcript per gene
 Parse GFF3 file to count the number of unique genes/transcripts for each mRNA
 ```bash
+GFF3=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.gff3
 # column 2=mRNA, column4=gene
 awk '{if ($3=="mRNA") {print $9}}' $GFF3 | awk -F "[;:]" '{$1 = $1; print $2}' | sort -u | wc -l # 72995
 
@@ -118,6 +119,22 @@ tmux new -s tar_archive
 tar -czf Bad_mutations.tar.gz ./BadMutationsSubs ./BadMutationsFASTAs
 
 # also uploading documents: SAM_SNP_BadMut_Summary
+```
+
+After the alignment step, I only had 4,1665 sequences. It turns out I needed an additional flag in the gffread command (-R) to only
+use transcripts fully contained in the coordinate sequence. Otherwise the FASTAs output can contain more than 1 sequence if there are transcripts on different strands that overlap positions
+```bash
+# make a list of sequences that I need to redo (e.g. have more than one sequence for each .fasta)
+
+for file in ./*; do
+seqnums=$(grep "^>" ${file} | wc -l)
+if [[ $seqnums -ne 1 ]]; then
+y=${file#./}
+echo "${y%.fasta}"
+#echo "Error: more than one sequence in FASTA $file"
+fi
+done > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Seqs_to_redo.txt
+
 ```
 
 

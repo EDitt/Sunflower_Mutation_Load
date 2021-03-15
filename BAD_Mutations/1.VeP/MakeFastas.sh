@@ -34,7 +34,12 @@ while read line; do
 		echo "ERROR: There are ${num} lines matching for ${line}"
 	else
 		echo "Processing FASTA for ${line}"
-		gffread $GFF3 -g $FASTA -r ${coord} -x ${OUTPUTDIR}/${line#mRNA:}.fasta
-		sed -i 's/>mRNA:/>/' ${OUTPUTDIR}/${line#mRNA:}.fasta
+		gffread $GFF3 -g $FASTA -r ${coord} -R -x ${OUTPUTDIR}/${line#mRNA:}.fasta
+		seqnums=$(grep "^>" ${OUTPUTDIR}/${line#mRNA:}.fasta | wc -l)
+		if [[ $seqnums -ne 1 ]]; then
+			echo "Error: $seqnums sequences in FASTA $line"
+		else
+			sed -i 's/>mRNA:/>/' ${OUTPUTDIR}/${line#mRNA:}.fasta
+		fi
 	fi
 done < $List_to_Process
