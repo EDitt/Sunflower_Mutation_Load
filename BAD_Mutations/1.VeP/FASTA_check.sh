@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name=CheckNRenameFASTAs
-#SBATCH --partition=batch
+#SBATCH -p small,ram256g,ram1t,max
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -19,16 +19,16 @@
 cd $FASTA_DIR
 
 for file in `ls -1`; do
-num_char=$(grep -v "^>" $file | grep -Eo '[[:alnum:]]' | wc -l)
-if (( $num_char % 3 != 0 )); then
-echo "ERROR: $file is not Divisible by 3"
-fi
-num_seq=$(grep "^>" $file | wc -l)
-if [[ $num_seq -ne 1 ]]; then
-echo "ERROR: $num sequences in $file"
-else
-sed -i 's/>mRNA:/>/' ${file}
-echo "Re-naming $file to ${file#mRNA:}sta"
-mv $file "${file#mRNA:}sta"
-fi
+	num_char=$(grep -v "^>" $file | grep -Eo '[[:alnum:]]' | wc -l)
+	if (( $num_char % 3 != 0 )); then
+		echo "ERROR: $file is not Divisible by 3"
+	fi
+	num_seq=$(grep "^>" $file | wc -l)
+	if [[ $num_seq -ne 1 ]]; then
+		echo "ERROR: $num sequences in $file"
+	else
+		sed -i 's/>mRNA:/>/' ${file}
+		echo "Re-naming $file to ${file#mRNA:}sta"
+		mv $file "${file#mRNA:}sta"
+	fi
 done
