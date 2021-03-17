@@ -148,6 +148,14 @@ done > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Seqs_to_redo.txt
 # there are 8936 lines in here
 ```
 
+Even after new script changes, there are still some FASTA files with >1 sequence (contained within same coordinates). Will try new approach by first extracting the CDs then splitting the FASTA file
+```bash
+sbatch FASTA_AllCDs.sh # 2040386
+# this finished quickly
+
+grep "^>" All_CDs.fasta | wc -l # 72995
+```
+I uploaded this file 'All_CDs.fasta' to the UMN cluster
 
 #############
 

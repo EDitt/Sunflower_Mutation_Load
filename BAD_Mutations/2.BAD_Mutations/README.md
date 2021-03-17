@@ -117,6 +117,25 @@ cd /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower
 tar -xf Bad_mutations.tar.gz
 ```
 
+## Split CDs into separate FASTA files
+Using Chaochih's script (split_cds_fasta.py from Barley_Mutated.git repository) to split up the CDs into individual files
+
+```bash
+module load python3_ML/3.7.1_anaconda
+./split_cds_fasta.py /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/All_CDs.fasta /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/BadMutationsFASTAS
+```
+Loading fasta file...
+Splitting fasta file...
+Done.
+
+Rename so extension is .fasta and not .fa & take out the "mRNA:" prefix
+Also check number of sequences and number of characters
+```bash
+sbatch --export=FASTA_DIR='/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/BadMutationsFASTAS' FASTA_check.sh # 1592462
+
+grep "ERROR:" FastaCheck.out | wc -l # 530 (not divisible by 3)
+```
+
 ### Create config file
 The database of CDS files has already been created in: `/panfs/roc/groups/9/morrellp/shared/Projects/Selective_Sweeps/BAD_Mutations_Genomes`
 
@@ -159,11 +178,11 @@ find $(pwd -P) -name "*list-*.txt" | sort -V > all_cds_Hannuus_list_of_lists.txt
 
 Used Chaochih's script: `bad_mut_align.sh`. I only changed the User-defined input variables
 ```bash
-sbatch --array=0-102 bad_mut_align.sh
+sbatch --array=0-101 bad_mut_align.sh
 ```
 sbatch: Setting account: morrellp
-Submitted batch job 1430109
-Job successfully completed
+Submitted batch job 1604694
+
 
 check number of files
 ```bash
@@ -197,10 +216,18 @@ find -name "Ha412HOChr00c*tree" | wc -l #32
 
 ```
 One sequence that failed: Ha412HOChr00c00023g0859521.fasta
+I need to edit some of the FASTA files (see MakeFastas.sh and README in 1.VeP folder) because some FASTA files had > 1 sequence
+
+Make a list of the files that failed (most of them due to having multiple sequences in FASTA) and re-run
+```bash
+
+
+```
 
 ##
 (on previous SNP set- JobID: 740887): array 71 had errors ("more than 1 record found in handle"). Need to check others for this error. (still running after 9 hours) Ha412HOChr12g0550871.fasta
 - jobs 740887_107 and 740887_96 stayed on pending ("launch failed requeued held"). Deleted these jobs
+
 
 
 ### Predict
