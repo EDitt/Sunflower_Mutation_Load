@@ -187,11 +187,8 @@ Submitted batch job 1604694
 check number of files
 ```bash
 cd /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_output
-find -name "*.tree" | wc -l # 41665
-find -name "*_MSA.fasta" | wc -l # 41665
-
-# why are 9173 regions missing? which ones are they?
-find -maxdepth 1 -name "*list-*" | wc -l #102
+find -name "*.tree" | wc -l # 50492 
+find -name "*_MSA.fasta" | wc -l # 50492 (was 41665 previously with FASTA issues)
 
 Input=/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_output
 
@@ -202,7 +199,7 @@ if [[ $filenum -ne 500 ]]; then
 echo "$dir has $filenum files"
 fi
 done
-# none of them have 500 files
+# none of them have 500 files (most missing 1-9)
 ```
 
 How many are scaffold sequence?
@@ -215,19 +212,33 @@ find -name "Ha412HOChr00c*tree" | wc -l #32
 
 
 ```
+9173 regions are missing. It turns out this is because the way I was using gffread to make FASTA files would sometimes put multiple sequences in the same file
 One sequence that failed: Ha412HOChr00c00023g0859521.fasta
 I need to edit some of the FASTA files (see MakeFastas.sh and README in 1.VeP folder) because some FASTA files had > 1 sequence
+I re-ran these again after re-making the FASTA files
 
-Make a list of the files that failed (most of them due to having multiple sequences in FASTA) and re-run
-```bash
+Now only 346 are missing
+-manually BLAST FASTA files
 
-
-```
 
 ##
 (on previous SNP set- JobID: 740887): array 71 had errors ("more than 1 record found in handle"). Need to check others for this error. (still running after 9 hours) Ha412HOChr12g0550871.fasta
 - jobs 740887_107 and 740887_96 stayed on pending ("launch failed requeued held"). Deleted these jobs
 
 
-
 ### Predict
+
+```bash
+# make list of MSA output directories
+cd /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_output
+find $(pwd -P) -mindepth 1 -maxdepth 1 -type d -name "Hannuus*" | sort -V > MSA_output_dir_list.txt
+
+# edit name of substitution file
+cp ./Sunflower/SAM_SNP_BadMut_Summary ./SAM_SNP_BadMut_Summary_edit
+SUB=/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/SAM_SNP_BadMut_Summary_edit
+sed -i 's/mRNA://' $SUB
+
+# make file of transcripts (all are primary)
+awk '{print $1}' ${SUB} | sort -u > /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/Transcript_names.txt
+
+```
