@@ -248,6 +248,11 @@ I used Chaochih's scripts but changed (for 3 instances) the code for the "MSA.fa
 sbatch --array=0-101 bad_mut_predict-sunflower.job.sh
 ```
 sbatch: Setting account: morrellp
-Submitted batch job 1727315
+Submitted batch job 1728089
 
 Another issue with the code was the inclusion of the code to intersect primary transcripts and substitutions files in the bad_mut_predict.sh script. It takes several minutes to create and while being created, other jobs begin running on the unfinished files. I moved this to the bad_mut_predict-sunflower.job.sh script
+
+Primary transcript subs file list exists, proceeding with current list...
+Maximum array limit is 101.
+Current subdirectory we are processing in task array index 1: /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_output/Hannuus_cds_list-001
+File doesn't exist: /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_output/Hannuus_cds_list-001/Ha412HOChr01g0008051.fasta, exiting...
