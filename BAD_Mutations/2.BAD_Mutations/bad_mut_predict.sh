@@ -67,7 +67,7 @@ do
     if [[ "${PT_SUBS_ARR[@]}" =~ "${transcript_prefix}" ]]
     then
         # Check to make sure .fasta and .tree files exist
-        check_filepaths "${CURR_MSA_DIR}/${transcript_prefix}.fasta"
+        check_filepaths "${CURR_MSA_DIR}/${transcript_prefix}_MSA.fasta"
         # Add to array
         # Current fasta prefix is present in PT_SUBS_ARR
         MSA_FASTA_ARR+=("${CURR_MSA_DIR}/${transcript_prefix}_MSA.fasta")
