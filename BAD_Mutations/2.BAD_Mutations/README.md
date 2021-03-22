@@ -242,3 +242,12 @@ sed -i 's/mRNA://' $SUB
 awk '{print $1}' ${SUB} | sort -u > /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/Transcript_names.txt
 
 ```
+
+I used Chaochih's scripts but changed (for 3 instances) the code for the "MSA.fasta" filenames (which didn't include the MSA)
+```bash
+sbatch --array=0-101 bad_mut_predict-sunflower.job.sh
+```
+sbatch: Setting account: morrellp
+Submitted batch job 1727315
+
+Another issue with the code was the inclusion of the code to intersect primary transcripts and substitutions files in the bad_mut_predict.sh script. It takes several minutes to create and while being created, other jobs begin running on the unfinished files. I moved this to the bad_mut_predict-sunflower.job.sh script
