@@ -250,6 +250,20 @@ sbatch --array=0-101 bad_mut_predict-sunflower.job.sh
 sbatch: Setting account: morrellp
 Submitted batch job 1728089
 
+After 48 hours:
+```bash
+find -name "*Predictions.txt" | wc -l # 7483
+
+find -maxdepth 2 -name "*Predictions.txt" | wc -l # 7189
+
+#problematic positions
+find -mindepth 3 -name "*Predictions.txt" | wc -l # 294
+```
+
+Will re-run code (this will restart any jobs that have not been completed or had non-zero exit codes).
+Will change the code (per Chaochih's recommendation) to take out the exit code =1 for problematic positions so it doesn't retry these every time
+
+### previous issues (that got resolved):
 Another issue with the code was the inclusion of the code to intersect primary transcripts and substitutions files in the bad_mut_predict.sh script. It takes several minutes to create and while being created, other jobs begin running on the unfinished files. I moved this to the bad_mut_predict-sunflower.job.sh script
 
 Primary transcript subs file list exists, proceeding with current list...
@@ -263,6 +277,8 @@ File doesn't exist: /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_o
 # Make list of output directories:
 find $(pwd -P) -maxdepth 1 -type d -name "*list*" > predict_out_dir_list.txt
 
+# run (test on ~15% of data)
+sbatch bad_mut_compile_predict.job.sh
 ```
 
 
