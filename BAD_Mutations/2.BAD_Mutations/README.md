@@ -256,3 +256,13 @@ Primary transcript subs file list exists, proceeding with current list...
 Maximum array limit is 101.
 Current subdirectory we are processing in task array index 1: /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_output/Hannuus_cds_list-001
 File doesn't exist: /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_output/Hannuus_cds_list-001/Ha412HOChr01g0008051.fasta, exiting...
+
+### Compile
+
+```bash
+# Make list of output directories:
+find $(pwd -P) -maxdepth 1 -type d -name "*list*" > predict_out_dir_list.txt
+
+```
+
+

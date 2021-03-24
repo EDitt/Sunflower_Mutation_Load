@@ -35,22 +35,22 @@ source activate /home/morrellp/liux1299/.conda/envs/bad_mutations
 #   find $(pwd -P) -maxdepth 1 -type d -name "*list*" > predict_out_dir_list.txt
 #   Get path to list of output directories
 #   find $(pwd -P) -name predict_out_dir_list.txt
-PREDICT_DIR_LIST=
+PREDICT_DIR_LIST=/scratch.global/edittmar/predict_output_Sunflower_SAM/predict_out_dir_list.txt
 
 # Full path to the list of long substitutions .txt file
 #   i.e., The long_substitutions.txt file output from the script VeP_to_Subs.py
-LONG_SUBS_FILE=
+LONG_SUBS_FILE=/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/SAM_SNP_BadMut_Summary_edit
 # Project name will be used as prefix for final combined report
-PROJECT=
+PROJECT=Sunflower_SAM
 
 # Where do we want to store our final compiled predictions report?
-OUT_DIR=
+OUT_DIR=/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower
 
 # Full path to the BAD_Mutations.py script
-BAD_MUT_SCRIPT=
+BAD_MUT_SCRIPT=/panfs/roc/groups/9/morrellp/shared/Software/BAD_Mutations/BAD_Mutations.py
 
 # Full path to the script bad_mut_compile_predictions.sh
-COMPILE_SCRIPT=
+COMPILE_SCRIPT=/panfs/roc/groups/9/morrellp/edittmar/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutations/bad_mut_compile_predictions.sh
 
 #------------------------------
 # Run compile predictions script
