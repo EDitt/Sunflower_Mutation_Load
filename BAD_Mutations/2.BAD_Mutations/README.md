@@ -263,6 +263,11 @@ find -mindepth 3 -name "*Predictions.txt" | wc -l # 294
 Will re-run code (this will restart any jobs that have not been completed or had non-zero exit codes).
 Will change the code (per Chaochih's recommendation) to take out the exit code =1 for problematic positions so it doesn't retry these every time
 
+restart1 (after removing exit status for problematic positions):
+sbatch: Setting account: morrellp
+Submitted batch job 1804946
+
+
 ### previous issues (that got resolved):
 Another issue with the code was the inclusion of the code to intersect primary transcripts and substitutions files in the bad_mut_predict.sh script. It takes several minutes to create and while being created, other jobs begin running on the unfinished files. I moved this to the bad_mut_predict-sunflower.job.sh script
 
@@ -280,5 +285,6 @@ find $(pwd -P) -maxdepth 1 -type d -name "*list*" > predict_out_dir_list.txt
 # run (test on ~15% of data)
 sbatch bad_mut_compile_predict.job.sh
 ```
-
+sbatch: Setting account: morrellp
+Submitted batch job 1802621
 
