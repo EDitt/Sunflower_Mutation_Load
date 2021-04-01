@@ -49,16 +49,85 @@ Cluster solution written to 100%
 ### Pairwise IBD estimation
 
 ```bash
-
 plink --file /scratch/eld72413/SAM_seq/Plink/Sunflower_SAM_HA412v2 \
 --allow-extra-chr \
 --Z-genome \
 --out /scratch/eld72413/SAM_seq/Plink/IBS/Sunflower_SAM_HA412v2
 ```
 
+### MDS Plot
+
+```bash
+plink --file /scratch/eld72413/SAM_seq/Plink/Sunflower_SAM_HA412v2 \
+--allow-extra-chr \
+--read-genome /scratch/eld72413/SAM_seq/Plink/IBS/Sunflower_SAM_HA412v2.genome.gz \
+--cluster --mds-plot 4 \
+--out /scratch/eld72413/SAM_seq/Plink/MDS/Sunflower_SAM_HA412v2
+```
+
+.ped scan complete (for binary autoconversion).
+Performing single-pass .bed write (37129915 variants, 288 people).
+--file: /scratch/eld72413/SAM_seq/Plink/MDS/Sunflower_SAM_HA412v2-temporary.bed
++ /scratch/eld72413/SAM_seq/Plink/MDS/Sunflower_SAM_HA412v2-temporary.bim +
+/scratch/eld72413/SAM_seq/Plink/MDS/Sunflower_SAM_HA412v2-temporary.fam
+written.
+37129915 variants loaded from .bim file.
+288 people (0 males, 0 females, 288 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to
+/scratch/eld72413/SAM_seq/Plink/MDS/Sunflower_SAM_HA412v2.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 288 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.894318.
+37129915 variants and 288 people pass filters and QC.
+Note: No phenotypes present.
+Clustering... done.                        
+Cluster solution written to 100%
+/scratch/eld72413/SAM_seq/Plink/MDS/Sunflower_SAM_HA412v2.cluster1 ,
+/scratch/eld72413/SAM_seq/Plink/MDS/Sunflower_SAM_HA412v2.cluster2 , and
+/scratch/eld72413/SAM_seq/Plink/MDS/Sunflower_SAM_HA412v2.cluster3 .
+Performing multidimensional scaling analysis (SVD algorithm, 4
+dimensions)... done.
+MDS solution written to
+/scratch/eld72413/SAM_seq/Plink/MDS/Sunflower_SAM_HA412v2.mds .
 
 
+```R
+library(ggplot2)
+library(ggthemes)
 
+setwd("/Users/eld72413/Google Drive/Active Projects/DelMutation/Results")
+mds <- read.table("Sunflower_SAM_HA412v2.mds", header=T)
+length(mds$FID) #288
+plot(mds$C1 ~ mds$C2)
+
+# grouping info
+line_info <- read.csv("/Users/eld72413/Documents/GitHub/Sunflower_Mutation_Load/BAD_Mutations/Line_Info.csv", header=T)
+
+# fix names of weird samples
+mds$name <- mds$IID
+
+mds$name[mds$name=="531071"] <- "PI_531071"
+mds$name[mds$name=="PPN285"] <- "Hopi_PPN285"
+mds$name[mds$name=="PPN136"] <- "NMS373_PPN136"
+
+#merge datasets
+Mds_wInfo <- merge(line_info[,c(8:10)], mds, by.x = "VCF_line_name", by.y = "name")
+length(Mds_wInfo$VCF_line_name) #286
+Mds_wInfo$Class1 <- factor(Mds_wInfo$Class1)
+Mds_wInfo$Class2 <- factor(Mds_wInfo$Class2)
+str(Mds_wInfo)
+
+
+### plot
+
+p <- ggplot(Mds_wInfo, aes(x=C1, y=C2))
+p + geom_point(aes(color=Class1, shape=Class2)) + theme_minimal()
+p + geom_point(aes(color=Class2)) + theme_minimal()
+
+```
+
+-----
 
 ### Filters
 - 5 % MAF
