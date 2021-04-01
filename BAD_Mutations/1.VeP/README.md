@@ -160,6 +160,28 @@ I uploaded this file 'All_CDs.fasta' to the UMN cluster
 
 # Stats by Group
 
+In Mandel et al. 2011 there are 12 cultivar classes. I want to condense:
+
+pairwise Fst is 0 (and N.S.) for other-Nonoil and landrace
+
+Made a category "landrace_OPV_other" for:
+- landrace
+- NonOil introgressed
+- Oil introgressed
+- OPV
+- Other- NonOil
+- Other-Oil
+
+This combines 6 classes
+
+Also Combined INRA HA & RHA
+
+Results in 6 total classes:
+- Oil: HA/RHA
+- NonOil: HA/RHA
+- INRA
+- Other
+
 ### Filter VCF by the different germplasm groups
 ```bash
 IN_VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz
