@@ -157,6 +157,26 @@ grep "^>" All_CDs.fasta | wc -l # 72995
 ```
 I uploaded this file 'All_CDs.fasta' to the UMN cluster
 
+
+# Stats by Group
+
+### Filter VCF by the different germplasm groups
+```bash
+IN_VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz
+
+module load BCFtools/1.10.2-GCC-8.3.0
+bcftools query -l $IN_VCF
+
+
+/scratch/eld72413/SAM_seq/VeP/VCF_subsets
+```
+
+
+
+
+
+
+
 #############
 
 # UBC SNPs
