@@ -299,3 +299,23 @@ Submitted batch job 1802621
 58%
 sbatch: Setting account: morrellp
 Submitted batch job 2085757
+
+### For Downstream Analyses
+
+Add SNP name to annotated variants using the Substitution_ID.py script in the 'Supporting' directory of BAD_Mutations
+```bash
+module load python3/3.6.3_anaconda5.0.1
+cd /panfs/roc/groups/9/morrellp/shared/Software/BAD_Mutations/Supporting
+compiled=/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/Compile_58perc/Sunflower_SAM_Combined_Report.txt
+sub_file=/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/SAM_SNP_BadMut_Summary_edit
+python Substitution_ID.py $compiled $sub_file
+```
+Traceback (most recent call last):
+  File "Substitution_ID.py", line 87, in <module>
+    tmp[0] = subs[key]
+KeyError: ('Ha412HOChr00c00005g0858651', '63')
+
+```bash
+grep Ha412HOChr00c00005g0858651 $sub_file
+```
+Ha412HOChr00c00005g0858651	63	R	Ha412HOChr00c00005_182708_A/G
