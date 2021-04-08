@@ -34,7 +34,7 @@ IndexError: list index out of range
 
 # Significant Variants from Compiled Predict report
 
-I tested 50,838 codons for Sunflower, so significance threshold= 0.05/50838
+I tested 50,838 codons for Sunflower, so significance threshold= 0.05/50838 <- way too stringent for this dataset
 
 Will also filter out alignments with fewer than 10 species
 
@@ -66,50 +66,55 @@ dsnp_data$RefAA <- as.factor(sapply(dsnp_data$Amino_acidsSPLIT, "[", 1))
 dsnp_data$AltAA <- as.factor(sapply(dsnp_data$Amino_acidsSPLIT, "[", 2))
 
 # I think(?) the "ReferenceAA" in the BAD_Mutations output is the reference of unrelated Angiosperm genomes
-length(which(dsnp_data$RefAA != dsnp_data$ReferenceAA & dsnp_data$AltAA != dsnp_data$ReferenceAA)) #4379
-length(which(dsnp_data$RefAA != dsnp_data$ReferenceAA & dsnp_data$AltAA != dsnp_data$ReferenceAA &
-	dsnp_data$MaskedConstraint < 1 )) # 3686
+length(which(dsnp_data$RefAA != dsnp_data$ReferenceAA | dsnp_data$AltAA != dsnp_data$ReferenceAA)) # 425,939
+length(which(dsnp_data$RefAA != dsnp_data$ReferenceAA | dsnp_data$AltAA != dsnp_data$ReferenceAA &
+	dsnp_data$MaskedConstraint < 1 )) # 350,284
 
 # Tom's criteria
 lrt_sig <- 0.05/50838
-length(which(dsnp_data$LogisticP_Masked < lrt_sig))
+length(which(dsnp_data$LogisticP_Masked < lrt_sig)) # 0
 min(na.omit(dsnp_data$LogisticP_Masked)) # 3.345465e-05
 min(na.omit(dsnp_data$LogisticP_Unmasked)) # 3.310914e-07
 
 # too stringent, try FDR
 dsnp_data$pAdjusted <- p.adjust(dsnp_data$LogisticP_Masked, method = "BH", n = length(dsnp_data$LogisticP_Masked))
-length(which(dsnp_data$pAdjusted < 0.05)) #385827
+length(which(dsnp_data$pAdjusted < 0.05)) # 83642
 
 minseq <- 10
-length(which(dsnp_data$SeqCount >= minseq)) # 381107 (out of 420,768)
+length(which(dsnp_data$SeqCount >= minseq)) # 385827 (out of 420,768)
 
 length(which(dsnp_data$SeqCount >= minseq & dsnp_data$pAdjusted < 0.05)) # 83642
 
 max_constraint <- 1
 
 lrt <- dsnp_data[(dsnp_data$pAdjusted < 0.05 & dsnp_data$SeqCount >= minseq & 
-	dsnp_data$MaskedConstraint < max_constraint & (dsnp_data$RefAA != dsnp_data$ReferenceAA & dsnp_data$AltAA != dsnp_data$ReferenceAA)), ] 
-length(lrt$VariantID) # 779
+	dsnp_data$MaskedConstraint < max_constraint & (dsnp_data$RefAA != dsnp_data$ReferenceAA | dsnp_data$AltAA != dsnp_data$ReferenceAA)), ] 
+length(lrt$VariantID) # 81565
 
-lrt <- dsnp_data[(dsnp_data$pAdjusted < 0.05 & dsnp_data$SeqCount >= minseq & 
-	dsnp_data$MaskedConstraint < max_constraint), ] # 81565
+#lrt <- dsnp_data[(dsnp_data$pAdjusted < 0.05 & dsnp_data$SeqCount >= minseq & 
+#	dsnp_data$MaskedConstraint < max_constraint), ] # 81565
 
-lrt <- dsnp_data[(dsnp_data$pAdjusted < 0.05 & dsnp_data$SeqCount >= minseq), ] # 83642
+#lrt <- dsnp_data[(dsnp_data$pAdjusted < 0.05 & dsnp_data$SeqCount >= minseq), ] # 83642
 
 write.table(lrt[,-30], "dsnp_data_PRELIM.table", sep = "\t", quote=FALSE, row.names=FALSE)
 ```
 
 # Subset VCF file
 
+First subset vcf to find *all* missense positions
 ```bash
 
 awk 'NR > 1 {print $2}' fullsam_missense_noHEADER.txt | awk '{$1=$1}1' FS=':' OFS='\t' > Missense_positions.txt
 
 
 sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Missense_positions.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_missense' Subset_vcf.sh # 2164550
+```
+
+Subset this vcf file to make separate vcfs of both deleterious and tolerated
 
 
 
+```bash
 ####### scratch
 awk 'NR > 1 {print $2}' fullsam_missense_noHEADER.txt > Missense_positions.txt
 
@@ -130,6 +135,9 @@ REGIONS_string=$(paste -sd Missense_positions.txt)
 awk 'NR > 1 {print $2}' fullsam_missense_noHEADER.txt | head
 awk 'NR > 1 {print $2}' fullsam_missense_noHEADER.txt | awk '{$1=$1}1' FS=':' OFS='\t' | head
 ```
+
+
+
 
 ---
 
