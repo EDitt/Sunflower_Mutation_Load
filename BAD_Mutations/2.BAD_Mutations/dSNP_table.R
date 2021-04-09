@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-### A script that saves a table with deleterious vs. tolerated and SNP Info merged from the Predict output + VeP summary
+### A script that saves a table with deleterious vs. tolerated for each SNP, including info merged from the Predict output + VeP summary
 
 options(warn=1)
 
