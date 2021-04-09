@@ -13,7 +13,7 @@ TolvDel_sites <- function (Predict_file, VeP_file, P_cutoff, minseq, max_constra
   dsnp <- read.table(Predict_file, sep = "\t", header=TRUE,
                      stringsAsFactors = FALSE)
   vep <- read.table(VeP_file, sep = "\t", header=FALSE,
-                         stringsAsFactors = FALSE)
+                         stringsAsFactors = FALSE, na.strings = c("NA", "-"))
   colnames(vep) <- c("VariantID", "Position", "Allele", "Gene", "Feature", "Feature_type", "Consequence", "cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons", "Existing_variation", "Extra")
   dsnp_data <- merge(dsnp, vep, by="VariantID")
   dsnp_data$Amino_acidsSPLIT <- strsplit(dsnp_data$Amino_acids, "/") # split amino acids column
