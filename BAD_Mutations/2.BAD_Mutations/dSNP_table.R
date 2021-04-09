@@ -53,8 +53,8 @@ VEP <- args[2]
 Pcutoff <- args[3]
 MinSeq <- args[4]
 MaxConstraint <- args[5]
-MaskedvUnMasked <- arg[6]
-OutFile <- arg[7]
+MaskedvUnMasked <- args[6]
+OutFile <- args[7]
 
 PvalsColumn <- ifelse(MaskedvUnMasked=="Unmasked",
 				"LogisticP_Unmasked",
