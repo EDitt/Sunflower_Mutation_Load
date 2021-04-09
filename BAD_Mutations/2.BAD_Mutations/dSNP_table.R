@@ -60,6 +60,6 @@ PvalsColumn <- ifelse(MaskedvUnMasked=="Unmasked",
 				"LogisticP_Unmasked",
                  "LogisticP_Masked")
 
-Mydf <- TolvDel_sites(Predict, VEP, 0.05, 10, 1, PvalsColumn)
+Mydf <- TolvDel_sites(Predict, VEP, Pcutoff, MinSeq, MaxConstraint, PvalsColumn)
 
 write.table(Mydf, OutFile, sep = "\t", quote=FALSE, row.names=FALSE)
