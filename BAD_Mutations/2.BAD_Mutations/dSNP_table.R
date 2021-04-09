@@ -37,7 +37,7 @@ TolvDel_sites <- function (Predict_file, VeP_file, P_cutoff, minseq, max_constra
                                (dsnp_data$Refderived == "derived_state" | 
                                   dsnp_data$Altderived == "derived_state"),
                              "Deleterious", "Tolerated")
-  Resultdf <- subset(dsnp_data, select = -c(Alignment_list))
+  Resultdf <- subset(dsnp_data, select = -c(Alignment_list, Amino_acidsSPLIT))
   return(Resultdf)
 }
 
