@@ -5,6 +5,24 @@
 options(warn=1)
 
 
+### Command line arguments:
+# 1.) Predict_file - this is the compiled report output from the BAD_Mutations compile subcommand
+# 2.) VeP file - the text file report output from running VeP
+# 3.) The p-value cutoff you wish to use after correction (e.g. 0.05)
+# 4.) The minimum number of sequences that must be represented in the alignment
+# 5.) The maximum constraint value
+# 6.) "Unmasked" if you want to use the un-masked p-values from the predictions. This defaults to masked for any other string
+
+### Example command line:
+#     Rscript ${Sunflower_Mutation_Load}/BAD_Mutations/2.BAD_Mutations/dSNP_table.R \
+#     ${BAD_Mut_Files_Results_DIR}/Compiled_report.txt \
+#     ${VEP_OUTPUTDIR}/SAM_SNP_Final_BiallelicNorm \
+#     0.05 \
+#     10 \
+#     1 \
+#     Masked \
+#     ${OUTPUTDIR}/dsnp_data.table
+
 #########################
 ####### FUNCTION ########
 #########################
