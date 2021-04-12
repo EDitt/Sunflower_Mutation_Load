@@ -275,6 +275,10 @@ restart3
 sbatch: Setting account: morrellp
 Submitted batch job 2087967
 
+restart4
+sbatch: Setting account: morrellp
+Submitted batch job 2219710
+
 
 ### previous issues (that got resolved):
 Another issue with the code was the inclusion of the code to intersect primary transcripts and substitutions files in the bad_mut_predict.sh script. It takes several minutes to create and while being created, other jobs begin running on the unfinished files. I moved this to the bad_mut_predict-sunflower.job.sh script
