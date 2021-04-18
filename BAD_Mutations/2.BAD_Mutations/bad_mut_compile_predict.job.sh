@@ -44,7 +44,7 @@ LONG_SUBS_FILE=/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/SAM_SNP_Ba
 PROJECT=Sunflower_SAM
 
 # Where do we want to store our final compiled predictions report?
-OUT_DIR=/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/Compile_58perc
+OUT_DIR=/panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/CompiledResults
 
 # Full path to the BAD_Mutations.py script
 BAD_MUT_SCRIPT=/panfs/roc/groups/9/morrellp/shared/Software/BAD_Mutations/BAD_Mutations.py
