@@ -279,6 +279,10 @@ restart4
 sbatch: Setting account: morrellp
 Submitted batch job 2219710
 
+After jobs completed: 50592 "Predictions.txt" files
+- 48,811 completed successfully
+- 1,781 problematic 
+
 
 ### previous issues (that got resolved):
 Another issue with the code was the inclusion of the code to intersect primary transcripts and substitutions files in the bad_mut_predict.sh script. It takes several minutes to create and while being created, other jobs begin running on the unfinished files. I moved this to the bad_mut_predict-sunflower.job.sh script
@@ -292,7 +296,7 @@ File doesn't exist: /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_o
 
 ```bash
 # Make list of output directories:
-find $(pwd -P) -maxdepth 1 -type d -name "*list*" > predict_out_dir_list.txt
+find $(pwd -P) -maxdepth 1 -type d -name "*list*" | sort -V > predict_out_dir_list.txt
 
 # run (test on ~15% of data)
 sbatch bad_mut_compile_predict.job.sh
@@ -303,6 +307,10 @@ Submitted batch job 1802621
 58%
 sbatch: Setting account: morrellp
 Submitted batch job 2085757
+
+after restart4
+sbatch: Setting account: morrellp
+Submitted batch job 2413836
 
 ### For Downstream Analyses
 
