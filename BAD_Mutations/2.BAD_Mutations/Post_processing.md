@@ -99,6 +99,50 @@ length(lrt$VariantID) # 81565
 write.table(lrt[,-30], "dsnp_data_PRELIM.table", sep = "\t", quote=FALSE, row.names=FALSE)
 ```
 
+I ended up writing an R script to do what I was trying to do
+
+```bash
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+module load R/4.0.0-foss-2019b
+module load R_ML/3.3.3 # for MSI
+
+Rscript /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutations/dSNP_table.R \
+/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Sunflower_SAM_Combined_Report_preliminary2.txt \
+/scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm \
+0.05 \
+10 \
+1 \
+Masked \
+/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data_PRELIM_newTEST.table
+
+
+Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutations/dSNP_table.R" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Sunflower_SAM_Combined_Report_preliminary2.txt" \
+"/scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm" \
+"0.05" \
+"10" \
+"1" \
+"Masked" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data_PRELIM_newTEST2.table"
+
+
+
+```
+
+```R
+source("/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutations/dSNP_table.R")
+
+Mydf <- TolvDel_sites("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Sunflower_SAM_Combined_Report_preliminary2.txt",
+"/scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm",
+0.05,
+10,
+1,
+"LogisticP_Masked")
+
+write.table(Mydf[-30], "dsnp_data_PRELIM_NEW.table", sep = "\t", quote=FALSE, row.names=FALSE)
+```
+
+
 # Subset VCF file
 
 First subset vcf to find *all* missense positions
