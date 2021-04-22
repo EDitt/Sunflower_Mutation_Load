@@ -32,8 +32,10 @@ TolvDel_sites <- function (Predict_file, VeP_file, P_cutoff, minseq, max_constra
                      stringsAsFactors = FALSE)
   vep <- read.table(VeP_file, sep = "\t", header=FALSE,
                          stringsAsFactors = FALSE, na.strings = c("NA", "-"))
-  colnames(vep) <- c("VariantID", "Position", "Allele", "Gene", "Feature", "Feature_type", "Consequence", "cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons", "Existing_variation", "Extra")
-  dsnp_data <- merge(dsnp, vep, by="VariantID")
+  colnames(vep) <- c("VariantID", "Position", "Allele", "GeneID", "Feature", "Feature_type", "Consequence", "cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons", "Existing_variation", "Extra")
+  vep_missense <- subset(vep, Consequence=="missense_variant")
+  rm("vep")
+  dsnp_data <- merge(dsnp, vep_missense, by=c("VariantID", "GeneID"))
   dsnp_data$Amino_acidsSPLIT <- strsplit(dsnp_data$Amino_acids, "/") # split amino acids column
   dsnp_data$RefAA <- as.factor(sapply(dsnp_data$Amino_acidsSPLIT, "[", 1))
   dsnp_data$AltAA <- as.factor(sapply(dsnp_data$Amino_acidsSPLIT, "[", 2))
