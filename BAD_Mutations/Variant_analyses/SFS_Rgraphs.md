@@ -129,3 +129,28 @@ p <- ggplot(Freqbins_df, aes(x=breaks, y=prop))
 p + geom_bar(stat="identity") + theme_minimal()
 
 ```
+
+## Deleterious predictions
+
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+
+cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results
+
+module load VCFtools/0.1.16-GCC-8.3.0-Perl-5.30.0
+vcftools --vcf SAM_deleterious.vcf --freq --out SAM_deleterious
+vcftools --vcf SAM_tolerated.vcf --freq --out SAM_tolerated
+
+module load R/4.0.0-foss-2019b
+R
+```
+
+Using vcftoolsFreqFormat function specified above
+```R
+SAM_deleterious_freq <- vcftoolsFreqFormat("SAM_deleterious.frq")
+SAM_deleterious_freqbins <- hist(SAM_deleterious_freq$freq, plot=FALSE)
+save(SAM_deleterious_freqbins, file="DeleteriousBins.RData")
+
+SAM_tolerated_freq <- vcftoolsFreqFormat("SAM_tolerated.frq")
+SAM_tolerated_freqbins <- hist(SAM_tolerated_freq$freq, plot=FALSE)
+save(SAM_tolerated_freqbins, file="ToleratedBins.RData")
