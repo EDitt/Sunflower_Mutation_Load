@@ -96,3 +96,17 @@ length(lrt$VariantID) # 81565
 
 write.table(lrt[,-30], "dsnp_data_PRELIM.table", sep = "\t", quote=FALSE, row.names=FALSE)
 ```
+
+# Using function in R 
+```R
+source("/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutations/dSNP_table.R")
+
+Mydf <- TolvDel_sites("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Sunflower_SAM_Combined_Report_preliminary2.txt",
+"/scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm",
+0.05,
+10,
+1,
+"LogisticP_Masked")
+
+write.table(Mydf[-30], "dsnp_data_PRELIM_NEW.table", sep = "\t", quote=FALSE, row.names=FALSE)
+```
