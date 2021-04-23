@@ -147,10 +147,33 @@ R
 
 Using vcftoolsFreqFormat function specified above
 ```R
+hist_breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5)
+
 SAM_deleterious_freq <- vcftoolsFreqFormat("SAM_deleterious.frq")
-SAM_deleterious_freqbins <- hist(SAM_deleterious_freq$freq, plot=FALSE)
+SAM_deleterious_freqbins <- hist(SAM_deleterious_freq$freq, plot=FALSE, breaks=hist_breaks)
 save(SAM_deleterious_freqbins, file="DeleteriousBins.RData")
 
 SAM_tolerated_freq <- vcftoolsFreqFormat("SAM_tolerated.frq")
-SAM_tolerated_freqbins <- hist(SAM_tolerated_freq$freq, plot=FALSE)
+SAM_tolerated_freqbins <- hist(SAM_tolerated_freq$freq, plot=FALSE, breaks=hist_breaks)
 save(SAM_tolerated_freqbins, file="ToleratedBins.RData")
+```
+
+On local computer
+```R
+setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Results")
+load("ToleratedBins.RData")
+load("DeleteriousBins.RData")
+
+library(ggplot2)
+library(reshape2)
+library(ggthemes)
+library(RColorBrewer)
+
+SAM_bins <- HistBinsFormat(SAM_tolerated_freqbins, "tolerated", 
+SAM_deleterious_freqbins, "deleterious")
+
+head(SAM_bins)
+
+p <- ggplot(SAM_bins, aes(x=breaks, y=prop, fill=variable))
+p + geom_bar(stat="identity", position = position_dodge()) + scale_fill_manual(values= c("tomato1", "tomato4")) + theme_minimal()
+```

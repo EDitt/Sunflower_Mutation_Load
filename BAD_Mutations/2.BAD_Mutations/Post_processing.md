@@ -70,7 +70,21 @@ Subset vcf file to make separate vcfs of both deleterious and tolerated
 ```bash
 # deleterious
 sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Deleterious_positions.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_deleterious' Subset_vcf.sh # Submitted batch job 2245897
+
+grep -v "#" SAM_deleterious.vcf | wc -l # 54,411
+
+
 # tolerated
 sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Tolerated_positions.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_tolerated' Subset_vcf.sh # Submitted batch job 2245899
+
+grep -v "#" SAM_tolerated.vcf | wc -l # 587,633
 ```
 
+count number of alternate alleles per genotype
+
+```bash
+module load BCFtools/1.10.2-GCC-8.3.0
+
+bcftools stats -s - SAM_deleterious.vcf > DeleteriousStatsperSample.txt
+grep "PSC" DeleteriousStatsperSample.txt > DeleteriousperSampleCounts.txt
+```
