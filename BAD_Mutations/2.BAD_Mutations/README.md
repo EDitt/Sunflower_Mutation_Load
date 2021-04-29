@@ -284,7 +284,7 @@ After jobs completed: 50592 "Predictions.txt" files
 - 1,781 problematic 
 
 
-### previous issues (that got resolved):
+##### previous issues (that got resolved):
 Another issue with the code was the inclusion of the code to intersect primary transcripts and substitutions files in the bad_mut_predict.sh script. It takes several minutes to create and while being created, other jobs begin running on the unfinished files. I moved this to the bad_mut_predict-sunflower.job.sh script
 
 Primary transcript subs file list exists, proceeding with current list...
@@ -292,6 +292,15 @@ Maximum array limit is 101.
 Current subdirectory we are processing in task array index 1: /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_output/Hannuus_cds_list-001
 File doesn't exist: /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/MSA_output/Hannuus_cds_list-001/Ha412HOChr01g0008051.fasta, exiting...
 
+##### Save an archive of the predict output directory
+predict directory (in scratch) is: 13 G
+tar.gz archive is: 1.4 G
+```bash
+tmux new -s tar_archive
+tar -czf predict_output_Sunflower_SAM.tar.gz ./predict_output_Sunflower_SAM
+# move to project directory
+mv scratch.global/edittmar/predict_output_Sunflower_SAM.tar.gz /panfs/roc/groups/9/morrellp/shared/Projects/Sunflower/
+```
 ### Compile
 
 ```bash
