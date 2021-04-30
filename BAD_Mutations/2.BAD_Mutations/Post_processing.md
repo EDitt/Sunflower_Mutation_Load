@@ -88,3 +88,16 @@ module load BCFtools/1.10.2-GCC-8.3.0
 bcftools stats -s - SAM_deleterious.vcf > DeleteriousStatsperSample.txt
 grep "PSC" DeleteriousStatsperSample.txt > DeleteriousperSampleCounts.txt
 ```
+
+```R
+
+allele_counts <- read.table("DeleteriousperSampleCounts.txt", sep = "\t", header=FALSE,
+                     stringsAsFactors = FALSE)
+colnames(allele_counts) <- c("PSC", "id", "sample", "nRefHom", "nNonRefHom", "nHets", "nTransitions", 
+	"nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissing")
+length(allele_counts$sample) #288
+
+key <- read.csv("LineKey.csv", header=T)
+
+counts_info <- merge(key, allele_counts, by.x="Line", by.y="sample")
+length(counts_info$Line) #286
