@@ -54,6 +54,8 @@ grep "Tolerated" dsnp_data.table | awk '{print $17}' | awk '{$1=$1}1' FS=':' OFS
 
 # Subset VCF file
 
+### Missense positions
+
 First subset vcf to find *all* missense positions
 ```bash
 
@@ -101,3 +103,20 @@ key <- read.csv("LineKey.csv", header=T)
 
 counts_info <- merge(key, allele_counts, by.x="Line", by.y="sample")
 length(counts_info$Line) #286
+
+
+```
+
+### Synonymous positions
+Subset VCF to get synonymous positions
+
+```bash
+cd /scratch/eld72413/SAM_seq/VeP
+grep -v "#" fullsam_synon.txt | awk '{print $2}' | awk '{$1=$1}1' FS=':' OFS='\t' > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Synonymous_positions.txt
+
+sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Synonymous_positions.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_synonymouse' Subset_vcf.sh # 2355491
+
+
+grep -v "#" SAM_missense.vcf | wc -l 
+wc -l Synonymous_positions.txt
+```
