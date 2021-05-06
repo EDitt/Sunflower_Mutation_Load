@@ -226,3 +226,20 @@ Ha412HOChr01_316258_A/T Ha412HOChr01:316258 T Ha412HOChr01g0000011  mRNA:Ha412HO
 Ha412HOChr01_316258_A/T Ha412HOChr01:316258 T Ha412HOChr01g0000021  mRNA:Ha412HOChr01g0000021 Transcript  missense_variant  239 6 2 K/N aaA/aaT - IMPACT=MODERATE;STRAND=1;SOURCE=Ha412HOv2.0.gff3.gz
 
 Solution: need to also sort by Gene ID
+
+
+# Initially subset VCF by missense positions (before I realized the duplicate position issue)
+
+### Missense positions
+
+First subset vcf to find *all* missense positions
+```bash
+
+awk 'NR > 1 {print $2}' fullsam_missense_noHEADER.txt | awk '{$1=$1}1' FS=':' OFS='\t' > Missense_positions.txt
+
+sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Missense_positions.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_missense' Subset_vcf.sh # 2164550
+
+
+grep -v "#" SAM_missense.vcf | wc -l # 699,805
+wc -l Missense_positions.txt # 704,075 # not sure why they aren't equal
+```
