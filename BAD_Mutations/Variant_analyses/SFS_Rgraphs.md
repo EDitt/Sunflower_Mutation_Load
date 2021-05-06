@@ -139,7 +139,8 @@ cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results
 
 module load VCFtools/0.1.16-GCC-8.3.0-Perl-5.30.0
 vcftools --vcf SAM_deleterious.vcf --freq --out SAM_deleterious
-vcftools --vcf SAM_tolerated.vcf --freq --out SAM_tolerated
+vcftools --vcf SAM_tolerated.vcf --freq --out SAM_tolerated # redid after removing duplicate positions
+vcftools --vcf SAM_synonymous.vcf --freq --out SAM_synonymous
 
 module load R/4.0.0-foss-2019b
 R
@@ -156,6 +157,10 @@ save(SAM_deleterious_freqbins, file="DeleteriousBins.RData")
 SAM_tolerated_freq <- vcftoolsFreqFormat("SAM_tolerated.frq")
 SAM_tolerated_freqbins <- hist(SAM_tolerated_freq$freq, plot=FALSE, breaks=hist_breaks)
 save(SAM_tolerated_freqbins, file="ToleratedBins.RData")
+
+SAM_synonymous_freq <- vcftoolsFreqFormat("SAM_synonymous.frq")
+SAM_synonymous_freqbins <- hist(SAM_synonymous_freq$freq, plot=FALSE, breaks=hist_breaks)
+save(SAM_synonymous_freqbins, file="SynonymousBins.RData")
 ```
 
 On local computer
@@ -163,6 +168,7 @@ On local computer
 setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Results")
 load("ToleratedBins.RData")
 load("DeleteriousBins.RData")
+load("SynonymousBins.RData")
 
 library(ggplot2)
 library(reshape2)
@@ -174,6 +180,27 @@ SAM_deleterious_freqbins, "deleterious")
 
 head(SAM_bins)
 
-p <- ggplot(SAM_bins, aes(x=breaks, y=prop, fill=variable))
-p + geom_bar(stat="identity", position = position_dodge()) + scale_fill_manual(values= c("tomato1", "tomato4")) + theme_minimal()
+Freqbins_df <- as.data.frame(cbind(SAM_synonymous_freqbins$breaks[1:length(SAM_synonymous_freqbins$counts)], SAM_synonymous_freqbins$counts, SAM_tolerated_freqbins$counts, SAM_deleterious_freqbins$counts))
+
+colSums(Freqbins_df) # check numbers
+
+colnames(Freqbins_df) <- c("breaks", "Synonymous", "Tolerated",
+                           "Deleterious")
+Freqbins_df_long <- melt(Freqbins_df, id.vars = c("breaks"))
+
+Freqbins_df_long$prop <- ifelse(Freqbins_df_long$variable=="Synonymous", 
+                            Freqbins_df_long$value / sum(Freqbins_df$Synonymous),
+                            ifelse(Freqbins_df_long$variable=="Tolerated",
+                                   Freqbins_df_long$value / sum(Freqbins_df$Tolerated),
+                            Freqbins_df_long$value / sum(Freqbins_df$Deleterious)))
+
+p <- ggplot(Freqbins_df_long, aes(x=breaks, y=prop, fill=variable))
+p + geom_bar(stat="identity", position = position_dodge()) + theme_minimal() +
+  #scale_fill_brewer(palette = "Dark2")
+scale_fill_manual(values= c("#7570B3", "#1B9E77", "#D95F02")) +
+  ylab("Proportion") +
+  xlab("Frequency") +
+  scale_x_continuous(breaks = c(0.00, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45),
+                     labels = c("[0,0.05)", "[0.05,0.10)", "[0.10,0.15)", "[0.15,0.20)", "[0.20,0.25)", "[0.25,0.30)", "[0.30,0.35)", "[0.35,0.40)", "[0.40,0.45)", "[0.45,0.5)"))
+ggsave("SFS_test.eps") # I manually changed the scaling with Rstudio GUI
 ```
