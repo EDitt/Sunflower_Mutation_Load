@@ -14,9 +14,9 @@
 
 
 
-OUTPUTDIR=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All
-INPUT_VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_BIALLELIC.vcf.gz
-FASTA=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
+OUTPUTDIR=/scratch/eld72413/SAM_seq/dSNP_results
+INPUT_VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz
+FASTA=/scratch/eld72413/SAM_seq/ANGSD/Ancestral/SRS2413741_0.03_realigned.fa
 
 module load BCFtools/1.10.2-GCC-8.3.0
 
@@ -24,5 +24,6 @@ bcftools norm ${INPUT_VCF} \
 --check-ref s \
 --fasta-ref ${FASTA} \
 --threads 4 \
---output ${OUTPUTDIR}/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz \
---output-type z
+--output ${OUTPUTDIR}/Sunflower_SAM_SNP_DebilisPolarized.vcf.gz \
+--output-type z \
+--do-not-normalize
