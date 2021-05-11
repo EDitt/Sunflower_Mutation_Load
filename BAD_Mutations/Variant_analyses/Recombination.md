@@ -132,3 +132,16 @@ write.table(Recombination_dSNP_bins, file="/scratch/eld72413/SAM_seq/dSNP_result
 ```
 
 On local computer:
+
+```{r code}
+setwd("/Users/eld72413/Google Drive/Active Projects/DelMutation/Results")
+
+Recomb_dSNP <- read.table("Recombination_dSNP_bins", sep = "\t", header=TRUE, stringsAsFactors = FALSE)
+
+plot(Recomb_dSNP$NumDel ~ Recomb_dSNP$Mean_cM_Mbp)
+plot(Recomb_dSNP$NumTol ~ Recomb_dSNP$Mean_cM_Mbp)
+
+# ratio of deleterious to tolerated?
+Recomb_dSNP$NumDelTol <- Recomb_dSNP$NumDel / Recomb_dSNP$NumTol
+plot(Recomb_dSNP$NumDelTol  ~ Recomb_dSNP$Mean_cM_Mbp)
+
