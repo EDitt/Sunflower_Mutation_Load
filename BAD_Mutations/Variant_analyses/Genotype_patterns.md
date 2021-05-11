@@ -38,7 +38,9 @@ Saved this file to local computer
 
 ```R
 setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Results")
-allele_counts <- read.table("DeleteriousperSampleCounts.txt", sep = "\t", header=FALSE,
+#allele_counts <- read.table("DeleteriousperSampleCounts.txt", sep = "\t", header=FALSE,
+#                     stringsAsFactors = FALSE)
+allele_counts <- read.table("DerivedDeleteriousperSampleCounts.txt", sep = "\t", header=FALSE,
                      stringsAsFactors = FALSE)
 colnames(allele_counts) <- c("PSC", "id", "sample", "nRefHom", "nNonRefHom", "nHets", "nTransitions", 
 	"nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissing")
@@ -101,3 +103,111 @@ p + geom_bar(stat="identity") +
                     width=.2))
 
 ```
+
+
+Look at relationship with performance
+#### HelNut
+```r
+
+performance <- read.csv("/Users/emilydittmar/Google Drive/Active Projects/Nut_Pilot/data files/HELNUT16SAMlsmeans_wide.csv", header=T)
+length(performance$SAM) #263
+
+AllData <- merge(performance[,c(2,43,44,53,54,59,60)], counts_info, by.y="SamID", by.x="SAM")
+length(AllData$SAM) #262
+
+# stress / control
+AllData$StressControl <- AllData$RGR_Low / AllData$RGR_High
+
+plot(AllData$RGR_High ~ AllData$nNonRefHom)
+plot(AllData$RGR_Low ~ AllData$nNonRefHom)
+
+#long format
+library(reshape2)
+library(car)
+
+Data_long <- melt(AllData[,c(1:7,17,18,23)], id.vars = c("SAM", "heterotic_group",
+                                                          "Oil_NonOil", "nNonRefHom") )
+Data_long$variable <- strsplit(as.character(Data_long$variable), "_")
+Data_long$PerfMeasure <- as.factor(sapply(Data_long$variable, "[", 1))
+Data_long$Condition <- as.factor(sapply(Data_long$variable, "[", 2))
+
+Mod1 <- lm(value ~ nNonRefHom + Condition +
+            heterotic_group +
+             nNonRefHom:Condition,
+           data=Data_long[which(Data_long$PerfMeasure=="RGR"),])
+summary(Mod1)
+drop1(Mod1, test="Chi") #oil vs. non-oil is ns
+Anova(Mod1) # no interaction between dSNP and environment
+
+p <- ggplot(data=Data_long[which(Data_long$PerfMeasure=="RGR"),],
+            aes(x=nNonRefHom, y=value, group=Condition))
+p + geom_point(aes(color=Condition)) +
+  geom_smooth(method='lm', aes(color=Condition)) +
+  theme_minimal() +
+  ylab("Relative growth rate")
+
+
+p2 <- ggplot(data=Data_long[which(Data_long$PerfMeasure=="Plant.weight"),],
+            aes(x=nNonRefHom, y=value, group=Condition))
+p2 + geom_point(aes(color=Condition)) +
+  geom_smooth(method='lm') +
+  theme_minimal() +
+  ylab("Plant_weight")
+
+p3 <- ggplot(data=Data_long[which(Data_long$PerfMeasure=="ln.Plant.weight"),],
+             aes(x=nNonRefHom, y=value, group=Condition))
+p3 + geom_point(aes(color=Condition)) +
+  geom_smooth(method='lm') +
+  theme_minimal() +
+  ylab("LN Plant_weight")
+
+
+Mod2 <- lm(value ~ nNonRefHom + Condition +
+             nNonRefHom:Condition,
+           data=Data_long[which(Data_long$PerfMeasure=="ln.Plant.weight"),])
+summary(Mod2) #only condition explains performance
+Anova(Mod2) #""
+
+# stress / control
+Mod4 <- lm(StressControl ~ nNonRefHom +
+              heterotic_group + Oil_NonOil, data=AllData)
+summary(Mod4)
+Anova(Mod4, test = "Chi")
+plot(AllData$StressControl ~ AllData$nNonRefHom)
+abline(Mod4)
+
+```
+
+#### SaltyHel
+```r
+
+performance2 <- read.csv("/Users/emilydittmar/Google Drive/Active Projects/Nut_Pilot/data files/SALTYHEL17_reduced_020518.csv", header=T)
+length(performance2$SAM) #263
+
+AllData2 <- merge(performance2[,c(2:6)], counts_info, by.y="SamID", by.x="SAM")
+length(AllData2$SAM) #289
+
+plot(AllData2$ln.Plant.weight_water ~ AllData2$nNonRefHom)
+plot(AllData2$ln.Plant.weight_salt ~ AllData2$nNonRefHom)
+
+Data_long2 <- melt(AllData2[,c(1:5,15,21)], id.vars = c("SAM", "heterotic_group", "nNonRefHom") )
+Data_long2$variable <- strsplit(as.character(Data_long2$variable), "_")
+Data_long2$PerfMeasure <- as.factor(sapply(Data_long2$variable, "[", 1))
+Data_long2$Condition <- as.factor(sapply(Data_long2$variable, "[", 2))
+
+Mod_salt <- lm(value ~ nNonRefHom + Condition +
+            heterotic_group +
+             nNonRefHom:Condition,
+           data=Data_long2[which(Data_long2$PerfMeasure=="ln.Plant.weight"),])
+summary(Mod_salt)
+drop1(Mod_salt, test="Chi")
+Anova(Mod_salt) 
+
+q <- ggplot(data=Data_long2[which(Data_long2$PerfMeasure=="ln.Plant.weight"),],
+            aes(x=nNonRefHom, y=value, group=Condition))
+q + geom_point(aes(color=Condition)) +
+  geom_smooth(method='lm', aes(color=Condition)) +
+  theme_minimal() +
+  ylab("ln Plant weight")
+
+# stress tolerance?
