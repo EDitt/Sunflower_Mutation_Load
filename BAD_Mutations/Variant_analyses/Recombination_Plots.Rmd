@@ -1,0 +1,224 @@
+---
+title: "Recombination_Plots"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Graphing recombination & proprtion of derived dSNPs across genome
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyr)
+library(car)
+library(ggpubr)
+setwd("/Users/eld72413/Google Drive/Active Projects/DelMutation/Results")
+setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Results")
+```
+
+
+## Average recombination in 10 Mb bins
+
+```{r dataframe}
+Recomb_dSNP <- read.table("Recombination_dSNP_bins", sep = "\t", header=TRUE, stringsAsFactors = FALSE)
+
+# Proportion of nonsynonymous SNPs that are inferred to be deleterious:
+Recomb_dSNP$PropdSNP <- Recomb_dSNP$NumDel / (Recomb_dSNP$NumDel + Recomb_dSNP$NumTol)
+
+# Recombination rate standard error
+Recomb_dSNP$SE <- Recomb_dSNP$Stdev_cM_Mbp / sqrt(Recomb_dSNP$Number_Markers)
+
+# order to graph bins
+Recomb_dSNP$Order <- as.numeric(row.names(Recomb_dSNP))
+
+# make long format for graphing
+Recomb_dSNP_long <- gather(Recomb_dSNP, Interval, Position, Interval_start:Interval_end, factor_key=TRUE)
+
+# order
+Recomb_dSNP_long <- Recomb_dSNP_long2[order(Recomb_dSNP_long2$Chromosome, 
+                                            Recomb_dSNP_long2$Position,
+                                            Recomb_dSNP_long2$Order),]
+
+# Mbp
+Recomb_dSNP_long$Position_Mbp <- Recomb_dSNP_long$Position / 1000000
+
+# average PropdSNP
+meanPropdSNP <- mean(Recomb_dSNP$PropdSNP)
+SdPropdSNP <- sd(Recomb_dSNP$PropdSNP)
+
+# split up by chromosome   
+Recombination_Chroms <- split(Recomb_dSNP_long, as.factor(Recomb_dSNP_long$Chromosome))
+
+# all points
+load("Recombination.RData")
+Recombination$Chromosome <- gsub(" ","",Recombination$Chromosome)
+Recombination$Mbp <- Recombination$bp / 1000000
+Recombination$cM_Mbp <- Recombination$cM / Recombination$Mbp
+hist(Recombination$cM_Mbp)
+# outliers?
+hist(Recombination[which(Recombination$cM_Mbp < 20),"cM_Mbp"])
+Recombination[which(Recombination$cM_Mbp > 20),] # N=8 (all on first bin of chromosome 12)
+Recombination[which(Recombination$cM_Mbp > 10),] # N=16 (all on first bin of chromosome 12)
+Recombination[which(Recombination$cM_Mbp > 5),] # N=34 (32 on first bin of chromosome 12; 1 on first bin of Chr8, 1 on first bin of Chr9)
+
+# remove points that are greater than 20
+Recombination <- Recombination[which(Recombination$cM_Mbp < 20),]
+
+# split by Chromosome
+Recombination_Chroms_points <- split(Recombination, as.factor(Recombination$Chromosome))
+```
+
+
+## Functions for graphing
+
+```{r recombination, echo=FALSE}
+RecombPlot <- function(dataset) {
+  plot <- ggplot(dataset, aes(x=Position_Mbp, y=Mean_cM_Mbp)) +
+    geom_line(col="black") +
+    geom_line(aes(y=Mean_cM_Mbp - SE), col="darkgrey", linetype = "dashed") +
+    geom_line(aes(y=Mean_cM_Mbp + SE), col="darkgrey", linetype = "dashed") +
+    theme_minimal() + ylab("Average cM/Mbp") + xlab("") +
+    ylim(0,3)
+  return (plot)
+}
+
+dSNPPlot <- function(dataset) {
+  plot <- ggplot(dataset, aes(x=Position_Mbp, y=PropdSNP_total)) +
+    geom_line(col="red") +
+    theme_minimal() + ylab("Proportion dSNPs") + xlab("Position (Mb)") +
+    geom_hline(yintercept = meanPropdSNP - SdPropdSNP, linetype="dashed") +
+    geom_hline(yintercept = meanPropdSNP + SdPropdSNP, linetype="dashed") +
+    ylim(0,0.25)
+  return (plot)
+}
+
+# include all points
+RecombPlotPoints <- function(dataset) {
+  plot <- ggplot(data=dataset, aes(x=Mbp, y=cM_Mbp)) +
+    geom_point(col="grey", alpha=0.5) + 
+    #geom_smooth(method="loess", alpha=0.5, se=FALSE, linetype="dotted") + 
+    xlab("Position (Mb)") + ylab("cM/Mbp") +
+    ylim(0,3) +
+    theme_minimal()
+  return (plot)
+}
+
+combinedPlot <- function(plot1, plot2) {
+  plot <- ggarrange(plot1, plot2, ncol=1, nrow=2)
+  return (plot)
+}
+
+
+```
+
+
+## Apply across Chromosomes
+```{r recombination, echo=FALSE}
+
+# recombination bins
+Chrom_recomb <- lapply(Recombination_Chroms, function(x) {RecombPlot(x)})
+# dSNP bins
+Chrom_dSNP <- lapply(Recombination_Chroms, function(x) {dSNPPlot(x)})
+names(Chrom_recomb)
+names(Chrom_dSNP)
+
+# individual marker points (cM / Mbp)
+Chrom_recomb_points <- lapply(Recombination_Chroms_points, function(x) {RecombPlotPoints(x)})
+
+# plot individual points on top of bins for recombination
+Recombination_Chroms_All <- lapply(names(Recombination_Chroms), function(x) {
+  RecombPlotPoints(Recombination_Chroms_points[[x]]) +
+    geom_line(data=Recombination_Chroms[[x]], aes(x=Position_Mbp, y=Mean_cM_Mbp), col="black")
+})
+names(Recombination_Chroms_All) <- names(Chrom_recomb)
+
+# Put all chromosome plots together
+labels <- paste0("Chromosome ", seq(1,17, by=1))
+ggarrange(plotlist = Chrom_dSNP, labels=labels)
+ggarrange(plotlist = Chrom_recomb, labels=labels)
+ggarrange(plotlist = Recombination_Chroms_All, labels=labels)
+
+# combine dSNP + recombination plots?
+Plots <- lapply(names(Chrom_recomb), function(x) {combinedPlot(Recombination_Chroms_All[[x]], Chrom_dSNP[[x]])})
+
+Plots[1]
+names(Plots) <- names(Chrom_recomb)
+
+ggarrange(plotlist = Plots, labels=labels)
+
+```
+
+
+## Initially, I did the binning with R-
+```{r binning, echo=FALSE}
+library(ggplot2)
+library(ggthemes)
+
+### bin + graph bins
+Bin_recomb <- function (dataframe, Num_mbp) {
+  Num_windows <- round(max(dataframe$Mbp) / 10, digits=0)
+  windows <- seq(0, Num_windows*Num_mbp, by=Num_mbp)
+  dataframe$Mbp_bins <- cut(dataframe$Mbp, breaks=windows)
+  means1 <- aggregate(dataframe$Rate,
+                       by=list(dataframe$Mbp_bins), mean, drop=FALSE)
+  means1$windows <- windows[1:(length(windows)-1)]
+  means2 <- cbind(means1[,c(1:2)], windows[2:length(windows)])
+  colnames(means2)[3] <- "windows"
+  both <- rbind(means1, means2)
+  both <- both[order(both$Group.1, both$windows),]
+  return(both)
+}
+# without drop=FALSE in the aggregate, need to make interval 44 Mbp to avoid missing bins
+
+Recomb_bins <- lapply(Recombination_Chroms, function(x) {
+  Bin_recomb(x, 10)
+})
+
+### bin only
+Bin_markers <- function (dataframe, Num_mbp) {
+  Num_windows <- round(max(dataframe$Mbp) / 10, digits=0)
+  windows <- seq(0, Num_windows*Num_mbp, by=Num_mbp)
+  dataframe$Mbp_bins <- cut(dataframe$Mbp, breaks=windows)
+  return(dataframe)
+}
+
+Chrom_bins <- lapply(Recombination_Chroms, function(x) {
+  Bin_markers(x, 10)
+})
+
+# bin size & number of markers:
+Nums10 <- lapply(Chrom_bins, function(x) {aggregate(x$Locus,
+                                                    by=list(x$Mbp_bins),
+                                                    length)})
+
+# combine different lists to look at distribution:
+All_10mbp <- do.call("rbind", Nums10)
+hist(All_10mbp$x, xlab=c("Number of markers in a bin"), main="10 Mb bins")
+
+# look at 20 Mb bins
+Chrom_bins20 <- lapply(Recombination_Chroms, function(x) {
+  Bin_markers(x, 20)
+})
+Nums20 <- lapply(Chrom_bins20, function(x) {aggregate(x$Locus,
+                                                    by=list(x$Mbp_bins),
+                                                    length)})
+All_20mbp <- do.call("rbind", Nums20)
+hist(All_20mbp$x, xlab=c("Number of markers in a bin"), main="20 Mb bins")
+
+### function to look at number of marker/bin?
+
+MarkerNum_bin <- function (dataframe, Num_mbp) {
+  Chrom_bins <- Bin_markers(dataframe, Num_mbp)
+  Num_Bin <- aggregate(Chrom_bins$Locus, by=list(Chrom_bins$Mbp_bins),
+                       length)
+  return(Num_Bin)
+}
+
+Nums30 <- lapply(Recombination_Chroms, function(x) {MarkerNum_bin(x, 30)})
+All_30mbp <- do.call("rbind", Nums30)
+hist(All_30mbp$x, xlab=c("Number of markers in a bin"), main="30 Mb bins")
+
+### plot
+plot(Recomb_bins$Ha412HOChr01$windows, Recomb_bins$Ha412HOChr01$x, type="l")
+plot(Recomb_bins$Ha412HOChr02$windows, Recomb_bins$Ha412HOChr02$x, type="l")
+plot(Recomb_bins$Ha412HOChr03$windows, Recomb_bins$Ha412HOChr03$x, type="l")
