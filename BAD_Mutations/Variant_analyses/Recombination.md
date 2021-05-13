@@ -134,14 +134,59 @@ write.table(Recombination_dSNP_bins, file="/scratch/eld72413/SAM_seq/dSNP_result
 On local computer:
 
 ```{r code}
-setwd("/Users/eld72413/Google Drive/Active Projects/DelMutation/Results")
 
-Recomb_dSNP <- read.table("Recombination_dSNP_bins", sep = "\t", header=TRUE, stringsAsFactors = FALSE)
 
-plot(Recomb_dSNP$NumDel ~ Recomb_dSNP$Mean_cM_Mbp)
-plot(Recomb_dSNP$NumTol ~ Recomb_dSNP$Mean_cM_Mbp)
+# long format
+Recomb_dSNP_long <- gather(Recomb_dSNP, Type, Number, PropdSNP:PropTol, factor_key=TRUE)
 
-# ratio of deleterious to tolerated?
-Recomb_dSNP$NumDelTol <- Recomb_dSNP$NumDel / Recomb_dSNP$NumTol
-plot(Recomb_dSNP$NumDelTol  ~ Recomb_dSNP$Mean_cM_Mbp)
+p <- ggplot(data=Recomb_dSNP_long, aes(x=Mean_cM_Mbp, y=Number, group=Type))
+p + geom_point(aes(col=Type)) + geom_smooth(method='lm', aes(col=Type))
 
+q <- ggplot(data=Recomb_dSNP[which(Recomb_dSNP$Mean_cM_Mbp < 4),], aes(x=Mean_cM_Mbp, y=PropdSNP_total))
+q + geom_point() + geom_smooth(method='lm')
+
+mod1 <- lm(PropdSNP_total ~ Mean_cM_Mbp +
+Chromosome, data=Recomb_dSNP[which(Recomb_dSNP$Mean_cM_Mbp < 4),])
+summary(mod1) # -0.004868, p=0.02225
+Anova(mod1, test = "Chi")
+
+plot(PropdSNP_total ~ Mean_cM_Mbp, 
+data=Recomb_dSNP[which(Recomb_dSNP$Mean_cM_Mbp < 4),])
+abline(mod1)
+
+### greater than 10 markers represented?
+hist(Recomb_dSNP$Number_Markers)
+
+mod2 <- lm(PropdSNP_total ~ Mean_cM_Mbp +
+Chromosome, data=Recomb_dSNP[which(Recomb_dSNP$Mean_cM_Mbp < 4 &
+Recomb_dSNP$Number_Markers > 10),])
+summary(mod2) # -0.002, p<0.0001
+Anova(mod2, test = "Chi") #ns
+
+plot(PropdSNP_total ~ Mean_cM_Mbp, 
+data=Recomb_dSNP[which(Recomb_dSNP$Mean_cM_Mbp < 4 &
+Recomb_dSNP$Number_Markers > 10),])
+abline(mod2)
+```
+
+Plot across genome
+```{r code}
+
+
+plot(Recombination_Chroms$Ha412HOChr01$Position, 
+      Recombination_Chroms$Ha412HOChr01$Mean_cM_Mbp, type="l")
+
+p <- ggplot(data=Recombination_Chroms$Ha412HOChr01, aes(x=Position, y=Mean_cM_Mbp))
+p1 <- p + geom_line(col="black") + 
+          geom_line(aes(y=Mean_cM_Mbp - SE), col="darkgrey", linetype = "dashed") +
+          geom_line(aes(y=Mean_cM_Mbp + SE), col="darkgrey", linetype = "dashed") +
+          theme_minimal() + ylab("Average cM/Mbp") + xlab("")
+    #geom_errorbar(aes(ymin=Mean_cM_Mbp - SE, ymax=Mean_cM_Mbp + SE),      
+    #position=position_dodge(200000000), width=2000000) +
+
+p2 <- ggplot(data=Recombination_Chroms$Ha412HOChr01, aes(x=Position, y=PropdSNP_total))
+p1b <- p2 + geom_line(col="red") +
+               theme_minimal() + ylab("Proportion dSNPs") + xlab("Position (Mb)")
+               #+ ylim(0,0.12)
+
+test1 <- ggarrange(p1, p1b, ncol=1, nrow=2)
