@@ -161,6 +161,15 @@ grep -v "#" SAM_missense.vcf | wc -l
 wc -l Synonymous_positions.txt
 ```
 
+Use bcftools to count the number of alternate alleles per genotype
+```bash
+cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+module load BCFtools/1.10.2-GCC-8.3.0
+
+bcftools stats -s - SAM_deleterious_polarized.vcf > DerivedDeleteriousStatsperSample.txt
+grep "PSC" DerivedDeleteriousStatsperSample.txt > DerivedDeleteriousperSampleCounts.txt
+```
 
 # Polarize SNPs
 I have a H. debilis ancestral FASTA sequence generated from ANGSD. Is it possible to use bcftools norm to fix the reference?
