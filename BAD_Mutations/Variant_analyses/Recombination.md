@@ -7,6 +7,7 @@ I also used the vcf file that I created with SNPutils- `MapUniqueSNP_idt90_renam
 - Here the first column is the chromosome, 2nd is the position in bp, third is Locus name
 
 
+## Create Recombination Data Files
 ```bash
 GeneticMap=/scratch/eld72413/SNParray/SNP_Genetic_Map_Unique.txt
 RemappedVCF=/scratch/eld72413/SNParray/FinalFiles/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf
@@ -54,34 +55,30 @@ length(which(cM_pos$Locus %in% bp_pos$Locus)) #6524
 cM_pos$Locus <- gsub(" ","",cM_pos$Locus)
 bp_pos$Locus <- gsub(" ","",bp_pos$Locus)
 
-Recombination <- merge(cM_pos, bp_pos, by=c("Chromosome", "Locus"))
+## also spaces in the Chromosome names
+cM_pos$Chromosome <- gsub(" ","",cM_pos$Chromosome)
+bp_pos$Chromosome <- gsub(" ","",bp_pos$Chromosome)
+
+Recombination <- merge(cM_pos, bp_pos, by=c("Chromosome", "Locus")) # some markers are on the scaffolds (not in chromosomes 1-17) so not included
 length(Recombination$Locus) #5958
 
 Recombination$Mbp <- Recombination$bp/1000000
 Recombination$cM_Mbp <- Recombination$cM / Recombination$Mbp
+
+# remove markers with very high cM/Mbp (>20) indicating a misalignment (previously 5958 markers, now 5950)
+Recombination <- Recombination[-which(Recombination$cM_Mbp > 20),]
 write.table(Recombination, file="Recombination.txt", row.names=FALSE, quote=FALSE, sep="\t")
 #save(Recombination, file="Recombination.RData")
 ```
 
-Make windows to bin count of dSNPs + recombination rate across genome
+### Bins for average recombination across genome
 ```bash
-module load BEDTools/2.29.2-GCC-8.3.0
-# make genome file
-awk -v OFS='\t' {'print $1,$2'} "/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta.fai" | head -17 > "/scratch/eld72413/SAM_seq/Recombination/GenomeFile.txt"
-
-### dSNPs per window
-bedtools makewindows -g /scratch/eld72413/SAM_seq/Recombination/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b SAM_deleterious_polarized.vcf -c > DerivedDeleterious_10MbCounts.txt
-
-bedtools makewindows -g /scratch/eld72413/SAM_seq/Recombination/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b SAM_tolerated_polarized.vcf -c > DerivedTolerated_10MbCounts.txt
-
 ### Recombination bins
 cd /scratch/eld72413/SAM_seq/Recombination
 # Convert Recombination.txt to a format bedtools can recognize
 awk 'NR>1 {print $1"\t"$4-1"\t"$4"\t"$6}' Recombination.txt > Recombination.bed
 
-### Number & Average recombination rate per window
+### Number, Average, and standard deviation of recombination rate per window
 bedtools makewindows -g /scratch/eld72413/SAM_seq/Recombination/GenomeFile.txt -w 10000000 \
 | bedtools intersect -wo -a - -b Recombination.bed \
 | bedtools groupby -i stdin \
@@ -98,7 +95,8 @@ bedtools makewindows -g /scratch/eld72413/SAM_seq/Recombination/GenomeFile.txt -
 -g 1,2,3 -c 7 -o stdev > Stdev_Recombination.txt
 ```
 
-Use R to merge Recombination info & dSNP info
+Use R to merge Recombination info
+I redid this after removing the 8 markers with high cM/Mbp values (>20, N=8). It only changed the mean for 1 interval- Chromosome 12 0-10Mbp (which also other markers with fairly high values)
 ```R
 RecombBin_Num <- read.table("Number_Markers.txt",  sep = "\t", header=FALSE,
                      stringsAsFactors = FALSE)
@@ -108,28 +106,55 @@ RecombBin_Stdev <- read.table("Stdev_Recombination.txt",  sep = "\t", header=FAL
                      stringsAsFactors = FALSE)
 
 RecombinationInfo <- merge(RecombBin_Num, merge(RecombBin_Ave, RecombBin_Stdev, by=c("V1", "V2", "V3")), 
-	by=c("V1", "V2", "V3"))
+  by=c("V1", "V2", "V3"))
 colnames(RecombinationInfo) <- c("Chromosome", "Interval_start", "Interval_end", "Number_Markers",
-	"Mean_cM_Mbp", "Stdev_cM_Mbp")
+  "Mean_cM_Mbp", "Stdev_cM_Mbp")
 write.table(RecombinationInfo, file="RecombinationBins.txt", row.names=FALSE, quote=FALSE, sep="\t") # length=302
+```
 
-# combine with dSNP info
-Derived_dSNP_bins <- read.table("/scratch/eld72413/SAM_seq/dSNP_results/DerivedDeleterious_10MbCounts.txt",  sep = "\t", header=FALSE, stringsAsFactors = FALSE)
-Derived_tolSNP_bins <- read.table("/scratch/eld72413/SAM_seq/dSNP_results/DerivedTolerated_10MbCounts.txt",  sep = "\t", header=FALSE, stringsAsFactors = FALSE)
+## Binning SNP classes across Genome
 
-both_SNP_bins <- merge(Derived_tolSNP_bins, Derived_dSNP_bins, by=c("V1", "V2", "V3"))
-colnames(both_SNP_bins) <- c("Chromosome", "Interval_start", "Interval_end", "NumTol", "NumDel")
-length(both_SNP_bins$Chromosome) #325
+Make windows to bin count of each class of SNPs
+```bash
+module load BEDTools/2.29.2-GCC-8.3.0
 
-# merge with recombination
-Recombination_dSNP_bins <- merge(RecombinationInfo, both_SNP_bins, by=c("Chromosome", "Interval_start", "Interval_end"),
-	all=TRUE)
-length(Recombination_dSNP_bins$Chromosome) #325
+# make genome file
+awk -v OFS='\t' {'print $1,$2'} "/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta.fai" | head -17 > "/scratch/eld72413/SAM_seq/Recombination/GenomeFile.txt"
+
+cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results
+mkdir GenomicBins
+
+### dSNPs per window
+bedtools makewindows -g /scratch/eld72413/SAM_seq/Recombination/GenomeFile.txt -w 10000000 \
+| bedtools intersect -a - -b SAM_deleterious.vcf -c > ./GenomicBins/Deleterious_10MbCounts.txt
+
+bedtools makewindows -g /scratch/eld72413/SAM_seq/Recombination/GenomeFile.txt -w 10000000 \
+| bedtools intersect -a - -b SAM_tolerated.vcf -c > ./GenomicBins/Tolerated_10MbCounts.txt
+#| bedtools intersect -a - -b SAM_tolerated_polarized.vcf -c > DerivedTolerated_10MbCounts.txt
+
+bedtools makewindows -g /scratch/eld72413/SAM_seq/Recombination/GenomeFile.txt -w 10000000 \
+| bedtools intersect -a - -b SAM_synonymous.vcf -c > ./GenomicBins/Synonymous_10MbCounts.txt
+```
+
+Use R to merge bin info across the 3 classes
+```R
+# module load R/4.0.0-foss-2019b
+# R
+# combine SNP info
+delSNP_bins <- read.table("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/GenomicBins/Deleterious_10MbCounts.txt",  sep = "\t", header=FALSE, stringsAsFactors = FALSE)
+tolSNP_bins <- read.table("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/GenomicBins/Tolerated_10MbCounts.txt",  sep = "\t", header=FALSE, stringsAsFactors = FALSE)
+synonSNP_bins <- read.table("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/GenomicBins/Synonymous_10MbCounts.txt",  sep = "\t", header=FALSE, stringsAsFactors = FALSE)
+
+All_SNP_bins <- merge(synonSNP_bins, merge(tolSNP_bins, delSNP_bins, by=c("V1", "V2", "V3")), by=c("V1", "V2", "V3"))
+colnames(All_SNP_bins) <- c("Chromosome", "Interval_start", "Interval_end", "NumSynon", "NumTol", "NumDel")
+length(All_SNP_bins$Chromosome) #325
 
 # write file
-write.table(Recombination_dSNP_bins, file="/scratch/eld72413/SAM_seq/dSNP_results/Recombination_dSNP_bins", row.names=FALSE, quote=FALSE, sep="\t") 
+write.table(All_SNP_bins, file="/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/GenomicBins/SNP_bins", row.names=FALSE, quote=FALSE, sep="\t") 
 
 ```
+
+
 
 On local computer:
 
@@ -190,3 +215,28 @@ p1b <- p2 + geom_line(col="red") +
                #+ ylim(0,0.12)
 
 test1 <- ggarrange(p1, p1b, ncol=1, nrow=2)
+
+```
+
+
+## Older Code
+
+Use R to merge bin info across the 3 classes w/ recombination info <- this file was done with the polarized SNP bins, later changed
+```R
+# combine with dSNP info
+Derived_dSNP_bins <- read.table("/scratch/eld72413/SAM_seq/dSNP_results/DerivedDeleterious_10MbCounts.txt",  sep = "\t", header=FALSE, stringsAsFactors = FALSE)
+Derived_tolSNP_bins <- read.table("/scratch/eld72413/SAM_seq/dSNP_results/DerivedTolerated_10MbCounts.txt",  sep = "\t", header=FALSE, stringsAsFactors = FALSE)
+
+both_SNP_bins <- merge(Derived_tolSNP_bins, Derived_dSNP_bins, by=c("V1", "V2", "V3"))
+colnames(both_SNP_bins) <- c("Chromosome", "Interval_start", "Interval_end", "NumTol", "NumDel")
+length(both_SNP_bins$Chromosome) #325
+
+# merge with recombination
+Recombination_dSNP_bins <- merge(RecombinationInfo, both_SNP_bins, by=c("Chromosome", "Interval_start", "Interval_end"),
+  all=TRUE)
+length(Recombination_dSNP_bins$Chromosome) #325
+
+# write file
+write.table(Recombination_dSNP_bins, file="/scratch/eld72413/SAM_seq/dSNP_results/Recombination_dSNP_bins", row.names=FALSE, quote=FALSE, sep="\t") 
+
+```
