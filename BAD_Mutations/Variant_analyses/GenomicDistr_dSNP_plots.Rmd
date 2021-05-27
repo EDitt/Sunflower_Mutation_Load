@@ -1,0 +1,101 @@
+---
+title: "SNPclasses_GenomePlots"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Graphing proprtion of dSNPs across genome
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyr)
+library(car)
+library(ggpubr)
+setwd("/Users/eld72413/Google Drive/Active Projects/DelMutation/Results")
+setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Results")
+```
+
+
+Setup dataframe
+```{r dataframe, include=FALSE}
+SNP_bins <- read.table("SNP_bins", sep = "\t", header=TRUE, stringsAsFactors = FALSE,
+                       row.names = NULL)
+
+SNP_bins <- SNP_bins[order(SNP_bins$Chromosome,
+                           SNP_bins$Interval_start,
+                           SNP_bins$Interval_end),]
+
+# order to graph bins
+Order_Nums <- seq(1,length(SNP_bins$Chromosome), by=1)
+SNP_bins$Order <- Order_Nums
+
+# Proportion of dSNPs / Synonymous
+SNP_bins$dSNP_Synon <- SNP_bins$NumDel / SNP_bins$NumSynon
+
+# Proportion of nonsynonymous SNPs that are inferred to be deleterious:
+SNP_bins$PropdSNP_nonsyn <- SNP_bins$NumDel / (SNP_bins$NumDel + SNP_bins$NumTol)
+
+# average PropdSNP
+meandSNP_Synon <- mean(SNP_bins$dSNP_Synon)
+SddSNP_Synon <- sd(SNP_bins$dSNP_Synon)
+
+meanPropdSNP_nonsyn <- mean(SNP_bins$PropdSNP_nonsyn)
+SdPropdSNP_nonsyn <- sd(SNP_bins$PropdSNP_nonsyn)
+
+# make long format for graphing
+SNP_bins_long <- gather(SNP_bins, Interval, Position, Interval_start:Interval_end, factor_key=TRUE)
+
+# order
+SNP_bins_long <- SNP_bins_long[order(SNP_bins_long$Chromosome, 
+                                            SNP_bins_long$Position,
+                                            SNP_bins_long$Order),]
+
+# Convert Position to Mbp
+SNP_bins_long$Position_Mbp <- SNP_bins_long$Position / 1000000
+
+# split up by chromosome   
+SNP_bins_Chroms <- split(SNP_bins_long, as.factor(SNP_bins_long$Chromosome))
+```
+
+## Functions for graphing
+```{r functions, echo=FALSE}
+
+dSNPPlot <- function(dataset, ycol, mean, sd, ylabel) {
+  plot <- ggplot(dataset, aes_string(x="Position_Mbp", y=ycol)) +
+    geom_line(col="red") +
+    theme_minimal() + ylab("Proportion dSNPs") + xlab("Position (Mb)") +
+    geom_hline(yintercept = mean - sd, linetype="dashed") +
+    geom_hline(yintercept = mean + sd, linetype="dashed") +
+    ylim(0,0.25) +
+    ylab(ylabel)
+  return (plot)
+}
+
+```
+
+Make plots
+```{r plots}
+
+# Plot dSNP/sSNP
+Chrom_SNPs <- lapply(SNP_bins_Chroms, function(x) {dSNPPlot(x, "dSNP_Synon", 
+                                                           meandSNP_Synon, SddSNP_Synon,
+                                                           "dSNPs/sSNPs")})
+
+# Put all chromosome plots together
+labels <- paste0("Chromosome ", seq(1,17, by=1))
+ggarrange(plotlist = Chrom_SNPs, labels=labels) # manually alter size 1100 x 600
+
+# Plot oroportion of dSNPs out of all nonsynonymous
+Chrom_SNPs2 <- lapply(SNP_bins_Chroms, function(x) {dSNPPlot(x, "PropdSNP_nonsyn", 
+                                                           meanPropdSNP_nonsyn, SdPropdSNP_nonsyn,
+                                                           "Prop dSNPs")})
+# Put all chromosome plots together
+ggarrange(plotlist = Chrom_SNPs2, labels=labels) # manually alter size 1100 x 600
+```
+
+Test for regions that are significantly high or low?
+```{r significance}
+
+hist(SNP_bins$dSNP_Synon)
+hist(SNP_bins$PropdSNP_nonsyn)
