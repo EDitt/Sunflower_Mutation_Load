@@ -80,10 +80,10 @@ PvalsColumn <- ifelse(MaskedvUnMasked=="Unmasked",
 				"LogisticP_Unmasked",
                  "LogisticP_Masked")
 
-#Mydf <- TolvDel_sites(Predict, VEP, Pcutoff, MinSeq, MaxConstraint, PvalsColumn)
+Mydf <- TolvDel_sites(Predict, VEP, Pcutoff, MinSeq, MaxConstraint, PvalsColumn)
 # to test:
-Mydf <- list("predict" = Predict, "vep_file" = VEP, "P-cutoff" = Pcutoff, "mininumseq" = MinSeq, 
-  "maximumconstraint" = MaxConstraint, "pvalcolumn" = PvalsColumn)
+#Mydf <- list("predict" = Predict, "vep_file" = VEP, "P-cutoff" = Pcutoff, "mininumseq" = MinSeq, 
+#  "maximumconstraint" = MaxConstraint, "pvalcolumn" = PvalsColumn)
 
 
 write.table(Mydf, OutFile, sep = "\t", quote=FALSE, row.names=FALSE)
