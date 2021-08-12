@@ -125,10 +125,23 @@ ${AncTable} ${vcf} > /scratch/eld72413/SAM_seq/Polarized/GenotypeAncestralStates
 
 # gzip table
 gzip -c /scratch/eld72413/SAM_seq/Polarized/GenotypeAncestralStates > /scratch/eld72413/SAM_seq/Polarized/GenotypeAncestralStates.gz
+AncGenoTable=/scratch/eld72413/SAM_seq/Polarized/GenotypeAncestralStates.gz
 
 # script to pull out derived allele frequency
 python /home/eld72413/Utilities/PeterMorrell/Utilities/count_derived.py \
+${AncGenoTable} > /scratch/eld72413/SAM_seq/Polarized/FreqDerivedVariants
 ```
+
+Error after running the count_derived.py script:
+Traceback (most recent call last):
+  File "/home/eld72413/Utilities/PeterMorrell/Utilities/count_derived.py", line 91, in <module>
+    main(sys.argv[1])
+  File "/home/eld72413/Utilities/PeterMorrell/Utilities/count_derived.py", line 80, in main
+    frequency = allele_freq(geno)
+  File "/home/eld72413/Utilities/PeterMorrell/Utilities/count_derived.py", line 61, in allele_freq
+    freq = (counts[der_key[0]] * 2) / observ
+KeyError: 'DD'
+
 
 Merge with compiled predictions
 ```R
