@@ -206,6 +206,7 @@ Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutat
 "Masked" \
 "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Temp_test/dsnp_data_TEST3.table"
 
+grep "Deleterious" dsnp_data_TEST3.table | wc -l # 54,445 (did not change with quotations).
 ```
 
 why the difference?

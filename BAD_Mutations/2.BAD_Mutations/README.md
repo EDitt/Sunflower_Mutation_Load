@@ -323,5 +323,5 @@ Submitted batch job 2413836
 
 
 ### Number of Predicted Variants:
-
+See Post_processing.md for parsing output
 

@@ -29,237 +29,167 @@ srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 -
 module load R/4.0.0-foss-2019b
 module load R_ML/3.3.3 # for MSI
 
-Rscript /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutations/dSNP_table.R \
-/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Sunflower_SAM_Combined_Report.txt \
-/scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm \
-0.05 \
-10 \
-1 \
-Masked \
-/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data.table
+# update: calling the R script from the command line (as below) gives me a different number of dSNPs than running the function in R. I cannot figure out why!!! (see xArchive/Test_RscriptPredictIssues.md for troubleshooting). I will instead run the function inside R which gives the correct number.
+# I also edited the R function due to realizing the alignment column *included* the reference genome (ie inmasked alignment) and therefore this had to be taken into account when 
 
-```
+##### previous command line code: (Put script in xArchive since there is something wrong with it)
 
-How many are deleterious vs. tolerated?
-Get positions to subset VCF
-```bash
-grep "Tolerated" dsnp_data.table | wc -l # 590,768
-grep "Deleterious" dsnp_data.table | wc -l # 54,445
+# Rscript /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutations/dSNP_table.R \
+# /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Sunflower_SAM_Combined_Report.txt \
+# /scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm \
+# 0.05 \
+# 10 \
+# 1 \
+# Masked \
+# /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data.table
 
-## deleterious positions
-grep "Deleterious" dsnp_data.table | awk '{print $17}' | awk '{$1=$1}1' FS=':' OFS='\t' > Deleterious_positions.txt
-## tolerated positions
-grep "Tolerated" dsnp_data.table | awk '{print $17}' | awk '{$1=$1}1' FS=':' OFS='\t' > Tolerated_positions.txt
-
-cd /scratch/eld72413/SAM_seq/VeP
-grep -v "#" fullsam_synon.txt | awk '{print $2}' | awk '{$1=$1}1' FS=':' OFS='\t' > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Synonymous_positions.txt
-```
-
-# Remove duplicate positions
-
-Some variant ID's are the same among the list of positions if they code for different genes on the forward and reverse strands. I will use the most severe consequence of the positions
-
-Any duplicates within a category will automatically be removed when I subset the VCF by position
-
-```bash
-cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results
-srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
-module load R/4.0.0-foss-2019b
-```
-Use R
-```R
-synon <- read.table("Synonymous_positions.txt", sep = "\t", header=FALSE,
-                         stringsAsFactors = FALSE)
-synon$pos <- paste0(synon$V1,"_",synon$V2)
-
-tolerated <- read.table("Tolerated_positions.txt", sep = "\t", header=FALSE,
-                         stringsAsFactors = FALSE)
-tolerated$pos <- paste0(tolerated$V1,"_",tolerated$V2)
-
-dsnp <- read.table("Deleterious_positions.txt", sep = "\t", header=FALSE,
-                         stringsAsFactors = FALSE)
-dsnp$pos <- paste0(dsnp$V1,"_",dsnp$V2)
-
-# which dsnp positions are also considered tolerated
-length(which(tolerated$pos %in% dsnp$pos)) #525
-tolerated_nodups <- tolerated[-c(which(tolerated$pos %in% dsnp$pos)),]
-length(tolerated$pos) # 590,768
-length(tolerated_nodups$pos) # 590,243
-write.table(tolerated_nodups[,c(1:2)], "Tolerated_positions_NoDups.txt", sep = "\t",
-	col.names=FALSE, row.names=FALSE, quote=FALSE)
-
-# which synonymous positions are considered tolerated OR deleterious?
-length(which(synon$pos %in% tolerated$pos)) # 4593
-length(which(synon$pos %in% dsnp$pos)) #396
-length(which(synon$pos %in% tolerated$pos |
-		synon$pos %in% dsnp$pos)) # 4989
-
-synon_nodups <- synon[-c(which(synon$pos %in% tolerated$pos |
-							synon$pos %in% dsnp$pos)),]
-length(synon$pos) # 835,622
-length(synon_nodups$pos) #830,633
-
-write.table(synon_nodups[,c(1:2)], "Synonymous_positions_NoDups.txt", sep = "\t",
-	col.names=FALSE, row.names=FALSE, quote=FALSE)
-```
-*** I will need to remove duplicate positions for syonymous variants (not also annotated as missense)
-Write a script to parse VeP output to remove duplicate positions (go by most severe annotation)
-
-Check
-```bash
-wc -l Synonymous_positions_NoDups.txt # 830,633
-awk '{print $0}' Synonymous_positions_NoDups.txt | sort -u | wc -l # 827,101 <- number of positions to expect in VCF
-awk '{print $0}' Synonymous_positions_NoDups.txt | sort | uniq -cd | wc -l # 3532 are duplicates
-
-wc -l Tolerated_positions_NoDups.txt # 590,243
-awk '{print $0}' Tolerated_positions_NoDups.txt | sort -u | wc -l # 587,108 <- number of positions to expect in VCF
-awk '{print $0}' Tolerated_positions_NoDups.txt  | sort | uniq -cd | wc -l # 3135 are duplicates
-
-wc -l Deleterious_positions.txt # 54,445
-awk '{print $0}' Deleterious_positions.txt | sort -u | wc -l # 54,411 <- number of positions to expect in VCF
-awk '{print $0}' Deleterious_positions.txt  | sort | uniq -cd | wc -l #34 are duplicates
-
-wc -l Sunflower_SAM_Combined_Report.txt # 645,216 (includes header line)
-```
-
-Total Number of unique positions= 
-Synonymous: 827,101
-
-Tolerated: 587,108
-Deleterious: 54,411
-		Total (unique) Missense predicted: 641,519
-
-Number in Predict output: 645,215 (difference= 3,696)
-	- 3135 duplicate positions (tolerated)
-	- 34 duplicate positions (deleterious)
-	- 525 positions annotated as deleterious & tolerated
-	Total: 3,694 (there are 2 NA's in predict output)
-
-# Subset VCF file
-
-Subset vcf file to make separate vcfs of both deleterious and tolerated
-```bash
-# deleterious
-sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Deleterious_positions.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_deleterious' Subset_vcf.sh # Submitted batch job 2245897
-
-grep -v "#" SAM_deleterious.vcf | wc -l # 54,411
-
-# tolerated (redo to remove duplicate positions)
-sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Tolerated_positions_NoDups.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_tolerated' Subset_vcf.sh # Submitted batch job 2378842
-
-grep -v "#" SAM_tolerated.vcf | wc -l # 587,108  (before removing positions in dSNPs: 587,633)
-```
-
-### Synonymous positions
-Subset VCF to get synonymous positions
-
-```bash
-sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Synonymous_positions_NoDups.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_synonymous' Subset_vcf.sh # 2378848
-
-
-grep -v "#" SAM_missense.vcf | wc -l 
-wc -l Synonymous_positions.txt
-```
-
-Use bcftools to count the number of alternate alleles per genotype
-```bash
-cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results
-srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
-module load BCFtools/1.10.2-GCC-8.3.0
-
-bcftools stats -s - SAM_deleterious_polarized.vcf > DerivedDeleteriousStatsperSample.txt
-grep "PSC" DerivedDeleteriousStatsperSample.txt > DerivedDeleteriousperSampleCounts.txt
-```
-
-# Polarize SNPs
-I have a H. debilis ancestral FASTA sequence generated from ANGSD. Is it possible to use bcftools norm to fix the reference?
-
-Ran `NormalizeVCF.sh` using the `--do-not-normalize` flag to just fix the reference (hopefully convert the reference to the ancestral allele?). I'm not sure what happens when it encounters an 'N' at a position. <- makes it multi-allelic with the 2 SNPs represented as 2 alternates (and literally 'N' is reference allele).
-Submitted batch job 2692399
-
-23,864,184 sites (out of 37,114,333) are multiallelic  the remaining (13,250,149) can be polarized by ancestral state
-* the job failed due to issues with scaffold sequence so file is truncated, but will continue anyway (redo later)
-
-### Filter for only biallelic positions
-
-```bash
-srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=12:00:00 --job-name=qlogin /bin/bash -l
-
-bcftools view -m2 -M2 -v snps --threads 4 /scratch/eld72413/SAM_seq/dSNP_results/Sunflower_SAM_SNP_DebilisPolarized.vcf.gz --output-type v --output-file /scratch/eld72413/SAM_seq/dSNP_results/Sunflower_SAM_SNP_DebilisPolarized_BIALLELIC.vcf
-
-grep -v "#" Sunflower_SAM_SNP_DebilisPolarized_BIALLELIC.vcf | wc -l # 13,250,148
-
-# compress
-sbatch --export=file=/scratch/eld72413/SAM_seq/dSNP_results/Sunflower_SAM_SNP_DebilisPolarized_BIALLELIC.vcf gzip_vcf.sh # Submitted batch job 2710927
-```
-
-### Subset this VCF file
-
-Subset vcf file to make separate vcfs of both deleterious and tolerated
-```bash
-# deleterious
-sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Deleterious_positions.txt',vcf='/scratch/eld72413/SAM_seq/dSNP_results/Sunflower_SAM_SNP_DebilisPolarized_BIALLELIC.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/dSNP_results',name='SAM_deleterious_polarized' Subset_vcf.sh # Submitted batch job 2710964
-
-grep -v "#" SAM_deleterious_polarized.vcf | wc -l # 39,010
-
-# tolerated
-sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Tolerated_positions_NoDups.txt',vcf='/scratch/eld72413/SAM_seq/dSNP_results/Sunflower_SAM_SNP_DebilisPolarized_BIALLELIC.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/dSNP_results',name='SAM_tolerated_polarized' Subset_vcf.sh # Submitted batch job 2710965
-
-grep -v "#" SAM_tolerated_polarized.vcf | wc -l # 398,104
-```
-
-### Frequency distributions
-```bash
-module load VCFtools/0.1.16-GCC-8.3.0-Perl-5.30.0
-vcftools --gzvcf /scratch/eld72413/SAM_seq/dSNP_results/Sunflower_SAM_SNP_DebilisPolarized_BIALLELIC.vcf.gz --freq --positions /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Deleterious_positions.txt --out SAM_deleterious_polarized
-
-vcftools --gzvcf /scratch/eld72413/SAM_seq/dSNP_results/Sunflower_SAM_SNP_DebilisPolarized_BIALLELIC.vcf.gz --freq --positions /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Tolerated_positions_NoDups.txt --out SAM_tolerated_polarized
-
-module load R/4.0.0-foss-2019b
+# instead will run inside R
 R
 ```
 
 ```R
-library(tidyr)
-hist_breaks <- seq(0, 1, by=0.05)
+dsnp <- read.table("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Sunflower_SAM_Combined_Report.txt", sep = "\t", header=TRUE,
+                     stringsAsFactors = FALSE)
+length(dsnp$VariantID) # 645,215
+dsnp[which(is.na(dsnp$Alignment)),] # 5 show NA in Alignment column (SeqCount=2 for all?)
+dsnp[which(is.na(dsnp$ReferenceAA)),] # 2 show NA in VariantID, ReferenceAA, P-value columns
+# remove those 7 variants:
+dsnp <- dsnp[-(which(is.na(dsnp$Alignment) |
+	is.na(dsnp$ReferenceAA)
+	)),]
+length(dsnp$VariantID) # 645,208
 
-del <- read.table("SAM_deleterious_polarized.frq", sep = "\t", header=TRUE, row.names=NULL)
-colnames(del) <- c("CHROM", "POS", "N_ALLELES", "N_CHR", "Ancestral_Freq", "Derived_Freq")
-del <- del %>% separate(Derived_Freq, c("Derived_Base", "Derived_Freq"), sep=":")
-del$Derived_Freq <- as.numeric(del$Derived_Freq)
+# make alignment characters into a list
+dsnp$Alignment_list <- strsplit(dsnp$Alignment, "")
 
-SAM_deleterious_POLARIZED_freqbins <- hist(del$Derived_Freq, plot=FALSE, breaks=hist_breaks)
-save(SAM_deleterious_POLARIZED_freqbins, file="DeleteriousBin_POLARIZED.RData")
+# check whether reference amino acid is derived-
 
-tol <- read.table("SAM_tolerated_polarized.frq", sep = "\t", header=TRUE, row.names=NULL)
-colnames(tol) <- c("CHROM", "POS", "N_ALLELES", "N_CHR", "Ancestral_Freq", "Derived_Freq")
-tol <- tol %>% separate(Derived_Freq, c("Derived_Base", "Derived_Freq"), sep=":")
-tol$Derived_Freq <- as.numeric(tol$Derived_Freq)
+# first, find number of reference alleles represented in alignment across sites
+dsnp$NumRefInAlignment <- apply(dsnp, 1, function(row) {
+    length(which(unlist(row["Alignment_list"]) %in% row["ReferenceAA"]))
+  }
+)
 
-SAM_tolerated_POLARIZED_freqbins <- hist(tol$Derived_Freq, plot=FALSE, breaks=hist_breaks)
-save(SAM_tolerated_POLARIZED_freqbins, file="ToleratedBin_POLARIZED.RData")
+# if not represented by any other species, reference allele will only be observed once (alignment is unmasked)
+min(dsnp$NumRefInAlignment) # 1
+length(dsnp[which(dsnp$NumRefInAlignment==1), "VariantID"]) # 154,759
 
-# on local computer
+# reference allele is derived (relative to other spp. in alignment if it's only represented once)
+dsnp$Refderived <- ifelse(dsnp$NumRefInAlignment==1, "derived_state",
+	ifelse(dsnp$NumRefInAlignment > 1, "not_derived",
+		"NA"))
+aggregate(dsnp$VariantID, by=list(dsnp$Refderived), length) # derived: 154,759; not_derived: 490,449
+
+
+# merge with Vep results to get alternate AA:
+vep <- read.table("/scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm", sep = "\t", header=FALSE, stringsAsFactors = FALSE, na.strings = c("NA", "-"))
+colnames(vep) <- c("VariantID", "Position", "Allele", "GeneID", "Feature", "Feature_type", "Consequence", "cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons", "Existing_variation", "Extra")
+library(pryr)
+mem_used() # 11.9 GB
+vep_missense <- subset(vep, Consequence=="missense_variant")
+rm("vep")
+dsnp_data <- merge(dsnp, vep_missense, by=c("VariantID", "GeneID"))
+length(dsnp_data$VariantID) # 645,208
+
+# split amino acids column
+dsnp_data$Amino_acidsSPLIT <- strsplit(dsnp_data$Amino_acids, "/")
+# alternate AA is second
+dsnp_data$AltAA <- as.factor(sapply(dsnp_data$Amino_acidsSPLIT, "[", 2))
+# determine whether alternate AA's are private:
+dsnp_data$Altderived <- ifelse(apply(dsnp_data, 1, function(row) {
+	row["AltAA"] %in% unlist(row["Alignment_list"])
+	}) == FALSE,
+"derived_state", "not_derived")
+
+aggregate(dsnp_data$VariantID, by=list(dsnp_data$Refderived, dsnp_data$Altderived), length)
+#        Group.1       Group.2      x
+#1 derived_state derived_state  87194
+#2   not_derived derived_state 197740
+#3 derived_state   not_derived  67565
+#4   not_derived   not_derived 292709
+
+# p-value using BH/FDR correction:
+dsnp_data$pAdjusted <- p.adjust(dsnp_data[,"LogisticP_Masked"], method = "BH", n = length(dsnp_data[,"LogisticP_Masked"]))
+
+dsnp_data$Result <- ifelse(dsnp_data$pAdjusted < 0.05 & 
+                               dsnp_data$SeqCount >= 10 & 
+                               dsnp_data$MaskedConstraint < 1 & 
+                               (dsnp_data$Refderived == "derived_state" | 
+                                  dsnp_data$Altderived == "derived_state"),
+                             "Deleterious", "Tolerated")
+aggregate(dsnp_data$VariantID, by=list(dsnp_data$Result,
+	dsnp_data$Refderived, dsnp_data$Altderived), length)
+
+
+Resultdf <- subset(dsnp_data, select = -c(Alignment_list, Feature_type, Consequence, Existing_variation, Extra, Amino_acidsSPLIT))
+
+# define which allele is deleterious
+Resultdf$Result_Allele <- ifelse(Resultdf$Result=="Deleterious" & Resultdf$Refderived=="derived_state",
+	"Reference_deleterious", ifelse(Resultdf$Result=="Deleterious" & Resultdf$Altderived=="derived_state",
+		"Alternate_deleterious", "Tolerated"))
+# check
+aggregate(Resultdf$VariantID, by=list(Resultdf$Result,
+	Resultdf$Refderived, Resultdf$Altderived, Resultdf$Result_Allele), length)
+
+write.table(Resultdf, "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data.table", sep = "\t", quote=FALSE, row.names=FALSE)
+
 ```
 
-Use bcftools to count the number of alternate alleles per genotype
+      Group.1       Group.2       Group.3      x
+1   Tolerated derived_state derived_state  87194
+2 Deleterious   not_derived derived_state  76095
+3   Tolerated   not_derived derived_state 121645
+4 Deleterious derived_state   not_derived  11796
+5   Tolerated derived_state   not_derived  55769
+6   Tolerated   not_derived   not_derived 292709
 
-```bash
-module load BCFtools/1.10.2-GCC-8.3.0
+Write function + Test
+```R
+TolvDel_sites <- function (Predict_file, VeP_file, P_cutoff, minseq, max_constraint, Name_Pvalues_column) {
+  dsnp <- read.table(Predict_file, sep = "\t", header=TRUE,
+                     stringsAsFactors = FALSE)
+  vep <- read.table(VeP_file, sep = "\t", header=FALSE,
+                         stringsAsFactors = FALSE, na.strings = c("NA", "-"))
+  colnames(vep) <- c("VariantID", "Position", "Allele", "GeneID", "Feature", "Feature_type", "Consequence", "cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons", "Existing_variation", "Extra")
+  vep_missense <- subset(vep, Consequence=="missense_variant")
+  rm("vep")
+  dsnp_data <- merge(dsnp, vep_missense, by=c("VariantID", "GeneID"))
+  # determine whether reference AA's are private:
+  dsnp_data$Alignment_list <- strsplit(dsnp_data$Alignment, "") # make alignment characters into a list
+  dsnp_data$NumRefInAlignment <- apply(dsnp_data, 1, function(row) {
+    length(which(unlist(row["Alignment_list"]) %in% row["ReferenceAA"]))
+    }
+  )
+  dsnp_data$Refderived <- ifelse(dsnp_data$NumRefInAlignment==1, "derived_state",
+    ifelse(dsnp_data$NumRefInAlignment > 1, "not_derived",
+     "NA"))
+  # determine whether alternate AA's are private:
+  dsnp_data$Amino_acidsSPLIT <- strsplit(dsnp_data$Amino_acids, "/") # split amino acids column
+  dsnp_data$AltAA <- as.factor(sapply(dsnp_data$Amino_acidsSPLIT, "[", 2))
+  dsnp_data$Altderived <- ifelse(apply(dsnp_data, 1, function(row) {
+    row["AltAA"] %in% unlist(row["Alignment_list"])
+  }) == FALSE,
+  "derived_state", "not_derived")
+  # p-value using BH/FDR correction:
+  dsnp_data$pAdjusted <- p.adjust(dsnp_data[,Name_Pvalues_column], method = "BH", n = length(dsnp_data[,Name_Pvalues_column]))
+  dsnp_data$Result <- ifelse(dsnp_data$pAdjusted < P_cutoff & 
+                               dsnp_data$SeqCount >= minseq & 
+                               dsnp_data$MaskedConstraint < max_constraint & 
+                               (dsnp_data$Refderived == "derived_state" | 
+                                  dsnp_data$Altderived == "derived_state"),
+                             "Deleterious", "Tolerated")
+  Resultdf <- subset(dsnp_data, select = -c(Alignment_list, Feature_type, Consequence, Existing_variation, Extra, Amino_acidsSPLIT))
+  # define which allele is deleterious
+  Resultdf$Result_Allele <- ifelse(Resultdf$Result=="Deleterious" & Resultdf$Refderived=="derived_state",
+    "Reference_deleterious", ifelse(Resultdf$Result=="Deleterious" & Resultdf$Altderived=="derived_state",
+      "Alternate_deleterious", "Tolerated"))
+  return(Resultdf)
+}
 
-bcftools stats -s - SAM_deleterious_polarized.vcf > DerivedDeleteriousStatsperSample.txt
-grep "PSC" DerivedDeleteriousStatsperSample.txt > DerivedDeleteriousperSampleCounts.txt
+Result_test <- TolvDel_sites("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Sunflower_SAM_Combined_Report.txt", "/scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm", 0.05, 10, 1, "LogisticP_Masked")
+
+aggregate(Result_test$VariantID, by=list(Result_test$Result,
+	Result_test$Refderived, Result_test$Altderived, Result_test$Result_Allele), length) # only difference is NAs not removed
 ```
-### Polarize SNPs using ANGSD-
 
-I tried installing angsd-
-```bash
-module load  HTSlib/1.10.2-GCC-8.3.0
-wget http://popgen.dk/software/download/angsd/angsd0.934.tar.gz
-tar xf angsd0.934.tar.gz
-cd angsd
-make
-```
-there is a now this exectuable: `/home/eld72413/apps/angsd/angsd`
-I can use this to run Chaochih's code to make an ancestral vcf file: https://github.com/ChaochihL/Barley_Outgroups/blob/master/morex_v1/angsd_anc_inf.job
 
