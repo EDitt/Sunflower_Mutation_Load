@@ -142,8 +142,6 @@ Traceback (most recent call last):
     freq = (counts[der_key[0]] * 2) / observ
 KeyError: 'DD'
 
-
-Merge with compiled predictions
 ```R
 # make column for VariantID to merge with compiled predictions
 
@@ -152,90 +150,94 @@ AncestralDF$VariantID <- paste0(AncestralDF$Chromosome, "_", AncestralDF$Positio
 library(pryr)
 mem_used() # 22.3 GB
 save(AncestralDF, file = "AncestralDF.RData")
+```
+
+Merge with compiled predictions
+```R
+load("/scratch/eld72413/SAM_seq/Polarized/AncestralDF.RData")
 
 dsnp_table <- read.table("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data.table",
-  sep = "\t", stringsAsFactors = FALSE)
+  sep = "\t", stringsAsFactors = FALSE, header = TRUE)
+
 mem_used() # 23.2 GB
-colnames(dsnp_table) <- dsnp_table[1,]
-dsnp_table <- dsnp_table[-1,]
-length(dsnp_table$VariantID) # 645213
-length(dsnp_table[which(dsnp_table$ReferenceAA == dsnp_table$RefAA), "VariantID"]) # 645213
+length(dsnp_table$VariantID) # 645,208
 
 dsnp_data <- merge(AncestralDF[,c(1:7,9:10)], dsnp_table, by="VariantID")
-length(dsnp_data$VariantID) # 645,213
+length(dsnp_data$VariantID) # 645,208
 
-aggregate(dsnp_data$VariantID, by=list(dsnp_data$Category, dsnp_data$Result), length)
+aggregate(dsnp_data$VariantID, by=list(dsnp_data$Result_Allele, dsnp_data$Category), length)
 
-aggregate(dsnp_data$VariantID, by=list(dsnp_data$Category, dsnp_data$Result,
+aggregate(dsnp_data$VariantID, by=list(dsnp_data$Category, dsnp_data$Result_Allele,
   dsnp_data$Refderived, dsnp_data$Altderived), length)
 
+aggregate(dsnp_data$VariantID, by=list(dsnp_data$Result_Allele,
+  dsnp_data$Refderived, dsnp_data$Altderived, dsnp_data$Category), length)
+
+aggregate(dsnp_data$VariantID, by=list(dsnp_data$Refderived, dsnp_data$Altderived, dsnp_data$Category), length)
 aggregate(dsnp_data$VariantID, by=list(dsnp_data$Category, dsnp_data$Refderived), length)
+aggregate(dsnp_data$VariantID, by=list(dsnp_data$Category, dsnp_data$Altderived), length)
+
+# save this dataframe
+write.table(dsnp_data, 
+  "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data_Polarized.table", 
+  sep = "\t", quote=FALSE, row.names=FALSE)
 ```
-       Group.1     Group.2      x
-1  Alt_derived Deleterious  36413
-2  Ancestral_N Deleterious  15115
-3 Both_derived Deleterious    293
-4  Ref_derived Deleterious   2624
+                  Group.1      Group.2      x
+1   Alternate_deleterious  Alt_derived  51009
+2   Reference_deleterious  Alt_derived   2680
+3               Tolerated  Alt_derived 293307
+4  Tolerated_duplicateDel  Alt_derived    477
+5   Alternate_deleterious  Ancestral_N  21228
+6   Reference_deleterious  Ancestral_N   4098
+7               Tolerated  Ancestral_N 174631
+8  Tolerated_duplicateDel  Ancestral_N    167
+9   Alternate_deleterious Both_derived    394
+10  Reference_deleterious Both_derived     64
+11              Tolerated Both_derived   4795
+12 Tolerated_duplicateDel Both_derived      6
+13  Alternate_deleterious  Ref_derived   3464
+14  Reference_deleterious  Ref_derived   4954
+15              Tolerated  Ref_derived  83844
+16 Tolerated_duplicateDel  Ref_derived     90
 
-5  Alt_derived   Tolerated 311060
-6  Ancestral_N   Tolerated 185013
-7 Both_derived   Tolerated   4966
-8  Ref_derived   Tolerated  89729
+        Group.1                Group.2       Group.3       Group.4      x
+1   Alt_derived              Tolerated derived_state derived_state  42530
+2   Ancestral_N              Tolerated derived_state derived_state  31561
+3  Both_derived              Tolerated derived_state derived_state    913
+4   Ref_derived              Tolerated derived_state derived_state  11975
+5   Alt_derived Tolerated_duplicateDel derived_state derived_state    146
+6   Ancestral_N Tolerated_duplicateDel derived_state derived_state     41
+7  Both_derived Tolerated_duplicateDel derived_state derived_state      1
+8   Ref_derived Tolerated_duplicateDel derived_state derived_state     27
+9   Alt_derived  Alternate_deleterious   not_derived derived_state  51009
+10  Ancestral_N  Alternate_deleterious   not_derived derived_state  21228
+11 Both_derived  Alternate_deleterious   not_derived derived_state    394
+12  Ref_derived  Alternate_deleterious   not_derived derived_state   3464
+13  Alt_derived              Tolerated   not_derived derived_state  67636
+14  Ancestral_N              Tolerated   not_derived derived_state  40468
+15 Both_derived              Tolerated   not_derived derived_state   1173
+16  Ref_derived              Tolerated   not_derived derived_state  12216
+17  Alt_derived Tolerated_duplicateDel   not_derived derived_state    109
+18  Ancestral_N Tolerated_duplicateDel   not_derived derived_state     30
+19 Both_derived Tolerated_duplicateDel   not_derived derived_state      2
+20  Ref_derived Tolerated_duplicateDel   not_derived derived_state     11
+21  Alt_derived  Reference_deleterious derived_state   not_derived   2680
+22  Ancestral_N  Reference_deleterious derived_state   not_derived   4098
+23 Both_derived  Reference_deleterious derived_state   not_derived     64
+24  Ref_derived  Reference_deleterious derived_state   not_derived   4954
+25  Alt_derived              Tolerated derived_state   not_derived  24516
+26  Ancestral_N              Tolerated derived_state   not_derived  18125
+27 Both_derived              Tolerated derived_state   not_derived    521
+28  Ref_derived              Tolerated derived_state   not_derived  12540
+29  Alt_derived Tolerated_duplicateDel derived_state   not_derived     43
+30  Ancestral_N Tolerated_duplicateDel derived_state   not_derived     16
+31  Ref_derived Tolerated_duplicateDel derived_state   not_derived      8
+32  Alt_derived              Tolerated   not_derived   not_derived 158625
+33  Ancestral_N              Tolerated   not_derived   not_derived  84477
+34 Both_derived              Tolerated   not_derived   not_derived   2188
+35  Ref_derived              Tolerated   not_derived   not_derived  47113
+36  Alt_derived Tolerated_duplicateDel   not_derived   not_derived    179
+37  Ancestral_N Tolerated_duplicateDel   not_derived   not_derived     80
+38 Both_derived Tolerated_duplicateDel   not_derived   not_derived      3
+39  Ref_derived Tolerated_duplicateDel   not_derived   not_derived     44
 
-        Group.1     Group.2       Group.3       Group.4      x
-1   Ancestral_N   Tolerated derived_state derived_state      4
-2   Ref_derived   Tolerated derived_state derived_state      1
-3   Alt_derived Deleterious   not_derived derived_state  36413
-4   Ancestral_N Deleterious   not_derived derived_state  15115
-5  Both_derived Deleterious   not_derived derived_state    293
-6   Ref_derived Deleterious   not_derived derived_state   2624
-7   Alt_derived   Tolerated   not_derived derived_state 125017
-8   Ancestral_N   Tolerated   not_derived derived_state  78213
-9  Both_derived   Tolerated   not_derived derived_state   2190
-10  Ref_derived   Tolerated   not_derived derived_state  25069
-11  Alt_derived   Tolerated   not_derived   not_derived 186043
-12  Ancestral_N   Tolerated   not_derived   not_derived 106796
-13 Both_derived   Tolerated   not_derived   not_derived   2776
-14  Ref_derived   Tolerated   not_derived   not_derived  64659
-
-1  Ancestral_N derived_state      4
-2  Ref_derived derived_state      1
-3  Alt_derived   not_derived 347473
-4  Ancestral_N   not_derived 200124
-5 Both_derived   not_derived   5259
-6  Ref_derived   not_derived  92352
-
-alternative order of operations
-```R
-dsnp_data$Result2 <- ifelse(dsnp_data$pAdjusted < 0.05 & 
-                               dsnp_data$SeqCount >= 10 & 
-                               dsnp_data$MaskedConstraint < 1,
-                             "Deleterious", "Tolerated")
-
-aggregate(dsnp_data$VariantID, by=list(dsnp_data$Category, dsnp_data$Result2,
-  dsnp_data$Refderived, dsnp_data$Altderived), length)
-
-dsnp_data[which(dsnp_data$Refderived=="derived_state"),]
-```
-        Group.1     Group.2       Group.3       Group.4      x
-1   Ancestral_N   Tolerated derived_state derived_state      4
-2   Ref_derived   Tolerated derived_state derived_state      1
-3   Alt_derived Deleterious   not_derived derived_state  36413
-4   Ancestral_N Deleterious   not_derived derived_state  15115
-5  Both_derived Deleterious   not_derived derived_state    293
-6   Ref_derived Deleterious   not_derived derived_state   2624
-7   Alt_derived   Tolerated   not_derived derived_state 125017
-8   Ancestral_N   Tolerated   not_derived derived_state  78213
-9  Both_derived   Tolerated   not_derived derived_state   2190
-10  Ref_derived   Tolerated   not_derived derived_state  25069
-11  Alt_derived Deleterious   not_derived   not_derived  22302
-12  Ancestral_N Deleterious   not_derived   not_derived  12247
-13 Both_derived Deleterious   not_derived   not_derived    218
-14  Ref_derived Deleterious   not_derived   not_derived   8386
-15  Alt_derived   Tolerated   not_derived   not_derived 163741
-16  Ancestral_N   Tolerated   not_derived   not_derived  94549
-17 Both_derived   Tolerated   not_derived   not_derived   2558
-18  Ref_derived   Tolerated   not_derived   not_derived  56273
-
-the four for which the reference allele is in "derived state" have NA's for alignment
-head(dsnp_data[,c(1,26)])

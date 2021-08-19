@@ -1,19 +1,6 @@
-# previous cod that was in "Post_processing.md" but should probably go somewhere else
+# previous code that was in "Post_processing.md" but should probably go somewhere else
 
-How many are deleterious vs. tolerated?
-Get positions to subset VCF
-```bash
-grep "Tolerated" dsnp_data.table | wc -l # 590,768
-grep "Deleterious" dsnp_data.table | wc -l # 54,445
 
-## deleterious positions
-grep "Deleterious" dsnp_data.table | awk '{print $17}' | awk '{$1=$1}1' FS=':' OFS='\t' > Deleterious_positions.txt
-## tolerated positions
-grep "Tolerated" dsnp_data.table | awk '{print $17}' | awk '{$1=$1}1' FS=':' OFS='\t' > Tolerated_positions.txt
-
-cd /scratch/eld72413/SAM_seq/VeP
-grep -v "#" fullsam_synon.txt | awk '{print $2}' | awk '{$1=$1}1' FS=':' OFS='\t' > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Synonymous_positions.txt
-```
 
 # Remove duplicate positions
 
