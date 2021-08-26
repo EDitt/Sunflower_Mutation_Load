@@ -3,7 +3,19 @@
 ### Script
 # test script
 ```bash
-sbatch --export=group='',alt_vcf='',ref_vcf='',OUTPUT_DIR'='' VCF_SubsetByGenotype.sh
+sbatch --export=group='RHA-Oil',alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf',ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf',OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups' VCF_SubsetByGenotype
+
+cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups
+
+bcftools view -Ov RHA-Oil_AllDel.vcf.gz | grep -v "#" | wc -l
+bcftools view -Ov RHA-Oil_AllDel.vcf | grep -v "#" | wc -l
+
+bcftools view -Ov RHA-Oil_sets1/RHA-Oil_AltDel.vcf.gz | grep -v "#" | wc -l
+bcftools view -Ov RHA-Oil_sets/RHA-Oil_AltDel.vcf.gz | grep -v "#" | wc -l
+
+bcftools view -Ov RHA-Oil_sets1/RHA-Oil_RefDel.vcf.gz | grep -v "#" | wc -l
+bcftools view -Ov RHA-Oil_sets/RHA-Oil_RefDel.vcf.gz | grep -v "#" | wc -l
+
 ```
 
 ### Setup
