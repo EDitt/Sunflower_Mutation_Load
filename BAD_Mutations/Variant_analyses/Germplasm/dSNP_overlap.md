@@ -1,23 +1,99 @@
 # Shared vs. private dSNPs for the different heterotic groups
 
-### Script
-# test script
+## Subset VCF files for different heterotic groups among Oil lines
+I'm using the reference and alternate dSNP vcf files separately. This only matters for variants that are *fixed* within a heterotic group since I'm (for now) only requiring 1 allele for each heterotic group
+
 ```bash
-sbatch --export=group='RHA-Oil',alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf',ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf',OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups' VCF_SubsetByGenotype
+SAM_info=/home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/All_SAM_Info.csv
+awk -v var="RHA-Oil" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | wc -l #66
+awk -v var="HA-Oil" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | wc -l #63
 
-cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups
+# RHA Oil, N= 66
+sbatch --export=group='RHA-Oil',alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf',ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf',OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups' VCF_SubsetByGenotype.sh # Submitted batch job 4335543
 
-bcftools view -Ov RHA-Oil_AllDel.vcf.gz | grep -v "#" | wc -l
-bcftools view -Ov RHA-Oil_AllDel.vcf | grep -v "#" | wc -l
-
-bcftools view -Ov RHA-Oil_sets1/RHA-Oil_AltDel.vcf.gz | grep -v "#" | wc -l
-bcftools view -Ov RHA-Oil_sets/RHA-Oil_AltDel.vcf.gz | grep -v "#" | wc -l
-
-bcftools view -Ov RHA-Oil_sets1/RHA-Oil_RefDel.vcf.gz | grep -v "#" | wc -l
-bcftools view -Ov RHA-Oil_sets/RHA-Oil_RefDel.vcf.gz | grep -v "#" | wc -l
-
+# HA Oil, N= 63
+sbatch --export=group='HA-Oil',alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf',ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf',OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups' VCF_SubsetByGenotype.sh # Submitted batch job 4335545
 ```
 
+### Subset shared/private dSNPs for HA-Oil and RHA-Oil
+```bash
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+
+OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups
+HA_oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/HA-Oil_AllDel.vcf.gz
+RHA_oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/RHA-Oil_AllDel.vcf.gz
+
+bcftools isec -p ${OUTPUTDIR}/Oil_intersections ${HA_oil} ${RHA_oil}
+cd ${OUTPUTDIR}/Oil_intersections
+grep -v "#" 0000.vcf | wc -l # 10,505 (private to HA-oil)
+grep -v "#" 0001.vcf | wc -l # 10,599 (private to RHA-oil)
+grep -v "#" 0002.vcf | wc -l # 29,582 HA-oil shared by both
+grep -v "#" 0003.vcf | wc -l # 29,582 RHA-oil shared by both
+```
+
+### Any fixed dSNPs?
+```bash
+for file in ${OUTPUTDIR}/Oil_intersections/*.vcf;
+ do bcftools stats ${file} > ${file}_stats
+done
+
+# private to HA-oil - 1 over 98%; 4536 singletons
+# private to RHA-oil - 1 over 35% (highest allele frequency bin shown); 4373 singletons
+# shared - 4 over 99%; 3763 singletons
+```
+
+## Non-oil lines
+```bash
+SAM_info=/home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/All_SAM_Info.csv
+awk -v var="RHA-NonOil" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | wc -l #25
+awk -v var="HA-NonOil" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | wc -l #51
+
+cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Germplasm
+
+# RHA NonOil, N= 25
+sbatch --export=group='RHA-NonOil',alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf',ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf',OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups' VCF_SubsetByGenotype.sh # Submitted batch job 4335807
+# 16982 alt deleterious, 11578 ref deleterious
+
+# HA NonOil, N= 51
+sbatch --export=group='HA-NonOil',alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf',ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf',OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups' VCF_SubsetByGenotype.sh # Submitted batch job 4335808
+# 28740 alt deleterious, 11767 ref deleterious
+
+### Subset shared/private dSNPs for HA-Oil and RHA-Oil
+
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+
+OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups
+HA_NonOil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/HA-NonOil_AllDel.vcf.gz
+RHA_Nonoil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/RHA-NonOil_AllDel.vcf.gz
+
+bcftools isec -p ${OUTPUTDIR}/NonOil_intersections ${HA_NonOil} ${RHA_Nonoil}
+cd ${OUTPUTDIR}/NonOil_intersections
+grep -v "#" 0000.vcf | wc -l # 15,502 (private to HA-Nonoil)
+grep -v "#" 0001.vcf | wc -l # 3,555 (private to RHA-Nonoil)
+grep -v "#" 0002.vcf | wc -l # 25,005 HA-oil shared by both
+grep -v "#" 0003.vcf | wc -l # 25,005 RHA-oil shared by both
+
+for file in ${OUTPUTDIR}/NonOil_intersections/*.vcf;
+ do bcftools stats ${file} > ${file}_stats
+done
+
+# private to HA-Nonoil - 1 over 98%; 5331 singletons (a few more high frequency variants than I've seen in other groups)
+# private to RHA-Nonoil - 2 over 89% (highest allele frequency bin shown); 1821 singletons
+# shared - 9 over 99%; 1768 singletons
+```
+
+## Compare to Synonymous Variants
+
+
+
+
+
+
+
+
+
+
+######### SCRATCH USED FOR DEVELOPING SCRIPT
 ### Setup
 ```bash
 srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
