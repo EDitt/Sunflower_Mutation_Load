@@ -47,7 +47,9 @@ echo "The group ${group} has at least one deleterious reference allele at ${NumR
 bcftools concat -a \
 ${OUTPUT_DIR}/${group}_sets/${group}_AltDel.vcf.gz \
 ${OUTPUT_DIR}/${group}_sets/${group}_RefDel.vcf.gz \
--Oz -o ${OUTPUT_DIR}/${group}_AllDel.vcf
+-Oz -o ${OUTPUT_DIR}/${group}_AllDel.vcf.gz
+
+tabix -p vcf ${OUTPUT_DIR}/${group}_AllDel.vcf.gz
 
 # 4. Clean up
 # rm ${OUTPUT_DIR}/${group}_sets/${group}_AltDel.vcf.gz
