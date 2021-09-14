@@ -84,11 +84,50 @@ done
 
 ## Compare to Synonymous Variants
 
+##### Oil lines
+```bash
+module load BCFtools/1.10.2-GCC-8.3.0
+SAM_info=/home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/All_SAM_Info.csv
+OUTPUT_DIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups
+synon_vcf=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_synonymous.vcf
 
+group="HA-Oil"
+genotypes=$(awk -v var="$group" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | paste -sd,)
 
+# minor allele count is greater than 0
+bcftools view -Ou --samples ${genotypes} ${synon_vcf} | bcftools filter -i 'MAC > 0' -Oz -o ${OUTPUT_DIR}/HA-Oil_Synon.vcf.gz
+tabix -p vcf ${OUTPUT_DIR}/HA-Oil_Synon.vcf.gz # needs to be indexed for bcftools
+bcftools view -Ov ${OUTPUT_DIR}/HA-Oil_Synon.vcf.gz | grep -v "#" | wc -l # 427,141
 
+group="RHA-Oil"
+genotypes=$(awk -v var="$group" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | paste -sd,)
+bcftools view -Ou --samples ${genotypes} ${synon_vcf} | bcftools filter -i 'MAC > 0' -Oz -o ${OUTPUT_DIR}/RHA-Oil_Synon.vcf.gz
+bcftools view -Ov ${OUTPUT_DIR}/RHA-Oil_Synon.vcf.gz | grep -v "#" | wc -l # 415,510
+tabix -p vcf ${OUTPUT_DIR}/RHA-Oil_Synon.vcf.gz
 
+bcftools isec -p /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/Oil_intersections/synonymous \
+${OUTPUT_DIR}/HA-Oil_Synon.vcf.gz \
+${OUTPUT_DIR}/RHA-Oil_Synon.vcf.gz
 
+cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/Oil_intersections/synonymous
+
+grep -v "#" 0000.vcf | wc -l # 95,910 (private to HA-Oil)
+grep -v "#" 0001.vcf | wc -l # 84,279 (private to RHA-Oil)
+grep -v "#" 0002.vcf | wc -l # 331,231 HA-oil shared by both
+grep -v "#" 0003.vcf | wc -l # 331,231
+```
+
+# check to make sure filtering not biased by the different criteria
+```bash
+
+HA_oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/HA-Oil_AllDel.vcf.gz
+RHA_oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/RHA-Oil_AllDel.vcf.gz
+
+bcftools filter -i 'MAC > 0' -Ou ${HA_oil} | bcftools view -Ov | grep -v "#" | wc -l # 36,048
+
+bcftools view -Ov ${HA_oil} | grep -v "#" | wc -l # 40,087
+# fixed differences?
+```
 
 
 
