@@ -130,6 +130,12 @@ bcftools view -Ov ${HA_oil} | grep -v "#" | wc -l # 40,087
 ```
 
 
+# Derived Shared vs. private dSNPs for the different heterotic groups
+
+
+
+
+
 
 
 ######### SCRATCH USED FOR DEVELOPING SCRIPT
