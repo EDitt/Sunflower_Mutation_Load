@@ -128,187 +128,248 @@ bcftools filter -i 'MAC > 0' -Ou ${HA_oil} | bcftools view -Ov | grep -v "#" | w
 bcftools view -Ov ${HA_oil} | grep -v "#" | wc -l # 40,087
 # fixed differences?
 ```
+why are the numbers different?
 
+# Derived Shared vs. private (derived) dSNPs for the different heterotic groups
 
-# Derived Shared vs. private dSNPs for the different heterotic groups
+### HA & RHA Oil
 
-
-
-
-
-
-
-######### SCRATCH USED FOR DEVELOPING SCRIPT
-### Setup
+##### dSNPs
 ```bash
-srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
-```
-
-### Groupings
-```bash
-# test code in script with RHA oil
-group="RHA-Oil"
-alt_vcf=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf
-ref_vcf=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf
-OUTPUT_DIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups
-
-awk -v var="$group" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | wc -l #66
-
-# Number of alt alleles: # 28,487
-# Number of ref alleles: # 11,694
-
-# concatenated file:
-grep -v "#" RHA-Oil_AllDel.vcf | wc -l # 40,181
-```
-
-# compare number same/different
-```bash
-OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/intersect_tests
-HA_oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/HA-Oil_AllDel.vcf
-RHA_oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/RHA-Oil_AllDel.vcf
-
-bgzip -c ${HA_oil} > ${HA_oil}.gz
-tabix -p vcf ${HA_oil}.gz
-bgzip -c ${RHA_oil} > ${RHA_oil}.gz
-tabix -p vcf ${RHA_oil}.gz
-
-### needs to be compressed!
-# -c all means that it considers positions identical regarless of whether ALT allele matches or not
-# should not matter here because all sites biallelic
-bcftools isec -p ${OUTPUTDIR}/Oil ${HA_oil}.gz ${RHA_oil}.gz
-
-grep -v "#" 0000.vcf | wc -l # 10,505 (private to HA-oil)
-grep -v "#" 0001.vcf | wc -l # 10,599 (private to RHA-oil)
-grep -v "#" 0002.vcf | wc -l # 29,582 HA-oil shared by both
-grep -v "#" 0003.vcf | wc -l # 29,582 RHA-oil shared by both
-
-# totals 50,686
-# HA Oil: 40,087 (agrees with these numbers)
-# RHA Oil: 40,181 (agrees with these numbers)
-# different with the -c all flag?
-bcftools isec -p ${OUTPUTDIR}/Oil2 -c all ${HA_oil}.gz ${RHA_oil}.gz
-
-### numbers exactly the same
-```
-
-#### HA-oil
-```bash
-# start with HA-oil:
-
 SAM_info=/home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/All_SAM_Info.csv
+awk -v var="RHA-Oil" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | wc -l #66
+awk -v var="HA-Oil" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | wc -l #63
 
-# last two lines are not included in vcf
-group="HA-Oil"
+cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Germplasm
 
-# need comma separated list of samples
-# need to remove the 2 samples that are not in the VCF
-genotypes=$(awk -v var="$group" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | paste -sd,)
-awk -v var="$group" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | wc -l # 63
+# RHA Oil, N= 66
+sbatch --export=group='RHA-Oil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedDeleterious.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedDeleterious.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/dSNPs' \
+VCF_SubsetByGenotype.sh # Submitted batch job 4973906
 
-# for dSNPs that are the alternate allele
-alt_vcf=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf
-grep -v "#" $alt_vcf | wc -l # 76,016
+# HA Oil, N= 63
+sbatch --export=group='HA-Oil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedDeleterious.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedDeleterious.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/dSNPs' \
+VCF_SubsetByGenotype.sh # Submitted batch job 4973985
 
-OUTPUT_DIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups
-
+### Subset shared/private dSNPs for HA-Oil and RHA-Oil
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
 module load BCFtools/1.10.2-GCC-8.3.0
+OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/dSNPs
+HA_Oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/dSNPs/HA-Oil_AllDel.vcf.gz
+RHA_Oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/dSNPs/RHA-Oil_AllDel.vcf.gz
 
-bcftools query -l ${alt_vcf}
+bcftools isec -p ${OUTPUTDIR}/Oil_intersections ${HA_Oil} ${RHA_Oil}
+cd ${OUTPUTDIR}/Oil_intersections
+grep -v "#" 0000.vcf | wc -l # 7,307 (private to HA-oil)
+grep -v "#" 0001.vcf | wc -l # 7,366 (private to RHA-oil)
+grep -v "#" 0002.vcf | wc -l # 16,164 HA-oil shared by both
+grep -v "#" 0003.vcf | wc -l # 16,164 RHA-oil shared by both
 
-bcftools view -Ou --samples ${genotypes} ${alt_vcf} | bcftools filter -i 'COUNT(GT="alt") > 0' -o ${OUTPUT_DIR}/${group}_AltDel.vcf
-
-grep -v "#" HA-Oil_AltDel.vcf | wc -l #28,311
-
-# does this number differ if I use GT="AA" (require homozygous)?
-
-bcftools view -Ou --samples ${genotypes} ${alt_vcf} | bcftools filter -i 'COUNT(GT="AA") > 0' -o ${OUTPUT_DIR}/${group}_AltDel_hom.vcf
-
-grep -v "#" HA-Oil_AltDel_hom.vcf | wc -l #15,979
-
-bcftools view -Ou --samples ${genotypes} ${alt_vcf} | bcftools filter -i 'COUNT(GT="AA" | GT="het") > 0' -o ${OUTPUT_DIR}/${group}_AltDel2.vcf
-
-grep -v "#" HA-Oil_AltDel2.vcf | wc -l # 28,311
-
-
-# for dSNPs that are the reference allele
-ref_vcf=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf
-grep -v "#" $ref_vcf | wc -l # 11,796
-
-bcftools view -Ou --samples ${genotypes} ${ref_vcf} | bcftools filter -i 'COUNT(GT="ref") > 0' -o ${OUTPUT_DIR}/${group}_RefDel.vcf
-grep -v "#" HA-Oil_RefDel.vcf | wc -l # 11,774
-
-bcftools view -Ou --samples ${genotypes} ${ref_vcf} | bcftools filter -i 'COUNT(GT="RR") > 0' -o ${OUTPUT_DIR}/${group}_RefDel_hom.vcf
-grep -v "#" HA-Oil_RefDel_hom.vcf | wc -l # 11,774
-
-bcftools view -Ou --samples ${genotypes} ${ref_vcf} | bcftools filter -i 'COUNT(GT="ref"| GT="het") > 0' -o ${OUTPUT_DIR}/${group}_RefDel2.vcf
-grep -v "#" HA-Oil_RefDel2.vcf | wc -l # 11,776 - need this for the reference alleles (if I'm allowing hets)
-
-
-### combine the files:
-bcftools concat ${OUTPUT_DIR}/${group}_AltDel.vcf ${OUTPUT_DIR}/${group}_RefDel2.vcf -o ${OUTPUT_DIR}/${group}_AllDel.vcf
-# Checking the headers and starting positions of 2 files
-# Concatenating /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/HA-Oil_AltDel.vcf	0.315904 seconds
-# Concatenating /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Groups/HA-Oil_RefDel2.vcf
-#The chromosome block Ha412HOChr00c00004 is not contiguous, consider running with -a.
-
-grep -v "#" HA-Oil_AllDel.vcf | wc -l # 28,080 (expecting 40,087, difference of 12,007)
-
-bcftools concat -a ${OUTPUT_DIR}/${group}_AltDel.vcf ${OUTPUT_DIR}/${group}_RefDel2.vcf -o ${OUTPUT_DIR}/${group}_AllDel.vcf
-# to use -a flag, files need to be gzipped?
-
-bgzip -c ${OUTPUT_DIR}/${group}_AltDel.vcf > ${OUTPUT_DIR}/${group}_AltDel.vcf.gz
-tabix -p vcf ${OUTPUT_DIR}/${group}_AltDel.vcf.gz
-bgzip -c ${OUTPUT_DIR}/${group}_RefDel2.vcf > ${OUTPUT_DIR}/${group}_RefDel2.vcf.gz
-tabix -p vcf ${OUTPUT_DIR}/${group}_RefDel2.vcf.gz
-
-# also needs index
-bcftools concat -a ${OUTPUT_DIR}/${group}_AltDel.vcf.gz ${OUTPUT_DIR}/${group}_RefDel2.vcf.gz -Ov -o ${OUTPUT_DIR}/${group}_AllDel.vcf
-grep -v "#" HA-Oil_AllDel.vcf | wc -l # 40,087 <- this gives the right number!
-
-# also test with MergeVcfs (Picard)
-module load picard/2.21.6-Java-11
-java -jar /apps/eb/picard/2.21.6-Java-11/picard.jar MergeVcfs \
-          I=${OUTPUT_DIR}/${group}_AltDel.vcf \
-          I=${OUTPUT_DIR}/${group}_RefDel2.vcf \
-          O=output_variants.vcf
-grep -v "#" output_variants.vcf | wc -l #0
-
-# count variants in gzipped vcf?
-bcftools view -Ov ${OUTPUT_DIR}/${group}_AltDel.vcf.gz | grep -v "#" | wc -l # 28,311
-
-#### tests
-bcftools concat $alt_vcf $ref_vcf -o ${OUTPUT_DIR}/AllDel_TEST.vcf
-bcftools concat $alt_vcf $alt_vcf -o ${OUTPUT_DIR}/AllDel_TEST2.vcf
-grep -v "#" AllDel_TEST.vcf | wc -l # 75,982 (should be 87,812) (difference of 11,830)
-grep -v "#" AllDel_TEST2.vcf | wc -l # 75,982
-cat $alt_vcf $ref_vcf > ${OUTPUT_DIR}/AllDel_TEST3.vcf
-grep -v "#" AllDel_TEST3.vcf | wc -l # 87,812
-cat $alt_vcf $alt_vcf > ${OUTPUT_DIR}/AllDel_TEST4.vcf
-grep -v "#" AllDel_TEST4.vcf | wc -l  # 152,032
-
-### why is the concatenated vcf for HA oil not the same as the sum of the 2?
-
-bcftools query -l ${OUTPUT_DIR}/${group}_AltDel.vcf | wc -l # 63
-bcftools query -l ${OUTPUT_DIR}/${group}_RefDel2.vcf | wc -l # 63
-
-
-##############
-# for all HAs
-awk -F',' '{if ($8~"HA" && $8!~"RHA") {print $9}}' $SAM_info
-
-# for all RHAs
-awk -F',' '{if ($8~"RHA") {print $9}}' $SAM_info
-
-
-
-
-
-bcftools filter -i 'AC > 0'  # what is the difference?
-
-
-#GT = "AA" if I want homozygous only
-
-
-
-
+for file in ${OUTPUTDIR}/Oil_intersections/*.vcf;
+ do bcftools stats ${file} > ${file}_stats
+done
 ```
+The group RHA-Oil has at least one deleterious alternate allele at 18584 sites
+The group RHA-Oil has at least one deleterious reference allele at 4946 sites
+Checking the headers and starting positions of 2 files
+
+The group HA-Oil has at least one deleterious alternate allele at 18469 sites
+The group HA-Oil has at least one deleterious reference allele at 5003 sites
+Checking the headers and starting positions of 2 files
+
+##### Tolerated
+```bash
+# RHA Oil, N= 66
+sbatch --export=group='RHA-Oil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedTolerated.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedTolerated.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/Tolerated' \
+VCF_SubsetByGenotype.sh # Submitted batch job 4973986
+
+# HA Oil, N= 63
+sbatch --export=group='HA-Oil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedTolerated.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedTolerated.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/Tolerated' \
+VCF_SubsetByGenotype.sh # Submitted batch job 4973987
+
+OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/Tolerated
+HA_Oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/Tolerated/HA-Oil_AllDel.vcf.gz
+RHA_Oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/Tolerated/RHA-Oil_AllDel.vcf.gz
+
+bcftools isec -p ${OUTPUTDIR}/Oil_intersections ${HA_Oil} ${RHA_Oil}
+cd ${OUTPUTDIR}/Oil_intersections
+grep -v "#" 0000.vcf | wc -l # 38,674 (private to HA-oil)
+grep -v "#" 0001.vcf | wc -l # 37,233 (private to RHA-oil)
+grep -v "#" 0002.vcf | wc -l # 173,100 HA-oil shared by both
+grep -v "#" 0003.vcf | wc -l # 173,100
+```
+The group RHA-Oil has at least one deleterious alternate allele at 122843 sites
+The group RHA-Oil has at least one deleterious reference allele at 87490 sites
+Checking the headers and starting positions of 2 files
+
+The group HA-Oil has at least one deleterious alternate allele at 123837 sites
+The group HA-Oil has at least one deleterious reference allele at 87937 sites
+Checking the headers and starting positions of 2 files
+
+##### Synonymous
+```bash
+# RHA Oil, N= 66
+sbatch --export=group='RHA-Oil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedSynonymous.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedSynonymous.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/sSNPs' \
+VCF_SubsetByGenotype.sh # Submitted batch job 4979178
+
+# HA Oil, N= 63
+sbatch --export=group='HA-Oil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedSynonymous.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedSynonymous.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/sSNPs' \
+VCF_SubsetByGenotype.sh  # Submitted batch job 4979179
+
+OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/sSNPs
+HA_Oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/sSNPs/HA-Oil_AllDel.vcf.gz
+RHA_Oil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/sSNPs/RHA-Oil_AllDel.vcf.gz
+
+bcftools isec -p ${OUTPUTDIR}/Oil_intersections ${HA_Oil} ${RHA_Oil}
+cd ${OUTPUTDIR}/Oil_intersections
+grep -v "#" 0000.vcf | wc -l # 56,395 (private to HA-oil)
+grep -v "#" 0001.vcf | wc -l # 48,430 (private to RHA-oil)
+grep -v "#" 0002.vcf | wc -l # 304,177 HA-oil shared by both
+grep -v "#" 0003.vcf | wc -l # 304177
+```
+The group RHA-Oil has at least one deleterious alternate allele at 194308 sites
+The group RHA-Oil has at least one deleterious reference allele at 158299 sites
+Checking the headers and starting positions of 2 files
+
+The group HA-Oil has at least one deleterious alternate allele at 201333 sites
+The group HA-Oil has at least one deleterious reference allele at 159239 sites
+Checking the headers and starting positions of 2 files
+
+### HA & RHA Non-Oil
+
+##### dSNPs
+```bash
+SAM_info=/home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/All_SAM_Info.csv
+awk -v var="RHA-NonOil" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | wc -l #25
+awk -v var="HA-NonOil" -F',' '{if ($8==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | wc -l #51
+
+cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Germplasm
+
+# RHA NonOil, N= 25
+sbatch --export=group='RHA-NonOil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedDeleterious.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedDeleterious.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/dSNPs' \
+VCF_SubsetByGenotype.sh # Submitted batch job 4976054
+
+# HA NonOil, N= 51
+sbatch --export=group='HA-NonOil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedDeleterious.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedDeleterious.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/dSNPs' \
+VCF_SubsetByGenotype.sh # Submitted batch job 4976055
+
+### Subset shared/private dSNPs for HA-NonOil and RHA-NonOil
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+module load BCFtools/1.10.2-GCC-8.3.0
+OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/dSNPs
+HA_NonOil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/dSNPs/HA-NonOil_AllDel.vcf.gz
+RHA_NonOil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/dSNPs/RHA-NonOil_AllDel.vcf.gz
+
+bcftools isec -p ${OUTPUTDIR}/Non-Oil_intersections ${HA_NonOil} ${RHA_NonOil}
+cd ${OUTPUTDIR}/Non-Oil_intersections
+grep -v "#" 0000.vcf | wc -l # 10,637 (private to HA-Nonoil)
+grep -v "#" 0001.vcf | wc -l # 2,457 (private to RHA-Nonoil)
+grep -v "#" 0002.vcf | wc -l # 13,128 HA-oil shared by both
+grep -v "#" 0003.vcf | wc -l # 13,128 RHA-oil shared by both
+
+for file in ${OUTPUTDIR}/Non-Oil_intersections/*.vcf;
+ do bcftools stats ${file} > ${file}_stats
+done
+```
+The group RHA-NonOil has at least one deleterious alternate allele at 10703 sites
+The group RHA-NonOil has at least one deleterious reference allele at 4882 sites
+Checking the headers and starting positions of 2 files
+
+The group HA-NonOil has at least one deleterious alternate allele at 18769 sites
+The group HA-NonOil has at least one deleterious reference allele at 4996 sites
+Checking the headers and starting positions of 2 files
+
+##### Tolerated
+```bash
+# RHA NonOil, N= 25
+sbatch --export=group='RHA-NonOil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedTolerated.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedTolerated.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/Tolerated' \
+VCF_SubsetByGenotype.sh # Submitted batch job 4976056
+
+# HA NonOil, N= 51
+sbatch --export=group='HA-NonOil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedTolerated.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedTolerated.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/Tolerated' \
+VCF_SubsetByGenotype.sh # Submitted batch job 4976057
+
+OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/Tolerated
+HA_NonOil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/Tolerated/HA-NonOil_AllDel.vcf.gz
+RHA_NonOil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/Tolerated/RHA-NonOil_AllDel.vcf.gz
+
+bcftools isec -p ${OUTPUTDIR}/Non-Oil_intersections ${HA_NonOil} ${RHA_NonOil}
+cd ${OUTPUTDIR}/Non-Oil_intersections
+grep -v "#" 0000.vcf | wc -l # 58,674 (private to HA-Nonoil)
+grep -v "#" 0001.vcf | wc -l # 11,967 (private to RHA-Nonoil)
+grep -v "#" 0002.vcf | wc -l # 152,524 HA-oil shared by both
+grep -v "#" 0003.vcf | wc -l # 152,524
+```
+
+The group RHA-NonOil has at least one deleterious alternate allele at 77876 sites
+The group RHA-NonOil has at least one deleterious reference allele at 86615 sites
+Checking the headers and starting positions of 2 files
+
+The group HA-NonOil has at least one deleterious alternate allele at 123328 sites
+The group HA-NonOil has at least one deleterious reference allele at 87870 sites
+Checking the headers and starting positions of 2 files
+
+##### Synonymous
+```bash
+# RHA NonOil, N= 25
+sbatch --export=group='RHA-NonOil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedSynonymous.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedSynonymous.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/sSNPs' \
+VCF_SubsetByGenotype.sh # Submitted batch job 4979204
+
+# HA NonOil, N= 51
+sbatch --export=group='HA-NonOil',\
+alt_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_AltDerivedSynonymous.vcf',\
+ref_vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/SAM_RefDerivedSynonymous.vcf',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/sSNPs' \
+VCF_SubsetByGenotype.sh # Submitted batch job 4979207
+
+OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/sSNPs
+HA_NonOil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/sSNPs/HA-NonOil_AllDel.vcf.gz
+RHA_NonOil=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/HeteroticGroupOverlap/NonOil/sSNPs/RHA-NonOil_AllDel.vcf.gz
+
+bcftools isec -p ${OUTPUTDIR}/Non-Oil_intersections ${HA_NonOil} ${RHA_NonOil}
+cd ${OUTPUTDIR}/Non-Oil_intersections
+grep -v "#" 0000.vcf | wc -l # 83,441 (private to HA-Nonoil)
+grep -v "#" 0001.vcf | wc -l # 16,088 (private to RHA-Nonoil)
+grep -v "#" 0002.vcf | wc -l # 273,197 HA-oil shared by both
+grep -v "#" 0003.vcf | wc -l # 273,197
+```
+
+The group RHA-NonOil has at least one deleterious alternate allele at 132545 sites
+The group RHA-NonOil has at least one deleterious reference allele at 156740 sites
+Checking the headers and starting positions of 2 files
+
+The group HA-NonOil has at least one deleterious alternate allele at 197523 sites
+The group HA-NonOil has at least one deleterious reference allele at 159115 sites
+Checking the headers and starting positions of 2 files

@@ -194,20 +194,45 @@ grep -v "#" SAM_AltDerivedTolerated.vcf | wc -l
 ```
 
 Do the same for synonymous vcf files
+#### I need a different positions file!
 ```bash
 cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results
 bgzip -c --threads 4 SAM_synonymous.vcf > SAM_synonymous.vcf.gz
 tabix -p vcf SAM_synonymous.vcf.gz
 
-cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutations
-# tolerated, reference derived
-sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/PositionsFiles/Reference_Derived_Positions.txt',\
-vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_synonymous.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs',name='SAM_RefDerivedSynonymous' Subset_vcf.sh # Submitted batch job 4961503
-grep -v "#" SAM_RefDerivedSynonymous.vcf | wc -l # 
+# positions files
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+cd /scratch/eld72413/SAM_seq/Polarized
+module load R/4.0.0-foss-2019b
+R
+```
 
-# tolerated, alternate derived
-sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/PositionsFiles/Alternate_Derived_Positions.txt',\
-vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_synonymous.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs',name='SAM_AltDerivedSynonymous' Subset_vcf.sh # Submitted batch job 4961504
-grep -v "#" SAM_AltDerivedSynonymous.vcf | wc -l 
+```R
+load("/scratch/eld72413/SAM_seq/Polarized/AncestralDF.RData")
+
+Ref_derived <- subset(AncestralDF, Category=="Ref_derived" | Category=="Both_derived")
+write.table(Ref_derived[,c("Chromosome", "Position")], "Ref_derived_sites.txt", sep = "\t", col.names=FALSE, row.names=FALSE, quote=FALSE)
+
+Alt_derived <- subset(AncestralDF, Category=="Alt_derived" | Category=="Both_derived")
+write.table(Alt_derived[,c("Chromosome", "Position")], "Alt_derived_sites.txt", sep = "\t", col.names=FALSE, row.names=FALSE, quote=FALSE)
+
+```
+```bash
+wc -l /scratch/eld72413/SAM_seq/Polarized/Ref_derived_sites.txt # 2,936,656
+wc -l /scratch/eld72413/SAM_seq/Polarized/Alt_derived_sites.txt # 10,857,114
+
+cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutations
+# synonymous, reference derived
+sbatch --export=positions='/scratch/eld72413/SAM_seq/Polarized/Ref_derived_sites.txt',\
+vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_synonymous.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs',name='SAM_RefDerivedSynonymous' Subset_vcf.sh # Submitted batch job 4976697
+grep -v "#" SAM_RefDerivedSynonymous.vcf | wc -l # 159553
+
+# synonymous, alternate derived
+sbatch --export=positions='/scratch/eld72413/SAM_seq/Polarized/Alt_derived_sites.txt',\
+vcf='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_synonymous.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs',name='SAM_AltDerivedSynonymous' Subset_vcf.sh # Submitted batch job 4976698
+grep -v "#" SAM_AltDerivedSynonymous.vcf | wc -l # 443172
+
+module load BCFtools/1.10.2-GCC-8.3.0
+bcftools view -H SAM_synonymous.vcf.gz | wc -l
 
 ```
