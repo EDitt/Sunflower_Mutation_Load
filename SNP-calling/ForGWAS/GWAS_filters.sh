@@ -39,9 +39,9 @@ if [[ -f "${GEN_FASTA%.fasta}.dict" ]]; then
 	echo "Sequence dictionary found, proceeding to step 1"
 else
 	echo "No sequence dictionary found. Creating one."
-	java -jar ${PICARD_JAR} CreateSequenceDictionary \ 
-      R="${GEN_FASTA}" \
-      O="${GEN_FASTA%.fasta}.dict"
+	java -jar ${PICARD_JAR} CreateSequenceDictionary \
+	R="${GEN_FASTA}" \
+	O="${GEN_FASTA%.fasta}.dict"
 fi
 
 # Step 1: Removing sites that failed variant recalibrator
