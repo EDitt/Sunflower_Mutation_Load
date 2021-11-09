@@ -5,7 +5,7 @@ plink requires .ped and .map files
 
 Used VCF_convert.sh script
 ```bash
-sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',OUT_PREFIX='/scratch/eld72413/SAM_seq/Plink/Sunflower_SAM_HA412v2' VCF_convert.sh # 1905764
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',OUT_PREFIX='/scratch/eld72413/SAM_seq/Plink/Sunflower_SAM_HA412v2' VCF_convert.sh # 1905764 # 5507827
 
 ```
 
@@ -126,6 +126,64 @@ p + geom_point(aes(color=Class1, shape=Class2)) + theme_minimal()
 p + geom_point(aes(color=Class2)) + theme_minimal()
 
 ```
+
+### Missing Data
+
+Generate a list of genotyping/missingness rate statistics
+```bash
+module load PLINK/1.9b_5-x86_64
+plink --file Sunflower_SAM_HA412v2 --missing --allow-extra-chr
+
+awk '{if ($3==0) {print $0}}' plink.lmiss | wc -l #819
+
+# filter at 10% missing data
+awk '{if ($5 < 0.1) {print $0}}' plink.lmiss | wc -l # 18,119,803
+```
+37129915 variants loaded from .bim file.
+288 people (0 males, 0 females, 288 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to plink.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 288 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.894318.
+--missing: Sample missing data report written to plink.imiss, and variant-based
+missing data report written to plink.lmiss.
+
+
+Could also first do filtering for missing data and MAF (as done for prior SNP set before imputing)
+
+Previously, I had filtered for missing data > 20%, >20% heterogygous individuals, and no minor allele frequency filter
+For GWAS, I will filter out sites with >10% missing data, >10% heterogyzous individuals, and <1% MAF
+```bash
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
+OUTPUT_DIR='/scratch/eld72413/SAM_seq/Plink',\
+OUT_PREFIX='Sunflower_SAM_HA412v2' \
+GWAS_filters.sh
+# Submitted batch job 5508504
+
+# Convert filtered VCF to plink format
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/Plink/Sunflower_SAM_HA412v2_missing_filtered.vcf',OUT_PREFIX='/scratch/eld72413/SAM_seq/Plink/Sunflower_SAM_HA412v2_FILTERED' VCF_convert.sh # Submitted batch job 5511088
+```
+After filtering out sites with MAF <1% and heterozygosity >10%, there are 15096881 sites left
+After filtering out sites with >10% missing data, there are 6899183 sites left
+
+
+Filter for Genotypes used in GWAS?
+```R
+# what about the subset in the 261?
+Geno261 <- read.table("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Plink/Andries_Info/Genotypes in 261 set.txt", header=FALSE)
+colnames(Geno261) <- c("SAM", "SAM2", "Col1", "Col2", "Col3", "Col4")
+
+library(stringr)
+Geno261$IID <- str_replace(Geno261$SAM, "SAM", "PPN")
+
+length(plink_geno[which(plink_geno$IID %in% Geno261$IID),"IID"]) # N = 260
+plink_geno[which(!Geno261$IID %in% plink_geno$IID),] # PPN047
+
+# how many are in the "GoldStandard"?
+length(Geno261[which(Geno261$IID %in% GoldStandard),"IID"]) # 58
+```
+These aren't necessarily biased towards the most highest-coverage genotypes
 
 -----
 
