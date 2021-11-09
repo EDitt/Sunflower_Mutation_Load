@@ -1,0 +1,44 @@
+#!/bin/bash
+
+#SBATCH --job-name=Angsd_AncestralVCF
+#SBATCH --partition=batch
+
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=22G
+#SBATCH --time=36:00:00
+#SBATCH --export=None 
+#SBATCH --mail-user=dittmare@gmail.com
+#SBATCH --mail-type=BEGIN,END,FAIL
+
+set -e
+set -u
+set -o pipefail
+
+#   Dependencies
+module load HTSlib/1.10.2-GCC-8.3.0
+angsd=/home/eld72413/apps/angsd/angsd
+
+
+#### Taken from Chaochih's script at: https://github.com/ChaochihL/Barley_Outgroups/blob/master/morex_v1/angsd_anc_inf.job
+
+#   User provided arguments
+BAM_LIST=/home/morrellp/liux1299/Shared/Projects/GP/GP_Bams/gp_bam_list.txt
+ANC_SEQ=/panfs/roc/groups/9/morrellp/shared/Datasets/NGS/Outgroups/H_murinum/murinum_0.03.fa
+OUT_NAME=H_debilis
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/GP/infer_ancestral
+
+#	Go into out directory
+cd "${OUT_DIR}"
+
+#	Infer ancestral state and output VCF file
+./${angsd} -bam "${BAM_LIST}" \
+	  -dovcf 1 \
+	  -gl 2 \
+	  -dopost 1 \
+	  -out "${OUT_NAME}" \
+	  -anc "${ANC_SEQ}" \
+	  -domaf 1 \
+	  -doMajorMinor 5
+
