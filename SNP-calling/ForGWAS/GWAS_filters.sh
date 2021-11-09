@@ -7,7 +7,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=22G
-#SBATCH --time=48:00:00
+#SBATCH --time=72:00:00
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
@@ -20,7 +20,7 @@ set -o pipefail
 module load GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
 GATK_JAR=/apps/eb/GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8/gatk
 
-module load BCFtools/1.10.2-GCC-8.3.0
+module load BCFtools/1.13-GCC-8.3.0
 
 # Variables to specify on command line:
 # INPUT_VCF
