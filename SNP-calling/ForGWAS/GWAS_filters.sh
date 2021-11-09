@@ -22,8 +22,8 @@ GATK_JAR=/apps/eb/GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8/gatk
 
 module load BCFtools/1.13-GCC-8.3.0
 
-module load picard/2.26.4-Java-13.0.2
-PICARD_JAR=/apps/eb/picard/2.26.4-Java-13.0.2/picard.jar
+module load picard/2.16.0-Java-1.8.0_144
+PICARD_JAR=/apps/eb/picard/2.16.0-Java-1.8.0_144/picard.jar
 
 # Variables to specify on command line:
 # INPUT_VCF
@@ -39,9 +39,8 @@ if [[ -f "${GEN_FASTA%.fasta}.dict" ]]; then
 	echo "Sequence dictionary found, proceeding to step 1"
 else
 	echo "No sequence dictionary found. Creating one."
-	java -jar ${PICARD_JAR} CreateSequenceDictionary \
-	-R:${GEN_FASTA} \
-	-O:"${GEN_FASTA%.fasta}.dict"
+	java -jar ${PICARD_JAR} CreateSequenceDictionary -R:"${GEN_FASTA}"
+	#-O:"${GEN_FASTA%.fasta}.dict"
 fi
 
 # Step 1: Removing sites that failed variant recalibrator
