@@ -41,6 +41,16 @@ After adapter trimming, quality assessment was re-run on trimmed samples to veri
 
 ## Read Mapping
 
+Genome downloaded from: https://sunflowergenome.org/assembly-data/assets/data/assemblies/Ha412HOv2.0-20181130.fasta.gz
+Annotations downloaded from https://www.heliagene.org/ICSG/ (Ha412-HOv2.0-20181130)
+```bash
+GenomeFASTA=/scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.fasta.gz
+
+gzip -dc $GenomeFASTA > /scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.fasta
+module load SAMtools/1.10-iccifort-2019.5.281 # (previously used SAMtools/1.3.1-foss-2016b)
+samtools faidx /scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.fasta
+```
+
 Used BWA v.0.7.17, default parameters
 
 Read mapping statistics-
