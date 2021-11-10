@@ -72,7 +72,7 @@ else
 	echo "Removing sites with more than 0.1 missing genotypes"
 	bcftools filter -e 'F_MISSING > 0.1' ${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_recalibrated_pass_sites.vcf > ${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_missing_filtered.vcf
 	num_sites2=$(grep -v "#" "${OUTPUT_DIR}/Intermediates/${OUT_PREFIX}_missing_filtered.vcf" | wc -l)
-	echo "After filtering out sites with too many low quality or missing variants, there are ${num_sites2} sites left"
+	echo "After filtering out sites with too many missing variants, there are ${num_sites2} sites left"
 fi
 
 # Step 3: Filtering out sites with more than 0.1 heterozygous genotypes
