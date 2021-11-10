@@ -128,6 +128,8 @@ awk '{if ($3==0) {print $0}}' plink.lmiss | wc -l #248
 
 I have already done all of these (not sure about the chromosomal naming) except for removing missing data
 I will first, subset the VCF to 72 genotypes with the least missing data (< 3.315% (lower hinge of boxplot) of sites missing)
+Then, I will remove all missing data (sites with any missing genotypic data)
+
 ```bash
 srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=1 --time=12:00:00 --job-name=qlogin /bin/bash -l
 
@@ -140,12 +142,39 @@ bcftools view -g ^miss -Oz -o /scratch/eld72413/SAM_seq/Plink/Sunflower_SAM_HA41
 
 bcftools stats Sunflower_SAM_HA412v2_REF_PANEL.vcf.gz # 3,948,880 SNPs
 
-####
-#bcftools filter -i 'ID=@/scratch/eld72413/SAM_seq/Plink/LowMissingGeno.txt' \
+#bcftools filter -i 'ID=@/scratch/eld72413/SAM_seq/Plink/LowMissingGeno.txt' \ #other option? (not sure if this is the right syntax)
 
+```
+From the SNPs remaining, I want to select those that are missing from the fewest number of genotypes in order to minimize imputation
+```bash
+# look at distribution of missing data 
 
+# print list of SNPs
+bcftools query -f '%CHROM\t%POS\n' Sunflower_SAM_HA412v2_REF_PANEL.vcf.gz > /scratch/eld72413/SAM_seq/Plink/Subset/AcrossAllGenos/GoldStandardSNPs.txt
+bgzip /scratch/eld72413/SAM_seq/Plink/Subset/AcrossAllGenos/GoldStandardSNPs.txt # needs to be compressed for bcftools
+bgzip -c /scratch/eld72413/SAM_seq/Plink/Sunflower_SAM_HA412v2_missing_filtered.vcf > /scratch/eld72413/SAM_seq/Plink/Sunflower_SAM_HA412v2_missing_filtered.vcf.gz
 
+bcftools index /scratch/eld72413/SAM_seq/Plink/Sunflower_SAM_HA412v2_missing_filtered.vcf.gz
 
+# will use bcftools to filter - unclear if I can use Plink without SNP names?
+bcftools view -R /scratch/eld72413/SAM_seq/Plink/Subset/AcrossAllGenos/GoldStandardSNPs.txt.gz \
+/scratch/eld72413/SAM_seq/Plink/Sunflower_SAM_HA412v2_missing_filtered.vcf.gz > /scratch/eld72413/SAM_seq/Plink/Subset/AcrossAllGenos/GoldSubset.vcf
+
+# convert to Plink format
+cd /home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/Plink
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/Plink/Subset/AcrossAllGenos/GoldSubset.vcf',OUT_PREFIX='/scratch/eld72413/SAM_seq/Plink/Subset/AcrossAllGenos/GoldSubset' VCF_convert.sh # Submitted batch job 5542497
+
+# look at distribution of missing genotypes per site
+plink --file /scratch/eld72413/SAM_seq/Plink/Subset/AcrossAllGenos/GoldSubset \
+--missing --allow-extra-chr
+
+awk '{if ($5>0.08) {print $0}}' plink.lmiss | wc -l # 1051763
+awk '{if ($5>0.07) {print $0}}' plink.lmiss | wc -l # 1798924
+
+awk '{if ($6>0.2) {print $0}}' plink.imiss | wc -l # 17 (all except 1 are in set of 261)
+awk '{if ($6>0.2) {print $0}}' plink.imiss
+awk '{if ($6>0.25) {print $0}}' plink.imiss
+# PPN038 has F_MISS=0.3764, PPN148 has F_MISS=0.3154, PPN128 has F_MISS=0.2512 (not included in 261)
 ```
 
 ### Reference panel allele frequencies:
