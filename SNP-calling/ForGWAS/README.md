@@ -67,3 +67,41 @@ awk '{if ($5<0.01) {print $0}}' plink.lmiss | wc -l # 6,054,250
 # how many are under 2% missing data (missing in 1-5 genotypes)?
 awk '{if ($5<0.02) {print $0}}' plink.lmiss | wc -l # 11,348,014
 ```
+
+### Subset without missing data
+Will first test out the subset without any missing data (while I work on imputation)
+- Need to first filter to 261 genotypes from salt experiment, then filter out missing data
+```bash
+tmux new -s vcf_filter  ## ss-sub4 partition
+module load BCFtools/1.13-GCC-8.3.0
+cd /scratch/eld72413/SAM_seq/ForGWAS/
+
+# make text file with genotype names
+awk '{print $1}' /scratch/eld72413/SAM_seq/Plink/Genotypes_261set.txt > Genotypes_261set_forBCFtools.txt
+# make sure names are similar
+bcftools query -l /scratch/eld72413/SAM_seq/ForGWAS/Sunflower_SAM_SNP_GWAS_BIALLELIC_NORM.vcf.gz
+sed -i 's/RHA415-4/RHA415-4_PPN251/g' Genotypes_261set_forBCFtools.txt
+sed -i 's/NMS373/NMS373_PPN136/g' Genotypes_261set_forBCFtools.txt
+#Hopi_PPN285
+#PI_531071
+#SF_33
+
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=1 --time=12:00:00 --job-name=qlogin /bin/bash -l
+
+bcftools view -S /scratch/eld72413/SAM_seq/ForGWAS/Genotypes_261set_forBCFtools.txt \
+/scratch/eld72413/SAM_seq/ForGWAS/Sunflower_SAM_SNP_GWAS_BIALLELIC_NORM.vcf.gz \
+--force-samples \
+-Ou | \
+bcftools view -g ^miss -Oz -o /scratch/eld72413/SAM_seq/ForGWAS/Subset261/Sunflower_SAM_SNP_GWAS_261Subset_noMISS.vcf.gz
+
+# Error: subset called for sample that does not exist in header: "PPN053".  Use "--force-samples" to ignore this error.
+### after adding flag:
+# Warn: subset called for sample that does not exist in header: "PPN053"... skipping
+du -h Sunflower_SAM_SNP_GWAS_261Subset_noMISS.vcf.gz # 1.5G
+bcftools stats Sunflower_SAM_SNP_GWAS_261Subset_noMISS.vcf.gz # 1363909 SNPs
+
+# convert to Plink format
+cd /home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/Plink
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/ForGWAS/Subset261/Sunflower_SAM_SNP_GWAS_261Subset_noMISS.vcf.gz',OUT_PREFIX='/scratch/eld72413/SAM_seq/ForGWAS/Subset261/Sunflower_SAM_SNP_GWAS_261Subset_noMISS' VCF_convert.sh # Submitted batch job 5581114
+
+```
