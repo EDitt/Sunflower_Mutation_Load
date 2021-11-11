@@ -146,10 +146,18 @@ done
 ```bash
 #check
 grep "^>" ContextualSeqs.fasta | wc -l #10640
+grep "^>" ContextualSeqs_UniqMap.fasta | wc -l #6984
 grep "^>" ContextualSeqs_subset.fasta | wc -l #5360
 ```
 
 I also replaced the polymorphism syntax using the same code as above  
+```bash
+# In dir: /scratch/eld72413/SAM_seq/Recombination
+sed -i 's|\[A/C]|M|g' ContextualSeqs_UniqMap.fasta
+sed -i 's|\[T/C]|Y|g' ContextualSeqs_UniqMap.fasta
+sed -i 's|\[A/G]|R|g' ContextualSeqs_UniqMap.fasta
+sed -i 's|\[T/G]|K|g' ContextualSeqs_UniqMap.fasta
+```
 Number of polymorphisms after subsetting to only include genotyped results: A/C - 507; T/C - 2208; A/G - 2115; T/G - 529  
 
 I then ran the alignment again with this new set.
@@ -253,36 +261,49 @@ tar -xzvf taxdb.tar.gz
 
 Created blast database:
 ```bash
-module load BLAST+/2.10.0
+#module load BLAST+/2.10.0
+module load BLAST+/2.11.0-gompi-2020b
+# In dir: /scratch/eld72413/SunflowerGenome
 makeblastdb -in Ha412HOv2.0-20181130.fasta -dbtype nucl -parse_seqids -title "Ha412HOv2_DB"
+
+# -taxid 4232 do I need this flag?
 #check
 blastdbcheck -db Ha412HOv2.0-20181130.fasta
 ```
+(initially got an error when I didn't extract the taxonomy info from the BLAST database in the same directory as the reference genome)
 
 blast search for the SNPs against the reference database
 ```bash
-#blastn -db Ha412HOv2.0-20181130.fasta -query /scratch/eld72413/SNParray/ContextualSeqs_subset.fasta -out /scratch/eld72413/SNParray/Blast_Mandel_subsetSNPs.out
-
 blastn -db Ha412HOv2.0-20181130.fasta -query /scratch/eld72413/SNParray/ContextualSeqs_UniqMap.fasta -out /scratch/eld72413/SNParray/Blast_UniqueSNPs.out
+
+# redo (diff directory)
+blastn -db Ha412HOv2.0-20181130.fasta -query /scratch/eld72413/SAM_seq/Recombination/ContextualSeqs_UniqMap.fasta -out /scratch/eld72413/SAM_seq/Recombination/Blast_UniqueSNPs.out
+# lots of this message: FASTA-Reader: Ignoring invalid residues at position(s): On line 13968: 37, 39, 41
 ```
 
 #### Run SNP-Utils
 First, install dependencies  
 Listed here: https://github.com/mojaveazure/SNP_Utils#dependencies
 ```bash
-module load BLAST+/2.10.0 
+#module load BLAST+/2.10.0
+# redo
+module load BLAST+/2.11.0-gompi-2020b
 module load Anaconda3/2020.02
+
 # use PyPi to install biopython, Beautiful Soup 4, Overload, Ixml
 pip install PyPi
 pip install biopython
 pip install beautifulsoup4
 pip install overload
 pip install lxml
+
+# to update pip: /apps/eb/Anaconda3/2020.02/bin/python -m pip install --upgrade pip
 ```
 
 Step 1: Config subroutine (configure BLAST search)
 ```bash
-GENOME=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
+#GENOME=/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.fasta
+GENOME=/scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.fasta
 cd /home/eld72413/DelMut/SNP_Utils/
 ./snp_utils.py CONFIG -d ${GENOME} -k -i 90 -c /scratch/eld72413/SNParray/SNPutils/blast_MapUniqueSNP_idt90
 ```
@@ -303,8 +324,10 @@ Config file can be found at /scratch/eld72413/SNParray/SNPutils/blast_MapUniqueS
 Step 2: Run SNP-Utils BLAST
 ```bash
 # define variables
-LOOKUP_TABLE=/scratch/eld72413/SNParray/LookupTable_MapUniq.txt
-GENETIC_MAP=/scratch/eld72413/SNParray/SNP_Genetic_Map_Unique.txt
+#LOOKUP_TABLE=/scratch/eld72413/SNParray/LookupTable_MapUniq.txt
+LOOKUP_TABLE=/scratch/eld72413/SAM_seq/Recombination/LookupTable_MapUniq.txt
+#GENETIC_MAP=/scratch/eld72413/SNParray/SNP_Genetic_Map_Unique.txt
+GENETIC_MAP=/scratch/eld72413/SAM_seq/Recombination/SNP_Genetic_Map_Unique.txt
 OUT_PREFIX=/scratch/eld72413/SNParray/SNPutils/MapUniqueSNP_idt90
 
 cd /home/eld72413/DelMut/SNP_Utils
@@ -312,6 +335,12 @@ cd /home/eld72413/DelMut/SNP_Utils
 ```
 
 ```bash
+Filtering SNPs by hit chromsome/contig
+Using genetic map /scratch/eld72413/SAM_seq/Recombination/SNP_Genetic_Map_Unique.txt
+Filtering SNPs with a minimum distance threshold of 100000
+Filtering SNPs by relative location on the genetic map
+Using genetic map /scratch/eld72413/SAM_seq/Recombination/SNP_Genetic_Map_Unique.txt
+Parsing blast database /scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.fasta
 Found 25090 chromosomes
 Filtering 6539 SNP IDs
 Writing 6539 SNPs to /scratch/eld72413/SNParray/SNPutils/MapUniqueSNP_idt90.vcf
@@ -322,6 +351,7 @@ Writing 134 failed SNPs to /scratch/eld72413/SNParray/SNPutils/MapUniqueSNP_idt9
 
 ### Result summary
 ```bash
+cd /scratch/eld72413/SNParray/SNPutils/
 # Total SNPs
 grep -v "#" MapUniqueSNP_idt90.vcf | cut -f 3 | wc -l # 6539
 # Total unique SNPs
