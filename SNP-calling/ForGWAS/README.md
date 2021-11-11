@@ -101,7 +101,6 @@ du -h Sunflower_SAM_SNP_GWAS_261Subset_noMISS.vcf.gz # 1.5G
 bcftools stats Sunflower_SAM_SNP_GWAS_261Subset_noMISS.vcf.gz # 1363909 SNPs
 
 # convert to Plink format
-cd /home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/Plink
 sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/ForGWAS/Subset261/Sunflower_SAM_SNP_GWAS_261Subset_noMISS.vcf.gz',OUT_PREFIX='/scratch/eld72413/SAM_seq/ForGWAS/Subset261/Sunflower_SAM_SNP_GWAS_261Subset_noMISS' VCF_convert.sh # Submitted batch job 5581114
 
 ```
