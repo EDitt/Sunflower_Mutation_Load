@@ -385,7 +385,8 @@ grep -v "#" $VCF | awk '{print $1}' | cut -c 5- | awk '{if ($1 < 10000) {print $
 Use reference dictionary to find and replace:  
 ```bash
 # First make a list of chromosome names and lengths:
-DICT="/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.dict"
+#DICT="/scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.dict"
+DICT="/scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.dict"
 
 # make a list of chromosome names + lengths
 awk -F "[\t,:]" 'NR > 1 {$1=$1; print $3,$5}' $DICT > Chrom_Names_Len.txt
@@ -408,7 +409,7 @@ VCFLengths=$(grep -v "#" $VCF | awk '{print $1}' | sort -u )
 # make a new list that only contains the chromosomes represented in the VCF
 # this is the union of a.) in VCF and b.) over 10kbp
 for i in $VCFLengths; do
-  awk -v var="$i" '{if ($2 == var) {print $1,"len="$2}}' Chrom_Names_Len_Over10kbp.txt >> Chrom_Names_Len_InVCF_Over10kbp.txt
+  awk -v var="${i#len=}" '{if ($2 == var) {print $1,"len="$2}}' Chrom_Names_Len_Over10kbp.txt >> Chrom_Names_Len_InVCF_Over10kbp.txt
 done
 
 wc -l Chrom_Names_Len_InVCF_Over10kbp.txt #21 (17 chromosomes + 4 contigs over 10kbp) -> 36 minus the 15 small contigs
