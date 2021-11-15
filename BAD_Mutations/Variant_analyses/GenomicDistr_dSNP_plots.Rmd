@@ -12,13 +12,166 @@ library(ggplot2)
 library(tidyr)
 library(car)
 library(ggpubr)
-setwd("/Users/eld72413/Google Drive/Active Projects/DelMutation/Results")
-setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Results")
+setwd("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicBins_10Mbp")
 ```
 
 
 Setup dataframe
 ```{r dataframe, include=FALSE}
+dSNP_ref <- read.table("RefDeleterious_10MbCounts.txt", header=FALSE)
+dSNP_alt <- read.table("AltDeleterious_10MbCounts.txt", header=FALSE)
+SNP_synon <- read.table("Synonymous_10MbCounts.txt", header=FALSE)
+
+column_names <- c("Chromosome", "StartPos", "EndPos", "Count")
+
+colnames(dSNP_ref) <- column_names
+colnames(dSNP_ref)[4] <- "Ref_dSNP_count"
+colnames(dSNP_alt) <- column_names
+colnames(dSNP_alt)[4] <- "Alt_dSNP_count"
+colnames(SNP_synon) <- column_names
+colnames(SNP_synon)[4] <- "Synon_count"
+
+AlldSNP <- merge(dSNP_ref, dSNP_alt, by=c("Chromosome", "StartPos", "EndPos"))
+AlldSNP$TotaldSNP <- AlldSNP$Ref_dSNP_count + AlldSNP$Alt_dSNP_count
+
+AllSNP <- merge(AlldSNP[,c(1:3,6)], SNP_synon, by=c("Chromosome", "StartPos", "EndPos"))
+
+AllSNP$dSNP_sSNP <- AllSNP$TotaldSNP / AllSNP$Synon_count
+
+meandSNP_sSNP <- mean(AllSNP$dSNP_sSNP)
+SddSNP_sSNP <- sd(AllSNP$dSNP_sSNP)
+
+# order to graph bins
+AllSNP <- AllSNP[order(AllSNP$Chromosome,
+                       AllSNP$StartPos, AllSNP$EndPos),]
+Order_Nums <- seq(1,length(AllSNP$Chromosome), by=1)
+AllSNP$Order <- Order_Nums
+
+# make long format for graphing
+SNP_bins_long <- gather(AllSNP, Interval, 
+                        Position, StartPos:EndPos, factor_key=TRUE)
+
+# order
+SNP_bins_long <- SNP_bins_long[order(SNP_bins_long$Chromosome, 
+                                     SNP_bins_long$Position,
+                                     SNP_bins_long$Order),]
+
+# Convert Position to Mbp
+SNP_bins_long$Position_Mbp <- SNP_bins_long$Position / 1000000
+
+# split up by chromosome   
+SNP_bins_Chroms <- split(SNP_bins_long, as.factor(SNP_bins_long$Chromosome))
+```
+
+## Functions for graphing
+```{r functions, echo=FALSE}
+
+dSNPPlot <- function(dataset, ycol, mean, sd, ylabel) {
+  plot <- ggplot(dataset, aes_string(x="Position_Mbp", y=ycol)) +
+    geom_line(col="red") +
+    theme_minimal() + ylab("Proportion dSNPs") + xlab("Position (Mb)") +
+    geom_hline(yintercept = mean - sd, linetype="dashed") +
+    geom_hline(yintercept = mean + sd, linetype="dashed") +
+    ylim(0,0.4) +
+    ylab(ylabel)
+  return (plot)
+}
+
+```
+
+Make plots
+```{r plots}
+
+# Plot dSNP/sSNP
+Chrom_SNPs <- lapply(SNP_bins_Chroms, function(x) {dSNPPlot(x, "dSNP_sSNP", 
+                                                           meandSNP_sSNP, SddSNP_sSNP,
+                                                           "dSNPs/sSNPs")})
+
+# Put all chromosome plots together
+labels <- paste0("Chromosome ", seq(1,17, by=1))
+ggarrange(plotlist = Chrom_SNPs, labels=labels) # manually alter size 1100 x 600
+
+# regions that are significantly high or low?
+hist(AllSNP$dSNP_sSNP)
+max(AllSNP$dSNP_sSNP) # 0.4
+```
+
+Combine with Recombination Info
+```{r recombination}
+
+Recombination <- read.table("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/Recombination/RecombinationBins.txt",
+                            sep = "\t", header=TRUE)
+
+Recombination$StartPos <- as.integer(Recombination$WindowMin*1000000)
+
+Combined <- merge(AllSNP, Recombination, by=c("Chromosome", "StartPos"))
+
+# make long format for graphing
+Combined_long <- gather(Combined, Interval, 
+                        Position, StartPos:EndPos, factor_key=TRUE)
+
+# Convert Position to Mbp
+Combined_long$Position_Mbp <- Combined_long$Position / 1000000
+
+# order
+Combined_long <- Combined_long[order(Combined_long$Chromosome, 
+                                     Combined_long$Position,
+                                     Combined_long$Order),]
+
+max(Combined_long$dSNP_sSNP)
+Combined_long$dSNP_sSNPConvert <- Combined_long$dSNP_sSNP*10
+
+Combined_Chrom <- split(Combined_long, Combined_long$Chromosome)
+
+
+## both on same graph?
+RecombdSNPplot <- function(dataset, maxY) {
+  plot <- ggplot(data=dataset, aes(x=Position_Mbp, y=Median_cM.Mbp)) +
+    geom_smooth(method="loess", alpha=0.5, se=TRUE) + 
+    #geom_line(aes(x=Position_Mbp, y=dSNP_sSNPConvert), col="red") +
+    geom_smooth(aes(x=Position_Mbp, y=dSNP_sSNPConvert), col="red") +
+    xlab("Position (Mb)") + 
+    geom_hline(yintercept = (meandSNP_sSNP - SddSNP_sSNP)*10, linetype="dashed") +
+    geom_hline(yintercept = (meandSNP_sSNP + SddSNP_sSNP)*10, linetype="dashed") +
+    #ylab("cM/Mbp") +
+    #ylim(0,maxY) +
+    theme_minimal()
+  return (plot)
+}
+
+Combined_plot <- lapply(Combined_Chrom, function(x) {RecombdSNPplot(x, 10)})
+ggarrange(plotlist = Combined_plot, labels=labels)
+
+### stopping point: add second y-axis
+```
+
+Relationship between recombination and dSNP/sSNP
+```{r scatterplot}
+
+Mod1 <- lm(dSNP_sSNP ~ Median_cM.Mbp, data=Combined)
+summary(Mod1)
+Anova(Mod1)
+drop1(Mod1, test = "Chisq")
+
+plot(Combined$Median_cM.Mbp, Combined$dSNP_sSNP)
+abline(Mod1)
+
+#Mod2 <- lm(log(dSNP_sSNP) ~ log(Median_cM.Mbp), data=Combined)
+Mod2 <- lm(log2(dSNP_sSNP+1) ~ log2(Median_cM.Mbp+1), data=Combined)
+summary(Mod2)
+
+plot(log2(Combined$Median_cM.Mbp + 1), log2(Combined$dSNP_sSNP + 1), xlab="log2 Median cM/Mbp + 1", ylab="log2 dSNP/sSNP + 1")
+abline(Mod2)
+
+plot(log(Combined$Median_cM.Mbp), log(Combined$dSNP_sSNP))
+```
+
+
+
+
+
+Older code
+```{r scratch}
 SNP_bins <- read.table("SNP_bins", sep = "\t", header=TRUE, stringsAsFactors = FALSE,
                        row.names = NULL)
 
@@ -46,56 +199,3 @@ SdPropdSNP_nonsyn <- sd(SNP_bins$PropdSNP_nonsyn)
 # make long format for graphing
 SNP_bins_long <- gather(SNP_bins, Interval, Position, Interval_start:Interval_end, factor_key=TRUE)
 
-# order
-SNP_bins_long <- SNP_bins_long[order(SNP_bins_long$Chromosome, 
-                                            SNP_bins_long$Position,
-                                            SNP_bins_long$Order),]
-
-# Convert Position to Mbp
-SNP_bins_long$Position_Mbp <- SNP_bins_long$Position / 1000000
-
-# split up by chromosome   
-SNP_bins_Chroms <- split(SNP_bins_long, as.factor(SNP_bins_long$Chromosome))
-```
-
-## Functions for graphing
-```{r functions, echo=FALSE}
-
-dSNPPlot <- function(dataset, ycol, mean, sd, ylabel) {
-  plot <- ggplot(dataset, aes_string(x="Position_Mbp", y=ycol)) +
-    geom_line(col="red") +
-    theme_minimal() + ylab("Proportion dSNPs") + xlab("Position (Mb)") +
-    geom_hline(yintercept = mean - sd, linetype="dashed") +
-    geom_hline(yintercept = mean + sd, linetype="dashed") +
-    ylim(0,0.25) +
-    ylab(ylabel)
-  return (plot)
-}
-
-```
-
-Make plots
-```{r plots}
-
-# Plot dSNP/sSNP
-Chrom_SNPs <- lapply(SNP_bins_Chroms, function(x) {dSNPPlot(x, "dSNP_Synon", 
-                                                           meandSNP_Synon, SddSNP_Synon,
-                                                           "dSNPs/sSNPs")})
-
-# Put all chromosome plots together
-labels <- paste0("Chromosome ", seq(1,17, by=1))
-ggarrange(plotlist = Chrom_SNPs, labels=labels) # manually alter size 1100 x 600
-
-# Plot oroportion of dSNPs out of all nonsynonymous
-Chrom_SNPs2 <- lapply(SNP_bins_Chroms, function(x) {dSNPPlot(x, "PropdSNP_nonsyn", 
-                                                           meanPropdSNP_nonsyn, SdPropdSNP_nonsyn,
-                                                           "Prop dSNPs")})
-# Put all chromosome plots together
-ggarrange(plotlist = Chrom_SNPs2, labels=labels) # manually alter size 1100 x 600
-```
-
-Test for regions that are significantly high or low?
-```{r significance}
-
-hist(SNP_bins$dSNP_Synon)
-hist(SNP_bins$PropdSNP_nonsyn)
