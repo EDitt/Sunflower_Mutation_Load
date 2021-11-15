@@ -9,7 +9,7 @@ I also used the vcf file that I created with SNPutils- `MapUniqueSNP_idt90_renam
 
 ## Create Recombination Data Files
 ```bash
-GeneticMap=/scratch/eld72413/SNParray/SNP_Genetic_Map_Unique.txt
+GeneticMap=/scratch/eld72413/SAM_seq/Recombination/SNP_Genetic_Map_Unique.txt
 RemappedVCF=/scratch/eld72413/SNParray/FinalFiles/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf
 
 cd /scratch/eld72413/SAM_seq/Recombination
@@ -63,6 +63,34 @@ Recombination <- merge(cM_pos, bp_pos, by=c("Chromosome", "Locus")) # some marke
 length(Recombination$Locus) #5958
 
 Recombination$Mbp <- Recombination$bp/1000000
+write.csv(Recombination, "Recombination_Full.csv", row.names=FALSE)
+### stopping point
+
+# sort by bp position
+Recombination$Chromosome <- factor(Recombination$Chromosome)
+Recombination <- with(Recombination, Recombination[order(Chromosome, bp),])
+
+#recombination rate between current position and next position in map (in cM/Mb)
+# need to split by chromosome
+
+####
+NextVals <- Recombination[-1,(c(5,3))]
+NextVals[5958,] <- NA
+colnames(NextVals) <- c("Next_Mbp", "NextcM")
+
+Recombination_calc <- cbind(Recombination, NextVals)
+Recombination_calc$MbpDiff <- Recombination_calc$Next_Mbp - Recombination_calc$Mbp
+Recombination_calc$cMDiff <- Recombination_calc$NextcM - Recombination_calc$cM
+
+Recombination$Rate <- Recombination_calc$cMDiff / Recombination_calc$MbpDiff
+
+length(Recombination[which(Recombination$Rate < 0),"Locus"]) # 1217
+
+### use previous value?
+PrevVals <- Recombination[-5958,(c(5,3))]
+
+
+##### Previous code below
 Recombination$cM_Mbp <- Recombination$cM / Recombination$Mbp
 
 # remove markers with very high cM/Mbp (>20) indicating a misalignment (previously 5958 markers, now 5950)
