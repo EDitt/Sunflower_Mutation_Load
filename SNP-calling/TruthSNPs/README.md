@@ -417,22 +417,22 @@ wc -l Chrom_Names_Len_InVCF_Over10kbp.txt #21 (17 chromosomes + 4 contigs over 1
 
 Make a new VCF file with contigs renamed and excluding small contigs
 ```bash
-cp $VCF ./MapUniqueSNP_idt90_rename.vcf
+cp $VCF ./MapUniqueSNP_idt90_Chrome_rename.vcf
 
 while read line; do
   ChromName=$(echo $line | cut -d " " -f1)
   ChromLen=$(echo $line | cut -d " " -f2)
-  sed -i 's|'^"${ChromLen}"'\b|'"${ChromName}"'|g' MapUniqueSNP_idt90_rename.vcf
+  sed -i 's|'^"${ChromLen}"'\b|'"${ChromName}"'|g' MapUniqueSNP_idt90_Chrome_rename.vcf
 done < Chrom_Names_Len_InVCF_Over10kbp.txt
 
 #check
-grep "^len=" MapUniqueSNP_idt90_rename.vcf | wc -l #15
+grep "^len=" MapUniqueSNP_idt90_Chrome_rename.vcf | wc -l #15
 
 ```
 
 Remove 15 small contigs that could not be re-named
 ```bash
-grep -v "^len=" MapUniqueSNP_idt90_rename.vcf > MapUniqueSNP_idt90_rename_rmContigs.vcf 
+grep -v "^len=" MapUniqueSNP_idt90_Chrome_rename.vcf > MapUniqueSNP_idt90_rename_rmContigs.vcf 
 
 # how many markers left?
 grep -v "#" MapUniqueSNP_idt90_rename_rmContigs.vcf | wc -l #6524
@@ -440,20 +440,24 @@ grep -v "#" MapUniqueSNP_idt90_rename_rmContigs.vcf | wc -l #6524
 
 Sort by Position
 ```bash
-qsub -I -q s_interq -l walltime=8:00:00 -l nodes=1:ppn=8 -l mem=22gb
+#qsub -I -q s_interq -l walltime=8:00:00 -l nodes=1:ppn=8 -l mem=22gb
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=1 --time=12:00:00 --job-name=qlogin /bin/bash -l
 
 module load picard/2.16.0-Java-1.8.0_144
 PICARD_JAR=/usr/local/apps/eb/picard/2.16.0-Java-1.8.0_144/picard.jar
-module load GATK/4.1.2.0-GCCcore-8.2.0-Java-1.8
-GATK_JAR=/usr/local/apps/eb/GATK/4.1.2.0-GCCcore-8.2.0-Java-1.8/gatk
+#module load GATK/4.1.2.0-GCCcore-8.2.0-Java-1.8
+#GATK_JAR=/usr/local/apps/eb/GATK/4.1.2.0-GCCcore-8.2.0-Java-1.8/gatk
+module load GATK/4.1.8.1-GCCcore-8.3.0-Java-1.8
+#GATK_JAR=/usr/local/apps/eb/GATK/
 
-TMP=/scratch/eld72413/SAM_seq/results2/Temp
-DIR=/scratch/eld72413/SNParray
+#TMP=/scratch/eld72413/SAM_seq/results2/Temp
+TMP=/scratch/eld72413/Tmp
+DIR=/scratch/eld72413/SNParray/SNPutils
 
 gatk SortVcf \
 --TMP_DIR ${TMP} \
 -I ${DIR}/MapUniqueSNP_idt90_rename_rmContigs.vcf \
--SD /scratch/eld72413/Ha412HOv2.0/Ha412HOv2.0-20181130.dict \
+-SD /scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.dict \
 -O ${DIR}/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf
 ```
 
