@@ -111,6 +111,13 @@ write.table(AncestralDF[,c("Chromosome", "Position", "Ancestral_Allele2")], "Anc
 	sep = "\t", col.names=FALSE, row.names=FALSE, quote=FALSE)
 ```
 
+Pull out all regions that have a call at that position
+```bash
+awk '{if ($3 != "N") {print $0}}' AncestralStateTable > AncestralStateCalls.txt
+wc -l AncestralStateCalls.txt # 13,524,630
+```
+
+
 Use Peter Morrell's ancestral_state.py code to pull out ancestral state info for all genotypes at all positions
 ```bash
 # gzip ancestral state list
