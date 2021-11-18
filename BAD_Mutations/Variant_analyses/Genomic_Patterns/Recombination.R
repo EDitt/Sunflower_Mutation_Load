@@ -4,6 +4,7 @@
 library(dplyr)
 library(ggplot2)
 library(ggpubr)
+library(scales)
 setwd("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/Recombination")
 
 ######################################
@@ -163,17 +164,29 @@ max(unlist(lapply(Recomb_bins, function(x) {max(na.omit(x$x_MinMarkers))}))) # 8
 
 ## both on same graph?
 RecombPlot <- function(dataset, dataset2, maxY) {
-  plot <- ggplot(data=dataset, aes(x=Mbp, y=cM_Mbp)) +
+  plot <- ggplot(data=dataset, aes(x=Mbp, y=cM_Mbp_noOut)) +
     geom_point(col="darkgrey", alpha=0.5) + 
-    geom_smooth(method="loess", alpha=0.5, se=TRUE) + 
+    geom_smooth(method="loess", alpha=0.5, se=TRUE, ymin=0) + 
     #geom_line(data=dataset2, aes(x=windows, y=x), col="black") +
     geom_line(data=dataset2, aes(x=windows, y=x_MinMarkers), col="black") +
     xlab("Position (Mb)") + ylab("cM/Mbp") +
-    ylim(0,maxY) +
+    coord_cartesian(ylim=c(0,maxY)) +
+    #ylim(0,maxY) +
+    #scale_y_continuous(limit=c(0,NA)) +
+    #scale_y_continuous(limit=c(0,NA), oob=squish) +
+    #scale_y_continuous(expand = c(0, 0)) +
     theme_minimal()
   return (plot)
 }
 
+#test
+#RecombPlot(Recomb_ChromCalcs$Ha412HOChr13, Recomb_bins$Ha412HOChr13, 10)
+# for geom_smooth- ymin=0, ymax=5 only control SE
+# span=0.3 to control fraction of points around local mean
+RecombPlot(Recomb_ChromCalcs$Ha412HOChr04, Recomb_bins$Ha412HOChr04, 10)
+# need to control the span of points manually
+#RecombPlot(Recomb_ChromCalcs$Ha412HOChr13[which(Recomb_ChromCalcs$Ha412HOChr13$cM_Mbp_noOut < 15),],
+#           Recomb_bins$Ha412HOChr13, 10)
 
 RecombPlots <- lapply(names(Recomb_ChromCalcs), function(x) {
   RecombPlot(Recomb_ChromCalcs[[x]], Recomb_bins[[x]], 10)})
@@ -190,9 +203,15 @@ names(Yaxes) <- names(Recomb_ChromCalcs)
 RecombPlots <- lapply(names(Recomb_ChromCalcs), function(x) {
   RecombPlot(Recomb_ChromCalcs[[x]], Recomb_bins[[x]], Yaxes[[x]])})
 
+# save for graphing
+save(Recomb_ChromCalcs, 
+     file="/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicBins_10Mbp/ForPlots/RecombinationDFs.RData")
+
 ######################################
 ###### SAVE RECOMBINATION DATA #######
 ######################################
+
+# for scatterplot analyses
 
 Bin_data <- function (dataframe, Num_mbp, cM_MbpColumn) {
   Num_windows <- ceiling(max(dataframe$Mbp) / Num_mbp)
@@ -211,10 +230,14 @@ Recomb_binData <- lapply(Recomb_ChromCalcs, function(x) {
   Bin_data(x, 10, "cM_Mbp_noOut")
 })
 
+save(Recomb_binData, 
+     file="/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicBins_10Mbp/ForPlots/RecombinationBins.RData")
+
 # add column for chromosome name
 Recomb_binData <- lapply(names(Recomb_binData), function(x){
   Recomb_binData[[x]][,"Chromosome"] <- x; return(Recomb_binData[[x]])
   })
+
 
 RecombinationBins_df <- do.call("rbind", Recomb_binData)
 write.table(RecombinationBins_df, file = "RecombinationBins.txt", row.names = FALSE, quote = FALSE, sep="\t")
