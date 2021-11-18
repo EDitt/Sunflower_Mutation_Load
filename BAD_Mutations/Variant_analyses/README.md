@@ -24,13 +24,12 @@ Need to parse VeP table
 ## Site Frequency Spectra
 All dSNPs
 ```bash
-
 module load BCFtools/1.13-GCC-8.3.0
 
 # reference deleterious
-bcftools query -f '%CHROM\t%POS\t%AC\t%AN\n' SAM_Refdeleterious.vcf.gz > AlleleFreqs/SAM_Refdeleterious_AC_AN.txt
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\n' SAM_Refdeleterious.vcf.gz > AlleleFreqs/SAM_Refdeleterious_AC_AN.txt
 # alternate deleterious
-bcftools query -f '%CHROM\t%POS\t%AC\t%AN\n' SAM_Altdeleterious.vcf.gz > AlleleFreqs/SAM_Altdeleterious_AC_AN.txt
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\n' SAM_Altdeleterious.vcf.gz > AlleleFreqs/SAM_Altdeleterious_AC_AN.txt
 
 # N_ALT : number of alternate alleles
 # AC : count of alternate alleles
@@ -39,6 +38,120 @@ bcftools query -f '%CHROM\t%POS\t%AC\t%AN\n' SAM_Altdeleterious.vcf.gz > AlleleF
 ### need to calculate frequency of deleterious allele (for deleterious reference it's AN - AC/AN; for deleterious alternate it's AC/AN)
 # because dSNPs are polarized to some degree, I cannot compare full set to tolerated or synonymous 
 ```
+
+Use R to wrangle
+```R
+#module load R/4.0.0-foss-2019b
+#R
+
+dSNPNums <- function (Alt_file, Ref_file) {
+	Alt_dSNP <- read.table(Alt_file, sep = "\t", header=FALSE)
+	colnames(Alt_dSNP) <- c("Chromosome", "Position", "Ref_allele", "Del_allele",
+		"Num_Alt_alleles", "Num_alleles")
+	Alt_dSNP$dSNP_freq <- Alt_dSNP$Num_Alt_alleles / Alt_dSNP$Num_alleles
+	Ref_dSNP <- read.table(Ref_file, sep = "\t", header=FALSE)
+	colnames(Ref_dSNP) <- c("Chromosome", "Position", "Del_allele", "Alt_allele",
+		"Num_Alt_alleles", "Num_alleles")
+	Ref_dSNP$dSNP_freq <- (Ref_dSNP$Num_alleles - Ref_dSNP$Num_Alt_alleles) / Ref_dSNP$Num_alleles
+	All_dSNP_freq <- rbind(Ref_dSNP[,c(1:3,7)], Alt_dSNP[,c(1,2,4,7)])
+	All_dSNP_freq$Chromosome <- as.factor(All_dSNP_freq$Chromosome)
+	All_dSNP_freq <- with(All_dSNP_freq, All_dSNP_freq[order(Chromosome, Position),])
+  	return(All_dSNP_freq)
+}
+
+dSNP_summary <- dSNPNums("SAM_Altdeleterious_AC_AN.txt", "SAM_Refdeleterious_AC_AN.txt")
+
+dSNP_histogram <- hist(dSNP_summary$dSNP_freq, plot = FALSE)
+#save(dSNP_histogram, file = "All_dSNPFreqData.RData")
+
+# how many of these are polarized?
+Polarized <- read.table("/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt")
+colnames(Polarized) <- c("Chromosome", "Position", "AncestralAllele")
+
+dSNP_summary_AA <- merge(dSNP_summary, Polarized, by=c("Chromosome", "Position"), all.x=TRUE)
+
+#duplicates?
+length(unique(paste0(dSNP_summary_AA$Chromosome,"_", dSNP_summary_AA$Position))) # 87794 (out of 87812) 18 duplicated
+
+dSNP_summary_AA$Cat <- ifelse(dSNP_summary_AA$AncestralAllele==dSNP_summary_AA$Del_allele, "Ancestral_dSNP",
+	ifelse(dSNP_summary_AA$AncestralAllele!=dSNP_summary_AA$Del_allele,"Derived_dSNP", NA))
+
+aggregate(dSNP_summary_AA$Position, by=list(dSNP_summary_AA$Cat), length)
+# ancestral dSNP= 6141; derived dSNP= 56360
+
+# frequencey of derived & ancestral:
+Derived_dSNP_histogram <- hist(dSNP_summary_AA[which(dSNP_summary_AA$Cat=="Derived_dSNP"), "dSNP_freq"],
+	plot = FALSE)
+Ancestral_dSNP_histogram <- hist(dSNP_summary_AA[which(dSNP_summary_AA$Cat=="Ancestral_dSNP"), "dSNP_freq"],
+	plot = FALSE)
+save(dSNP_histogram, Derived_dSNP_histogram, Ancestral_dSNP_histogram, 
+	file = "All_dSNPFreqData.RData")
+write.table(dSNP_summary_AA, file="dSNP_freq_summary.txt", row.names=FALSE, quote=FALSE)
+
+```
+
+Binning Across Genome:
+Frequency of all dSNPs
+Number & Frequency of derived & ancestral dSNPs
+```R
+dSNP_summary_AA <- read.table("dSNP_freq_summary.txt", header=TRUE)
+dSNP_summary_AA$Mbp <- dSNP_summary_AA$Position/1000000
+
+Windows_Calc <- function(dataset, Stat_col, Mbp_col, BinSize_Mbp) {
+	Num_windows <- ceiling(max(dataset[,Mbp_col]) / BinSize_Mbp)
+	dataset$bin <- cut(dataset[,Mbp_col],seq(0,Num_windows*BinSize_Mbp,BinSize_Mbp))
+	median <- aggregate(dataset[,Stat_col],
+                      by=list(dataset$bin), median, drop=FALSE, na.rm=TRUE)
+	mean <- aggregate(dataset[,Stat_col],
+                      by=list(dataset$bin), mean, drop=FALSE, na.rm=TRUE)
+	Number <- aggregate(dataset[,Stat_col],
+                      by=list(dataset$bin), length, drop=FALSE)
+	All_info <- merge(median, merge(mean, Number, by="Group.1"), by="Group.1")
+	colnames(All_info) <- c("Bin", "Median", "Mean", "Number")
+	All_info <- with(All_info, All_info[order(Bin),])
+	return(All_info)
+}
+
+dSNP_summary_AA_chrom <- split(dSNP_summary_AA, dSNP_summary_AA$Chromosome)
+
+dSNP_genome_binStats <- lapply(dSNP_summary_AA_chrom, function(x) {
+	Windows_Calc(x, "dSNP_freq", "Mbp", 10)
+	})
+
+# derived only
+dSNP_derived <- subset(dSNP_summary_AA, Cat=="Derived_dSNP")
+dSNP_derived_chrom <- split(dSNP_derived, dSNP_derived$Chromosome)
+
+dSNP_derived_binStats <- lapply(dSNP_derived_chrom, function(x) {
+	Windows_Calc(x, "dSNP_freq", "Mbp", 10)
+	})
+
+# ancestral dSNP
+dSNP_ancestral <- subset(dSNP_summary_AA, Cat=="Ancestral_dSNP")
+dSNP_ancestral_chrom <- split(dSNP_ancestral, dSNP_ancestral$Chromosome)
+
+dSNP_ancestral_binStats <- lapply(dSNP_ancestral_chrom, function(x) {
+	Windows_Calc(x, "dSNP_freq", "Mbp", 10)
+	})
+
+#names(dSNP_ancestral_chrom[-1]) # to use only chromosomes
+
+save(dSNP_genome_binStats, dSNP_derived_binStats, dSNP_ancestral_binStats, file="dSNP_genomeBINS.RData")
+
+
+##### scratch
+head(dSNP_derived_chrom$Ha412HOChr01)
+dSNP_derived_binStats$Ha412HOChr01
+
+dSNP_summary_AA_chrom <- lapply(dSNP_summary_AA_chrom, function(x) {
+	x$bin <- cut(x$Position,seq(0,Num_windows*BinSize_Mbp,BinSize_Mbp)); return(x)
+}
+
+Med_Freq_dSNP_all <- Bin_recomb(dSNP_summary_AA[])
+
+Recomb_ChromCalcs <- lapply(Recomb_Chrom, function(x) {Recombination_Calc(x, 3,5,10)})
+```
+
 
 All SNPs across the three classes of variants: deleterious, tolerated, synonymous
 ```bash
