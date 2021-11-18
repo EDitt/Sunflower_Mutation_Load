@@ -89,54 +89,12 @@ save(dSNP_histogram, Derived_dSNP_histogram, Ancestral_dSNP_histogram,
 write.table(dSNP_summary_AA, file="dSNP_freq_summary.txt", row.names=FALSE, quote=FALSE)
 
 ```
+Continued with `dSNP_DerAncBINS.R`
 
 Binning Across Genome:
 Frequency of all dSNPs
 Number & Frequency of derived & ancestral dSNPs
 ```R
-dSNP_summary_AA <- read.table("dSNP_freq_summary.txt", header=TRUE)
-dSNP_summary_AA$Mbp <- dSNP_summary_AA$Position/1000000
-
-Windows_Calc <- function(dataset, Stat_col, Mbp_col, BinSize_Mbp) {
-	Num_windows <- ceiling(max(dataset[,Mbp_col]) / BinSize_Mbp)
-	dataset$bin <- cut(dataset[,Mbp_col],seq(0,Num_windows*BinSize_Mbp,BinSize_Mbp))
-	median <- aggregate(dataset[,Stat_col],
-                      by=list(dataset$bin), median, drop=FALSE, na.rm=TRUE)
-	mean <- aggregate(dataset[,Stat_col],
-                      by=list(dataset$bin), mean, drop=FALSE, na.rm=TRUE)
-	Number <- aggregate(dataset[,Stat_col],
-                      by=list(dataset$bin), length, drop=FALSE)
-	All_info <- merge(median, merge(mean, Number, by="Group.1"), by="Group.1")
-	colnames(All_info) <- c("Bin", "Median", "Mean", "Number")
-	All_info <- with(All_info, All_info[order(Bin),])
-	return(All_info)
-}
-
-dSNP_summary_AA_chrom <- split(dSNP_summary_AA, dSNP_summary_AA$Chromosome)
-
-dSNP_genome_binStats <- lapply(dSNP_summary_AA_chrom, function(x) {
-	Windows_Calc(x, "dSNP_freq", "Mbp", 10)
-	})
-
-# derived only
-dSNP_derived <- subset(dSNP_summary_AA, Cat=="Derived_dSNP")
-dSNP_derived_chrom <- split(dSNP_derived, dSNP_derived$Chromosome)
-
-dSNP_derived_binStats <- lapply(dSNP_derived_chrom, function(x) {
-	Windows_Calc(x, "dSNP_freq", "Mbp", 10)
-	})
-
-# ancestral dSNP
-dSNP_ancestral <- subset(dSNP_summary_AA, Cat=="Ancestral_dSNP")
-dSNP_ancestral_chrom <- split(dSNP_ancestral, dSNP_ancestral$Chromosome)
-
-dSNP_ancestral_binStats <- lapply(dSNP_ancestral_chrom, function(x) {
-	Windows_Calc(x, "dSNP_freq", "Mbp", 10)
-	})
-
-#names(dSNP_ancestral_chrom[-1]) # to use only chromosomes
-
-save(dSNP_genome_binStats, dSNP_derived_binStats, dSNP_ancestral_binStats, file="dSNP_genomeBINS.RData")
 
 
 ##### scratch
