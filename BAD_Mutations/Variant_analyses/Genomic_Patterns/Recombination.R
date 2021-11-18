@@ -165,43 +165,42 @@ max(unlist(lapply(Recomb_bins, function(x) {max(na.omit(x$x_MinMarkers))}))) # 8
 ## both on same graph?
 RecombPlot <- function(dataset, dataset2, maxY) {
   plot <- ggplot(data=dataset, aes(x=Mbp, y=cM_Mbp_noOut)) +
-    geom_point(col="darkgrey", alpha=0.5) + 
-    geom_smooth(method="loess", alpha=0.5, se=TRUE, ymin=0) + 
+    #geom_point(col="darkgrey", alpha=0.5) + 
+    geom_point(col="darkgrey") + 
+    #geom_smooth(method="loess", alpha=0.5, se=TRUE, ymin=0) + 
+    geom_smooth(method="loess", se=TRUE, ymin=0) + 
     #geom_line(data=dataset2, aes(x=windows, y=x), col="black") +
     geom_line(data=dataset2, aes(x=windows, y=x_MinMarkers), col="black") +
     xlab("Position (Mb)") + ylab("cM/Mbp") +
     coord_cartesian(ylim=c(0,maxY)) +
     #ylim(0,maxY) +
     #scale_y_continuous(limit=c(0,NA)) +
-    #scale_y_continuous(limit=c(0,NA), oob=squish) +
+    scale_y_continuous(limit=c(0,NA), oob=squish) +
     #scale_y_continuous(expand = c(0, 0)) +
     theme_minimal()
   return (plot)
 }
 
-#test
-#RecombPlot(Recomb_ChromCalcs$Ha412HOChr13, Recomb_bins$Ha412HOChr13, 10)
-# for geom_smooth- ymin=0, ymax=5 only control SE
-# span=0.3 to control fraction of points around local mean
-RecombPlot(Recomb_ChromCalcs$Ha412HOChr04, Recomb_bins$Ha412HOChr04, 10)
-# need to control the span of points manually
-#RecombPlot(Recomb_ChromCalcs$Ha412HOChr13[which(Recomb_ChromCalcs$Ha412HOChr13$cM_Mbp_noOut < 15),],
-#           Recomb_bins$Ha412HOChr13, 10)
+# test
+RecombPlot(Recomb_ChromCalcs$Ha412HOChr13, Recomb_bins$Ha412HOChr13, 10)
 
 RecombPlots <- lapply(names(Recomb_ChromCalcs), function(x) {
   RecombPlot(Recomb_ChromCalcs[[x]], Recomb_bins[[x]], 10)})
 
 # Put all chromosome plots together
 labels <- paste0("Chromosome ", seq(1,17, by=1))
-ggarrange(plotlist = RecombPlots, labels=labels)
 
+setEPS
+postscript("/Users/eld72413/Dropbox/Sunflower_mutation_load/Figures/Recombination_wBins.eps", 
+           height=8, width=10)
+ggarrange(plotlist = RecombPlots, labels=labels)
+dev.off()
 
 # different y-axes for each chromosome?
-Yaxes <- list(3,10,3,5,5,4,5,3,4,5,4,3,5,4,5,3,5)
-names(Yaxes) <- names(Recomb_ChromCalcs)
-
-RecombPlots <- lapply(names(Recomb_ChromCalcs), function(x) {
-  RecombPlot(Recomb_ChromCalcs[[x]], Recomb_bins[[x]], Yaxes[[x]])})
+#Yaxes <- list(3,10,3,5,5,4,5,3,4,5,4,3,5,4,5,3,5)
+#names(Yaxes) <- names(Recomb_ChromCalcs)
+#RecombPlots <- lapply(names(Recomb_ChromCalcs), function(x) {
+#  RecombPlot(Recomb_ChromCalcs[[x]], Recomb_bins[[x]], Yaxes[[x]])})
 
 # save for graphing
 save(Recomb_ChromCalcs, 
