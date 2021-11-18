@@ -7,7 +7,10 @@
 load("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicBins_10Mbp/ForPlots/dSNP_sSNPBins.RData")
 # object: SNP_bins_Chroms (binned ratio of dSNP/sSNP in format for graphing)
 
-load("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicBins_10Mbp/ForPlots/AncDerRatio.RData")
+load("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicBins_10Mbp/ForPlots/Freq_dSNP_bins.RData")
+# object: dSNP_Bins_allInfo (binned ratio of ancestral/derived dSNPs & Mean/Median Frequency- replaces 'AncDerRatio.RData')
+
+#load("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicBins_10Mbp/ForPlots/AncDerRatio.RData")
 # object: dSNP_derivedRatio_Bins (binned ratio of ancestral/derived dSNPs in format for graphing- by middle point of bin)
 
 load("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicBins_10Mbp/ForPlots/RecombinationDFs.RData")
@@ -39,31 +42,31 @@ dSNP_info_chrom <- split(dSNP_info, dSNP_info$Chromosome)
 # Is there a relationship between recombination and dSNP frequency? Will also include dSNP/sSNP bins
 
 Recomb_FreqdSNP_plot <- function(recombination_dataset, frequency_dataset, dSNP_sSNP_dataset, maxY) {
-  plot <- ggplot(recombination_dataset, aes(x=Mbp, y=cM_Mbp)) +
-    geom_smooth(method="loess", alpha=0.5, se=FALSE, fullrange=TRUE) +
-    geom_point(col="darkgrey", alpha=0.5) +
+  plot <- ggplot(recombination_dataset, aes(x=Mbp, y=cM_Mbp_noOut)) +
+    geom_smooth(method="loess", se=FALSE, fullrange=TRUE) +
+    #geom_point(col="darkgrey", alpha=0.5) +
     #ylim(0,maxY) +
     coord_cartesian(ylim=c(0,maxY)) + # need this instead of ylim() so geom_smooth does not operate on fewer points
-    #geom_point(data = dSNP_info_chrom$Ha412HOChr01, aes(x=Mbp, y=10*dSNP_freq),
-    #           col="red", alpha=0.5) +
-    geom_smooth(data = frequency_dataset, aes(x=Mbp, y=10*dSNP_freq),
-                method="loess", alpha=0.5, se=TRUE, color="red", linetype="dotted", fullrange=TRUE) +
+    geom_point(data = dSNP_info_chrom$Ha412HOChr01, aes(x=Mbp, y=10*dSNP_freq),
+               col="red", alpha=0.2) +
+    geom_smooth(data = frequency_dataset, aes(x=Mbp, y=20*dSNP_freq),
+                method="loess", alpha=0.5, se=TRUE, color="red", linetype="dashed", fullrange=TRUE) +
     theme_minimal() + 
-    scale_y_continuous(sec.axis = sec_axis(~ ./10, name= "dSNP/sSNP; Frequency")) +
-    geom_line(data = dSNP_sSNP_dataset, aes(x=Position_Mbp, y=10*dSNP_sSNP),
+    scale_y_continuous(limit=c(0,NA), oob=squish,
+                       sec.axis = sec_axis(~ ./10, name= "dSNP/sSNP; Frequency")) +
+    #scale_y_continuous(sec.axis = sec_axis(~ ./10, name= "dSNP/sSNP; Frequency")) +
+    geom_line(data = dSNP_sSNP_dataset, aes(x=Position_Mbp, y=20*dSNP_sSNP),
               col="red") 
   return (plot)
 }
 
 # test
-Recomb_FreqdSNP_plot(Recomb_ChromCalcs$Ha412HOChr01, dSNP_info_chrom$Ha412HOChr01, SNP_bins_Chroms$Ha412HOChr01, 10)
-Recomb_FreqdSNP_plot(Recomb_ChromCalcs$Ha412HOChr13, dSNP_info_chrom$Ha412HOChr13, SNP_bins_Chroms$Ha412HOChr13, 10)
-
-
+#Recomb_FreqdSNP_plot(Recomb_ChromCalcs$Ha412HOChr01, dSNP_info_chrom$Ha412HOChr01, SNP_bins_Chroms$Ha412HOChr01, 10)
+Recomb_FreqdSNP_plot(Recomb_ChromCalcs$Ha412HOChr13, dSNP_info_chrom$Ha412HOChr13, SNP_bins_Chroms$Ha412HOChr13, 8)
 
 
 Recomb_freqdSNPplots <- lapply(names(Recomb_ChromCalcs), function(x) {
-  Recomb_FreqdSNP_plot(Recomb_ChromCalcs[[x]], dSNP_info_chrom[[x]], SNP_bins_Chroms[[x]], 10)})
+  Recomb_FreqdSNP_plot(Recomb_ChromCalcs[[x]], dSNP_info_chrom[[x]], SNP_bins_Chroms[[x]], 8)})
 
 labels <- paste0("Chromosome ", seq(1,17, by=1))
 ggarrange(plotlist = Recomb_freqdSNPplots, labels=labels) 
