@@ -61,6 +61,9 @@ SNP_bins_long$Position_Mbp <- SNP_bins_long$Position / 1000000
 
 # split up by chromosome   
 SNP_bins_Chroms <- split(SNP_bins_long, as.factor(SNP_bins_long$Chromosome))
+
+# save list of dataframes
+save(SNP_bins_Chroms, file = "/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicBins_10Mbp/ForPlots/dSNP_sSNPBins.RData")
 ```
 
 ## Functions for graphing
@@ -129,7 +132,7 @@ RecombdSNPplot <- function(dataset, maxY) {
   plot <- ggplot(data=dataset, aes(x=Position_Mbp, y=Median_cM.Mbp)) +
     geom_smooth(method="loess", alpha=0.5, se=TRUE) + 
     #geom_line(aes(x=Position_Mbp, y=dSNP_sSNPConvert), col="red") +
-    geom_smooth(aes(x=Position_Mbp, y=dSNP_sSNPConvert), col="red") +
+    geom_smooth(method="loess", aes(x=Position_Mbp, y=dSNP_sSNPConvert), col="red") +
     xlab("Position (Mb)") + 
     geom_hline(yintercept = (meandSNP_sSNP - SddSNP_sSNP)*10, linetype="dashed") +
     geom_hline(yintercept = (meandSNP_sSNP + SddSNP_sSNP)*10, linetype="dashed") +
