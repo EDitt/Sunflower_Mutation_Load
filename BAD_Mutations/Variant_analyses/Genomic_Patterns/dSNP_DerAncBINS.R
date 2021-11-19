@@ -176,13 +176,116 @@ save(dSNP_Bins_allInfo,
      file = "/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicBins_10Mbp/ForPlots/Freq_dSNP_bins.RData")
 
 
+#######################################
+#### FUNCTION TO MAKE LONG FORMAT #####
+#######################################
+
+# make into long format
+
+FreqNumstoLong <- function(dataframe){
+  dataframe$SE_ancestral <- dataframe$SDFreq_ancestral / sqrt(dataframe$Number_ancestral)
+  dataframe$SE_derived <- dataframe$SDFreq_derived / sqrt(dataframe$Number_derived)
+  Meandf <- reshape(dataframe[,c("Bin", "MiddlePos", "MeanFreq_derived", "MeanFreq_ancestral")],
+                    direction="long",
+                    varying=c("MeanFreq_derived", "MeanFreq_ancestral"),
+                    v.names=c("MeanFreq"),
+                    idvar=c("Bin", "MiddlePos"),
+                    timevar =  c("Category"),
+                    times = c("derived", "ancestral"),
+                    new.row.names = NULL)
+  SDdf <-  reshape(dataframe[,c("Bin", "MiddlePos", "SE_derived", "SE_ancestral")],
+                   direction="long",
+                   varying=c("SE_derived", "SE_ancestral"),
+                   v.names=c("SEFreq"),
+                   idvar=c("Bin", "MiddlePos"),
+                   timevar =  c("Category"),
+                   times = c("derived", "ancestral"),
+                   new.row.names = NULL)
+  Newdf <- merge(Meandf, SDdf, by=c("Bin", "MiddlePos", "Category"))
+  return(Newdf)
+}
+
+
+dSNP_binsAncDer_long <- lapply(dSNP_Bins_allInfo, function(x) {
+  FreqNumstoLong(x)
+})
+
 
 #######################################
 ######### GRAPH ACROSS GENOME #########
 #######################################
 
-# look at derived versus ancestral frequencies separately?
-# make into long format
+# graph with recombination
+
+load("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicBins_10Mbp/ForPlots/RecombinationDFs.RData")
+# recombination info: objects: Recomb_ChromCalcs
+
+Der_Anc_plot <- function(Long_dataframe, recomb_dataframe) {
+  plot <- ggplot(data=Long_dataframe, aes(x=MiddlePos, y=MeanFreq)) +
+    geom_point(aes(fill=Category), shape=21, size=2) +
+    geom_smooth(method=loess, se=FALSE, aes(color=Category)) +
+    geom_errorbar(aes(color=Category, ymin=MeanFreq-SEFreq, ymax=MeanFreq+SEFreq), linetype="longdash") +
+    coord_cartesian(ylim=c(0,1)) +
+    theme_minimal() +
+    geom_smooth(data=recomb_dataframe, aes(x=Mbp, y=cM_Mbp_noOut/10), method = loess, se=FALSE) +
+    scale_y_continuous(limits=c(0,1), sec.axis = sec_axis(~ .*10, name= "cM/Mbp"))
+    #scale_y_continuous(sec.axis = sec_axis(~ .*10, name= "cM/Mbp"), oob = squish)
+  return (plot)
+}
+
+
+# test 
+# Der_Anc_plot(dSNP_binsAncDer_long$Ha412HOChr11, Recomb_ChromCalcs$Ha412HOChr11)
+
+AncDerFreqPlots <- lapply(names(dSNP_binsAncDer_long), function(x) {
+  Der_Anc_plot(dSNP_binsAncDer_long[[x]], Recomb_ChromCalcs[[x]])})
+
+labels <- paste0("Chromosome ", seq(1,17, by=1))
+
+#setEPS
+#postscript("/Users/emilydittmar/Dropbox/Figures/AncDerFreq.eps", 
+#           height=15, width=12)
+#ggarrange(plotlist = AncDerFreqPlots, labels=labels, 
+#          ncol = 4, nrow = 5, common.legend = TRUE,
+#          font.label = list(size=10)) 
+#dev.off()
+
+# separate to see patterns more easily:
+AncDerFreqPlots1 <- lapply(names(dSNP_binsAncDer_long)[1:8], function(x) {
+  Der_Anc_plot(dSNP_binsAncDer_long[[x]], Recomb_ChromCalcs[[x]])})
+AncDerFreqPlots2 <- lapply(names(dSNP_binsAncDer_long)[9:17], function(x) {
+  Der_Anc_plot(dSNP_binsAncDer_long[[x]], Recomb_ChromCalcs[[x]])})
+
+labels1 <- paste0("Chromosome ", seq(1,8, by=1))
+labels2 <- paste0("Chromosome ", seq(9,17, by=1))
+
+setEPS
+postscript("/Users/emilydittmar/Dropbox/Figures/AncDerFreq1.eps", 
+                      height=12, width=10)
+ggarrange(plotlist = AncDerFreqPlots1, labels=labels1, 
+          ncol = 3, nrow = 3, common.legend = TRUE,
+          font.label = list(size=10)) 
+dev.off()
+
+setEPS
+postscript("/Users/emilydittmar/Dropbox/Figures/AncDerFreq2.eps", 
+           height=12, width=10)
+ggarrange(plotlist = AncDerFreqPlots2, labels=labels2, 
+          ncol = 3, nrow = 3, common.legend = TRUE,
+          font.label = list(size=10)) 
+dev.off()
+
+
+
+
+
+
+
+
+
+#####################  Scratch below
+
+
 
 dSNP_binsAncDer_long <- lapply(dSNP_Bins_allInfo, function(x) {
   reshape(x[,c(1,7,11:13,17)],
@@ -355,3 +458,20 @@ median(unlist(lapply(dSNP_derivedRatio_Bins, function(x) {max(na.omit(x$Der_Anc_
 length(which(unlist(lapply(dSNP_derivedRatio_Bins, function(x) {x$Der_Anc_Ratio})
                     )
        > meanRatio + sdRatio)) # 1
+
+### test - bins
+ggplot(data = dSNP_Bins_allInfo$Ha412HOChr01, aes(x=MiddlePos, y=MeanFreq_derived))+
+  geom_point(size=2, shape=23, fill=alpha("red", 0.5))+
+  geom_point(aes(x=MiddlePos, y=MeanFreq_ancestral),
+             size=2, shape=23, fill=alpha("blue", 0.5))
+
+
+ggplot(data=Recomb_ChromCalcs$Ha412HOChr01, aes(x=Mbp, y=cM_Mbp)) +
+  geom_smooth(method="loess", alpha=0.5, se=TRUE) +
+  geom_point(col="darkgrey", alpha=0.5) +
+  geom_point(data = dSNP_Bins_allInfo$Ha412HOChr01, aes(x=MiddlePos, y=10*MeanFreq_derived),
+             size=2, shape=23, fill=alpha("red", 0.5)) +
+  ylim(0,10) +
+  theme_minimal() +
+  geom_point(data = dSNP_Bins_allInfo$Ha412HOChr01, aes(x=MiddlePos, y=10*MeanFreq_ancestral),
+             size=2, shape=23, fill=alpha("green", 0.5))
