@@ -2,9 +2,12 @@
 
 ## Navigation: Jump to Section
 
+- [Annotation Classes](#parse-vep-table-and-predictions-output)
+- [Polarize Ancestral State](#polarize-ancestral-state)
+
+- [Subset VCF](#subset-vcf-by-consequence)
 - [Subset VCF](#subset-vcf-by-consequence)
 - [Site Frequency Spectra](#site-frequency-spectra)
-- [Polarize SNPs](#polarize-snps)
 - [Genomic Patterns](#genomic-patterns)
 	- [Recombination across genome](#recombination-across-genome)
 	- [Binning SNP classes](#binning-snp-classes)
@@ -12,13 +15,61 @@
 
 ---
 
+## Parse VeP Table and Predictions output
+See: `Variant_class_numbers.md` for commands used to parse the prediction output and VeP output to get the variants for each class
+
+## Polarize Ancestral State
+
+Created ancestral fasta file with ANGSD. See: ANGSD directory
+
+See `Polarize_SNPs.md` for process of creating ancestral state table.
+Output a table with ancestral state calls at 13,524,630 variant positions: `/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt`
+
+
+## Site Frequency Spectrum
+
+### Folded 
+
+First, parsed VeP table and dSNP predictions to get the positions of SNPs in each frequency class (see `Variant_class_numbers.md`)
+
+Next, get allele frequency information for all alleles
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+module load BCFtools/1.13-GCC-8.3.0
+vcf=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' ${vcf} > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt
+
+# use R to get histogram bin information
+cd
+module load R/4.0.0-foss-2019b
+Rscript "SFS_Info.R" "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles" "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt" "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleFreqBins.txt"
+```
+
+Use R to wrangle
+```R
+#module load R/4.0.0-foss-2019b
+#R
+
+Position_lists <- ImportTxts("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles")
+Positions_annotate <- do.call("rbind", Position_lists)
+FrequencyInfo <- SNP_freq("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt", Positions_annotate)
+MAF_breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5)
+MAF_histList <- lapply(names(FrequencyInfo), function(x) {
+	Hist_bins(FrequencyInfo[[x]], MAF_breaks, "MAF", x)
+	})
+MAF_histogram_data <- do.call("rbind", MAF_histList)
+write.table(MAF_histogram_data, "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleFreqBinsTESTSCRIPT.txt", sep = "\t", quote=FALSE, row.names=FALSE)
+
+
+```
+
+----- 
+
 ## Subset VCF by Consequence
 Compiled Report was used to identify variant classes (see `2.BAD_Mutations/Post_processing.md`)
 
 Created VCFs of the variants in the different allele classes (see `Subset_VCFbyConsequence.md`)
 
-##### Numbers in various allele classes (excluding duplicates)
-Need to parse VeP table
 
 
 ## Site Frequency Spectra
@@ -91,24 +142,6 @@ write.table(dSNP_summary_AA, file="dSNP_freq_summary.txt", row.names=FALSE, quot
 ```
 Continued with `dSNP_DerAncBINS.R`
 
-Binning Across Genome:
-Frequency of all dSNPs
-Number & Frequency of derived & ancestral dSNPs
-```R
-
-
-##### scratch
-head(dSNP_derived_chrom$Ha412HOChr01)
-dSNP_derived_binStats$Ha412HOChr01
-
-dSNP_summary_AA_chrom <- lapply(dSNP_summary_AA_chrom, function(x) {
-	x$bin <- cut(x$Position,seq(0,Num_windows*BinSize_Mbp,BinSize_Mbp)); return(x)
-}
-
-Med_Freq_dSNP_all <- Bin_recomb(dSNP_summary_AA[])
-
-Recomb_ChromCalcs <- lapply(Recomb_Chrom, function(x) {Recombination_Calc(x, 3,5,10)})
-```
 
 
 All SNPs across the three classes of variants: deleterious, tolerated, synonymous
@@ -116,10 +149,6 @@ All SNPs across the three classes of variants: deleterious, tolerated, synonymou
 
 ```
 
-## Polarize SNPs
-Created ancestral fasta file with ANGSDS. See: ANGSD directory
-
-See `Polarize_SNPs.md` for process of creating ancestral state table
 
 
 
