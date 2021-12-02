@@ -40,27 +40,60 @@ vcf=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Var
 bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' ${vcf} > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt
 
 # use R to get histogram bin information
-cd
+cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses
 module load R/4.0.0-foss-2019b
-Rscript "SFS_Info.R" "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles" "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt" "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleFreqBins.txt"
+Rscript "SFS_Info.R" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt" \
+"/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/MAF_Bins.txt" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedFreq_Bins.txt"
+
+
 ```
 
 Use R to wrangle
+(make sure output is the same as Rscript)
 ```R
 #module load R/4.0.0-foss-2019b
 #R
 
 Position_lists <- ImportTxts("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles")
 Positions_annotate <- do.call("rbind", Position_lists)
-FrequencyInfo <- SNP_freq("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt", Positions_annotate)
+FrequencyInfo <- SNP_freq("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt", "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt", Positions_annotate)
+
+save(FrequencyInfo, file="FrequencyInfo.RData") # in case I need for troubleshooting ##############
+
 MAF_breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5)
 MAF_histList <- lapply(names(FrequencyInfo), function(x) {
 	Hist_bins(FrequencyInfo[[x]], MAF_breaks, "MAF", x)
 	})
+
+
 MAF_histogram_data <- do.call("rbind", MAF_histList)
-write.table(MAF_histogram_data, "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleFreqBinsTESTSCRIPT.txt", sep = "\t", quote=FALSE, row.names=FALSE)
+colnames(MAF_histogram_data)[1] <- "breaks"
+write.table(MAF_histogram_data, "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleMAFFreqBins_binlabs_TEST.txt", sep = "\t", quote=FALSE, row.names=FALSE)
+
+### what breaks to save?
+
+test1 <- hist(FrequencyInfo$AllDel$MAF, plot=FALSE, breaks=MAF_breaks)
+MAF_breaks[-1]
+test2 <- Hist_bins(FrequencyInfo$AllDel, MAF_breaks, "MAF", "Deleterious")
 
 
+# derived allele info
+derived_breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1)
+
+# test
+test3 <- hist(FrequencyInfo$AllDel$Derived_Freq, plot=FALSE, breaks=derived_breaks)
+fortest <- subset(FrequencyInfo$AllDel, !is.na(FrequencyInfo$AllDel$Derived_Freq))
+test4 <- hist(fortest$Derived_Freq, plot=FALSE, breaks=derived_breaks)
+
+test5 <- Hist_bins(FrequencyInfo$AllDel, derived_breaks, "Derived_Freq", "Deleterious")
+
+# remove 'All deleterious' category because I need to calculate differently (see below)
+
+write.table(Der_histogram_data, "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleDerivedFreqBins_TEST.txt", sep = "\t", quote=FALSE, row.names=FALSE)
 ```
 
 ----- 

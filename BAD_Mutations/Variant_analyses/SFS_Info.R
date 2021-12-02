@@ -7,6 +7,9 @@ options(warn=1)
 ### Command line arguments:
 # 1.) Directory containing the Chromosomes and positions of each class of variants (tab delimited)
 # 2.) File output from bcftools that has the number of alternate alleles and total count of alleles in called genotypes
+# 3.) Text file with chromosome, position, and ancestral allele
+# 4.) Output filename for MAF data
+# 5.) Output filename for derived frequency data
 
 
 #########################
@@ -16,8 +19,10 @@ options(warn=1)
 args <- commandArgs(trailingOnly = TRUE)
 
 Directory <- args[1]
-table <- args[2]
-Output_File <- args[3]
+SNP_freq_table <- args[2]
+Ancestral_file <- args[3]
+MAF_Output_File <- args[4]
+Derived_Output_File <- args[5]
 
 #########################
 ####### FUNCTIONS #######
@@ -42,16 +47,23 @@ ImportTxts <- function (DirPath) {
   return(my_data)
 }
 
-# calculate allele frequencies from bcftools output & merge with variant type information
-SNP_freq <- function (bcftools_file, annotation_table) {
+# calculate allele frequencies from bcftools output & merge with variant type information & ancestral allele information
+# outputs a list of dataframes split by variant type
+SNP_freq <- function (bcftools_file, ancestral_allele_file, annotation_table) {
 	data <- read.table(bcftools_file, sep = "\t", header=FALSE)
 	colnames(data) <- c("Chromosome", "Position", "Ref_allele", "Alt_allele",
 		"Num_Alt_alleles", "Num_alleles", "Alt_Freq")
-	data$AAfreq <- data$Num_Alt_alleles / data$Num_alleles
-	data$RAfreq <- (data$Num_alleles - data$Num_Alt_alleles) / data$Num_alleles
-	data$MAF <- ifelse(data$RAfreq < data$AAfreq, data$RAfreq, data$AAfreq)
-	data <- with(data, data[order(Chromosome, Position),])
-	All_data <-  merge(data, annotation_table, by=c("Chromosome", "Position"))
+	data$Altfreq <- data$Num_Alt_alleles / data$Num_alleles
+	data$Reffreq <- (data$Num_alleles - data$Num_Alt_alleles) / data$Num_alleles
+	data$MAF <- ifelse(data$Reffreq < data$Altfreq, data$Reffreq, data$Altfreq)
+	Ancestral_table <- read.table(ancestral_allele_file, sep="\t", header=FALSE)
+	colnames(Ancestral_table) <- c("Chromosome", "Position", "Ancestral_Allele")
+	data_Anc <- merge(data, Ancestral_table, by=c("Chromosome", "Position"), all.x=TRUE)
+	data_Anc$Derived_Freq <- ifelse(data_Anc$Ancestral_Allele==data_Anc$Ref_allele,
+	data_Anc$Altfreq, ifelse(data_Anc$Ancestral_Allele==data_Anc$Alt_allele,
+		data_Anc$Reffreq, NA))
+	data_Anc <- with(data_Anc, data_Anc[order(Chromosome, Position),])
+	All_data <-  merge(data_Anc, annotation_table, by=c("Chromosome", "Position"))
 	All_dataList <- split(All_data, factor(All_data$Variant_type))
   	return(All_dataList)
 }
@@ -60,7 +72,7 @@ SNP_freq <- function (bcftools_file, annotation_table) {
 Hist_bins <- function (dataset, hist_breaks, colName, Annotation) {
 	y <- hist(dataset[,colName], plot=FALSE, breaks=hist_breaks)
 	prop <- y$counts / sum(y$counts)
-	hist_df <- cbind.data.frame(prop, Annotation)
+	hist_df <- cbind.data.frame(hist_breaks[-1], prop, Annotation)
 	return(hist_df)
 }
 
@@ -74,7 +86,11 @@ Position_lists <- ImportTxts(Directory)
 Positions_annotate <- do.call("rbind", Position_lists)
 
 # get allele frequency data from positions output and merge with variant type- output a list separated by variant type
-FrequencyInfo <- SNP_freq(table, Positions_annotate)
+FrequencyInfo <- SNP_freq(SNP_freq_table, Ancestral_file, Positions_annotate)
+
+#########################
+######## FOLDED #########
+#########################
 
 # histogram breaks for folded SFS
 MAF_breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5)
@@ -85,6 +101,18 @@ MAF_histList <- lapply(names(FrequencyInfo), function(x) {
 	})
 
 MAF_histogram_data <- do.call("rbind", MAF_histList)
+colnames(MAF_histogram_data)[1] <- "breaks"
+write.table(MAF_histogram_data, MAF_Output_File, sep = "\t", quote=FALSE, row.names=FALSE)
 
-write.table(MAF_histogram_data, Output_File, sep = "\t", quote=FALSE, row.names=FALSE)
+#########################
+####### UNFOLDED ########
+#########################
 
+# apply function for derived allele data
+derived_breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1)
+derived_histList <- lapply(names(FrequencyInfo), function(x) {
+	Hist_bins(FrequencyInfo[[x]], derived_breaks, "Derived_Freq", x)
+	})
+Der_histogram_data <- do.call("rbind", derived_histList)
+colnames(Der_histogram_data)[1] <- "breaks"
+write.table(Der_histogram_data, Derived_Output_File, sep = "\t", quote=FALSE, row.names=FALSE)
