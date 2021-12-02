@@ -26,9 +26,7 @@ See `Polarize_SNPs.md` for process of creating ancestral state table.
 Output a table with ancestral state calls at 13,524,630 variant positions: `/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt`
 
 
-## Site Frequency Spectrum
-
-### Folded 
+## Site Frequency Spectra
 
 First, parsed VeP table and dSNP predictions to get the positions of SNPs in each frequency class (see `Variant_class_numbers.md`)
 
@@ -48,67 +46,38 @@ Rscript "SFS_Info.R" \
 "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
 "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/MAF_Bins.txt" \
 "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedFreq_Bins.txt"
-
-
 ```
 
-Use R to wrangle
-(make sure output is the same as Rscript)
-```R
-#module load R/4.0.0-foss-2019b
-#R
+However, to look at derived dSNPs, I need to separate the deleterious alleles in the reference and alternate states (i.e. if a dSNP is in the alternate state, but the reference allele is derived, this allele would not be counted as derived deleterious)
 
-Position_lists <- ImportTxts("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles")
-Positions_annotate <- do.call("rbind", Position_lists)
-FrequencyInfo <- SNP_freq("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt", "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt", Positions_annotate)
+#### Deleterious SNPs
+Compiled Report was used to identify variant classes (see `2.BAD_Mutations/Post_processing.md` and positions files created in `Variant_class_numbers.md`)
 
-save(FrequencyInfo, file="FrequencyInfo.RData") # in case I need for troubleshooting ##############
-
-MAF_breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5)
-MAF_histList <- lapply(names(FrequencyInfo), function(x) {
-	Hist_bins(FrequencyInfo[[x]], MAF_breaks, "MAF", x)
-	})
-
-
-MAF_histogram_data <- do.call("rbind", MAF_histList)
-colnames(MAF_histogram_data)[1] <- "breaks"
-write.table(MAF_histogram_data, "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleMAFFreqBins_binlabs_TEST.txt", sep = "\t", quote=FALSE, row.names=FALSE)
-
-### what breaks to save?
-
-test1 <- hist(FrequencyInfo$AllDel$MAF, plot=FALSE, breaks=MAF_breaks)
-MAF_breaks[-1]
-test2 <- Hist_bins(FrequencyInfo$AllDel, MAF_breaks, "MAF", "Deleterious")
-
-
-# derived allele info
-derived_breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1)
-
-# test
-test3 <- hist(FrequencyInfo$AllDel$Derived_Freq, plot=FALSE, breaks=derived_breaks)
-fortest <- subset(FrequencyInfo$AllDel, !is.na(FrequencyInfo$AllDel$Derived_Freq))
-test4 <- hist(fortest$Derived_Freq, plot=FALSE, breaks=derived_breaks)
-
-test5 <- Hist_bins(FrequencyInfo$AllDel, derived_breaks, "Derived_Freq", "Deleterious")
-
-# remove 'All deleterious' category because I need to calculate differently (see below)
-
-write.table(Der_histogram_data, "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleDerivedFreqBins_TEST.txt", sep = "\t", quote=FALSE, row.names=FALSE)
-```
-
------ 
-
-## Subset VCF by Consequence
-Compiled Report was used to identify variant classes (see `2.BAD_Mutations/Post_processing.md`)
-
-Created VCFs of the variants in the different allele classes (see `Subset_VCFbyConsequence.md`)
-
-
-
-## Site Frequency Spectra
-All dSNPs
+First, subset vcf file to make separate vcfs of deleterious (for both reference and alternate alleles)
 ```bash
+cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutations
+
+# deleterious in reference
+sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Reference_DelPositions.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_Refdeleterious' Subset_vcf.sh # Submitted batch job 4232837
+
+grep -v "#" SAM_Refdeleterious.vcf | wc -l # 11796
+
+# deleterious in alternate
+sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Alternate_DelPositionsNoDups.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_Altdeleterious' Subset_vcf.sh # Submitted batch job 4232853
+
+grep -v "#" SAM_Altdeleterious.vcf | wc -l # 76016
+
+# use bcftools to get stats for each allele
 module load BCFtools/1.13-GCC-8.3.0
+
+# need to bgzip vcf files:
+module load HTSlib/1.10.2-GCC-8.3.0
+bgzip -c --threads 4 /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf.gz
+tabix -p vcf /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf.gz
+
+# derived deleterious in alternate
+bgzip -c --threads 4 /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf.gz
+tabix -p vcf /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf.gz
 
 # reference deleterious
 bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\n' SAM_Refdeleterious.vcf.gz > AlleleFreqs/SAM_Refdeleterious_AC_AN.txt
@@ -120,7 +89,6 @@ bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\n' SAM_Altdeleterious.v
 # AN : number of alleles in called genotypes
 
 ### need to calculate frequency of deleterious allele (for deleterious reference it's AN - AC/AN; for deleterious alternate it's AC/AN)
-# because dSNPs are polarized to some degree, I cannot compare full set to tolerated or synonymous 
 ```
 
 Use R to wrangle
@@ -128,7 +96,7 @@ Use R to wrangle
 #module load R/4.0.0-foss-2019b
 #R
 
-dSNPNums <- function (Alt_file, Ref_file) {
+dSNPNums <- function (Alt_file, Ref_file, AncestralState_file) {
 	Alt_dSNP <- read.table(Alt_file, sep = "\t", header=FALSE)
 	colnames(Alt_dSNP) <- c("Chromosome", "Position", "Ref_allele", "Del_allele",
 		"Num_Alt_alleles", "Num_alleles")
@@ -140,48 +108,42 @@ dSNPNums <- function (Alt_file, Ref_file) {
 	All_dSNP_freq <- rbind(Ref_dSNP[,c(1:3,7)], Alt_dSNP[,c(1,2,4,7)])
 	All_dSNP_freq$Chromosome <- as.factor(All_dSNP_freq$Chromosome)
 	All_dSNP_freq <- with(All_dSNP_freq, All_dSNP_freq[order(Chromosome, Position),])
-  	return(All_dSNP_freq)
+	Polarized <- read.table(AncestralState_file)
+	colnames(Polarized) <- c("Chromosome", "Position", "AncestralAllele")
+	dSNP_summary_AA <- merge(All_dSNP_freq, Polarized, by=c("Chromosome", "Position"), all.x=TRUE)
+	dSNP_summary_AA$Cat <- ifelse(dSNP_summary_AA$AncestralAllele==dSNP_summary_AA$Del_allele, "Ancestral_dSNP",
+	ifelse(dSNP_summary_AA$AncestralAllele!=dSNP_summary_AA$Del_allele,"Derived_dSNP", NA))
+  	return(dSNP_summary_AA)
 }
 
-dSNP_summary <- dSNPNums("SAM_Altdeleterious_AC_AN.txt", "SAM_Refdeleterious_AC_AN.txt")
-
-dSNP_histogram <- hist(dSNP_summary$dSNP_freq, plot = FALSE)
-#save(dSNP_histogram, file = "All_dSNPFreqData.RData")
-
-# how many of these are polarized?
-Polarized <- read.table("/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt")
-colnames(Polarized) <- c("Chromosome", "Position", "AncestralAllele")
-
-dSNP_summary_AA <- merge(dSNP_summary, Polarized, by=c("Chromosome", "Position"), all.x=TRUE)
+dSNP_summary <- dSNPNums("SAM_Altdeleterious_AC_AN.txt", "SAM_Refdeleterious_AC_AN.txt", "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt")
 
 #duplicates?
-length(unique(paste0(dSNP_summary_AA$Chromosome,"_", dSNP_summary_AA$Position))) # 87794 (out of 87812) 18 duplicated
+length(unique(paste0(dSNP_summary$Chromosome,"_", dSNP_summary$Position))) # 87794 (out of 87812) 18 duplicated
+# how many of these are polarized?
+aggregate(dSNP_summary$Position, by=list(dSNP_summary$Cat), length)
+# ancestral dSNP= 6141; derived dSNP= 56360 (total 62,501) <- still have 14 duplicate positions
 
-dSNP_summary_AA$Cat <- ifelse(dSNP_summary_AA$AncestralAllele==dSNP_summary_AA$Del_allele, "Ancestral_dSNP",
-	ifelse(dSNP_summary_AA$AncestralAllele!=dSNP_summary_AA$Del_allele,"Derived_dSNP", NA))
+derived_breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1)
+Derived_dSNP_histogram <- hist(dSNP_summary[which(dSNP_summary$Cat=="Derived_dSNP"), "dSNP_freq"],
+	plot = FALSE, breaks=derived_breaks)
+sum(Derived_dSNP_histogram$counts) # 56360
 
-aggregate(dSNP_summary_AA$Position, by=list(dSNP_summary_AA$Cat), length)
-# ancestral dSNP= 6141; derived dSNP= 56360
-
-# frequencey of derived & ancestral:
-Derived_dSNP_histogram <- hist(dSNP_summary_AA[which(dSNP_summary_AA$Cat=="Derived_dSNP"), "dSNP_freq"],
-	plot = FALSE)
-Ancestral_dSNP_histogram <- hist(dSNP_summary_AA[which(dSNP_summary_AA$Cat=="Ancestral_dSNP"), "dSNP_freq"],
-	plot = FALSE)
-save(dSNP_histogram, Derived_dSNP_histogram, Ancestral_dSNP_histogram, 
-	file = "All_dSNPFreqData.RData")
-write.table(dSNP_summary_AA, file="dSNP_freq_summary.txt", row.names=FALSE, quote=FALSE)
-
-```
-Continued with `dSNP_DerAncBINS.R`
-
-
-
-All SNPs across the three classes of variants: deleterious, tolerated, synonymous
-```bash
+# use "Hist_bins" function from SFS_Info.R
+Derived_dSNP <- Hist_bins(dSNP_summary[which(dSNP_summary$Cat=="Derived_dSNP"),],
+	derived_breaks, "dSNP_freq", "dSNP")
+colnames(Derived_dSNP)[1] <- "breaks"
+write.table(Derived_dSNP, file="/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Derived_dSNP_freqbins.txt", sep = "\t", quote=FALSE, row.names=FALSE)
 
 ```
 
+----- 
+
+Continued with `dSNP_DerAncBINS.R` <- for binning across genome
+
+
+
+----- 
 
 
 
