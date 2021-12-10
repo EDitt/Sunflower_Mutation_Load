@@ -23,6 +23,7 @@ SNP_freq_table <- args[2]
 Ancestral_file <- args[3]
 MAF_Output_File <- args[4]
 Derived_Output_File <- args[5]
+Frequency_RData_File <- args[6]
 
 #########################
 ####### FUNCTIONS #######
@@ -87,6 +88,8 @@ Positions_annotate <- do.call("rbind", Position_lists)
 
 # get allele frequency data from positions output and merge with variant type- output a list separated by variant type
 FrequencyInfo <- SNP_freq(SNP_freq_table, Ancestral_file, Positions_annotate)
+
+save(FrequencyInfo, file=Frequency_RData_File)
 
 #########################
 ######## FOLDED #########
