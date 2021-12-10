@@ -45,7 +45,8 @@ Rscript "SFS_Info.R" \
 "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt" \
 "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
 "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/MAF_Bins.txt" \
-"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedFreq_Bins.txt"
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedFreq_Bins.txt" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/FrequencyInfo.RData" # this file will be used for other purposes
 ```
 
 However, to look at derived dSNPs, I need to separate the deleterious alleles in the reference and alternate states (i.e. if a dSNP is in the alternate state, but the reference allele is derived, this allele would not be counted as derived deleterious)
@@ -137,11 +138,10 @@ write.table(Derived_dSNP, file="/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/
 
 ```
 
+
 ----- 
 
 Continued with `dSNP_DerAncBINS.R` <- for binning across genome
-
-
 
 ----- 
 
@@ -186,6 +186,9 @@ done < ChromNames.txt
 To graph Recombination patterns across genome, I used R (see Genomic_Patterns/Recombination.R script).
 
 ### Binning SNP classes across Genome
+
+
+
 Make windows to bin count of each class of SNPs-
 dSNPs, sSNPs, Tolerated SNPs
 ```bash
@@ -241,4 +244,101 @@ bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 1000
 
 ```
 
+### Number of codons per window
+```bash
+GFF3=/scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.gff3
+OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/GenomicBins
 
+awk '{if ($3=="mRNA") {print $1,$4,$5}}' $GFF3 | wc -l # 72995
+
+# use bedtools to find # bp (and # counts) for each mRNA feature in 10Mbp window- divide by 3 to get number of codons
+bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
+| bedtools intersect -a - -b $GFF3 -wo \
+| awk '{if ($6=="mRNA") {print $0}}' \
+| bedtools groupby -g 1,2,3,6 -c 13 -o sum,count \
+| awk '{print $1,$2,$3,$4, $5,$6, $5/3}' > ${OUTPUTDIR}/mRNA_bpNumCodonCounts.txt
+
+```
+
+### Number of different SNP classes per window
+Using R object saved from SFS_Info.R script
+```R
+# tmux new -s SNP_bins
+# srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+# module load R/4.0.0-foss-2019b
+load("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/FrequencyInfo.RData") # object is FrequencyInfo
+
+# function to bin number of each SNP class across genome
+SNP_bins <- function(dataset, BinSize_bp, SNP_class_Name) {
+	dataset <- dataset[order(dataset$Position),]
+	Num_windows <- ceiling(max(dataset$Position)/BinSize_bp)
+	dataset$bin <- cut(dataset$Position,seq(0,Num_windows*BinSize_bp,BinSize_bp))
+	counts <- aggregate(dataset$Position,
+                      by=list(dataset$bin), length, drop=FALSE)
+	colnames(counts) <- c("Bin", paste0("Number_", SNP_class_Name))
+	counts$BinList <- strsplit(as.character(counts$Bin), ",")
+	counts$StartPos <- as.numeric(gsub('[(]', '', sapply(counts$BinList, "[", 1)))
+	counts$EndPos <- as.numeric(gsub('[]]', '', sapply(counts$BinList, "[", 2)))
+	return(counts[,c(4,5,2)])
+}
+
+# function to apply SNP_bins across all chromosomes
+apply_SNP_bins <- function(dataset, BinSize_bp, SNP_class_Name) {
+	dataset$Chromosome <- factor(dataset$Chromosome)
+	dataset_chrom <- split(dataset, dataset$Chromosome)
+	binCounts <- lapply(dataset_chrom, function(x) {
+		SNP_bins(x, BinSize_bp, SNP_class_Name)
+	})
+	binCounts <- lapply(names(binCounts), function(x) {
+		binCounts[[x]]["Chromosome"] <- x; return(binCounts[[x]])
+	})
+	binCounts_df <- do.call("rbind", binCounts)
+	return(binCounts_df)
+}
+
+### first subset to only derived SNPs
+FrequencyInfo_Derived <- lapply(FrequencyInfo, function(x) {
+	subset(x, !is.na(x$Derived_Freq))
+	})
+names(FrequencyInfo_Derived)
+names(FrequencyInfo_Derived)[2:5] # not using the deleterious SNPs from this list
+
+Derived_Bins <- lapply(names(FrequencyInfo_Derived)[2:5], function(x) {
+	apply_SNP_bins(FrequencyInfo_Derived[[x]], 10000000, x)
+	})
+names(Derived_Bins) <- names(FrequencyInfo_Derived)[2:5]
+
+## for dSNPs:
+setwd("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/AlleleFreqs")
+# use dSNPNums function above
+dSNP_summary <- dSNPNums("SAM_Altdeleterious_AC_AN.txt", "SAM_Refdeleterious_AC_AN.txt", "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt")
+dSNP_derived <- subset(dSNP_summary, Cat=="Derived_dSNP")
+
+# (take out scaffold seq)
+dSNP_Derived_Bins <- apply_SNP_bins(dSNP_derived[-grep("Ha412HOChr00c", dSNP_derived$Chromosome),], 
+	10000000, "dSNP")
+
+### merge all classes
+All_info1 <- Reduce(function(x, y) merge(x, y, 
+	by=c("StartPos", "EndPos", "Chromosome"), all=TRUE), Derived_Bins)
+
+### merge (without scaffold, N=325) with dSNP data
+All_info <- merge(dSNP_Derived_Bins, 
+	All_info1[-grep("Ha412HOChr00c", All_info1$Chromosome),], 
+	by=c("StartPos", "EndPos", "Chromosome"), all=TRUE)
+
+All_info$StartPos <- as.integer(All_info$StartPos)
+All_info$EndPos <- as.integer(All_info$EndPos)
+
+### combine with number of codon info
+NumCodons <- read.table("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/GenomicBins/mRNA_bpNumCodonCounts.txt",
+	header=FALSE)
+colnames(NumCodons) <- c("Chromosome", "StartPos", "EndPos", "feature", "Total_bases", "Total_features", "Num_codons")
+
+All_info2 <- merge(All_info, NumCodons[,c(1:3,7)], by=c("StartPos", "Chromosome"))
+All_info2 <- All_info2[order(All_info2$Chromosome, All_info2$StartPos),]
+
+write.table(All_info2, file="/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/GenomicBins/Derived_VariantNums.txt",
+	row.names=FALSE, quote=FALSE, sep="\t")
+
+```
