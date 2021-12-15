@@ -2,6 +2,8 @@
 
 library(ggplot2)
 library(ggpubr)
+library(viridis)
+library(RColorBrewer)
 
 #######################################
 ############# FOLDED SFS ##############
@@ -41,7 +43,6 @@ unfolded_sfs <- rbind.data.frame(unfolded_sfs1[which(unfolded_sfs1$Annotation!="
 # order by severity
 unfolded_sfs$Annotation <- factor(unfolded_sfs$Annotation, levels=c("NonCoding", "Synonymous",
                                                                 "Tolerated", "dSNP", "StopLostGained"))
-
 p2 <- ggplot(unfolded_sfs, aes(x=breaks, y=prop, fill=Annotation))
 p2 + geom_bar(stat="identity", position = position_dodge()) + theme_minimal() +
   #scale_fill_brewer(palette = "Dark2") +
@@ -59,6 +60,34 @@ p2 + geom_bar(stat="identity", position = position_dodge()) + theme_minimal() +
 ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/FigureS1_UnfoldedSFS.pdf",
        width = 20, height = 5, units = "in")
 
+# subset (only synonymous, tolerated, and dSNP)
+unfolded_sfs_sub <- subset(unfolded_sfs, Annotation=="Synonymous" | Annotation=="Tolerated" | Annotation == "dSNP")
+
+p3 <- ggplot(unfolded_sfs_sub, aes(x=breaks, y=prop, fill=Annotation))
+p3 + geom_bar(stat="identity", position = position_dodge(), color="black") + 
+  theme_minimal() +
+  #scale_fill_brewer(palette = "Dark2") +
+  #scale_fill_viridis(discrete = TRUE, option = "D", alpha = 0.8)
+  scale_fill_manual(values= c("#7570B3", "#1B9E77", "#D95F02"),
+                    name = "Variant Class", labels = c("Synonymous", "Tolerated", "Deleterious")) +
+  ylab("Proportion") +
+  xlab("Frequency") +
+  theme(axis.text = element_text(size = 16),
+        axis.title = element_text(size = 16, face = "bold"),
+        panel.grid.minor = element_blank(),
+        #legend.title = element_blank(),
+        legend.title = element_text(size = 16, face = "bold"),
+        legend.text = element_text(size = 16),
+        legend.position = c(0.7, 0.5),
+        legend.background = element_rect(fill = "white", size = 0.1, linetype = "solid")) +
+scale_x_continuous(breaks = c(0.05, 0.25, 0.50, 0.75, 1.00),
+                   labels = c("[0 - 0.05)", 
+                              "[0.20 - 0.25)",
+                              "[0.45 - 0.50)", 
+                              "[0.70 - 0.75)", "[0.95 - 1.00)"))
+
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/UnfoldedSFS_subset.pdf",
+       width = 20, height = 10, units = "in")
 
 #######################################
 ##### RECOMBINATION & dSNP/CODON ######
@@ -153,7 +182,7 @@ Recomb_Legend <- function(color1, Recombination_color, Y_label) {
 
 dSNP <- Recomb_Legend("blue", "#FC4E07", "dSNP/codon")
 sSNP <- Recomb_Legend("blue", "#00AFBB", "sSNP/codon")
-dSNP_sSNP <- Recomb_Legend("blue", "darkgreen", "dSNP/sSNP")
+dSNP_sSNP <- Recomb_Legend("blue", "#D95F02", "dSNP/sSNP")
 
 #######################################
 ##### RECOMBINATION & sSNP/CODON #######
@@ -182,11 +211,14 @@ Recomb_sSNPCodonplots <- lapply(names(VariantNums_Chromosome), function(x) {
 
 Recomb_sSNPCodonplots[[18]] <- as_ggplot(get_legend(sSNP))
 
-p2 <- ggarrange(plotlist = Recomb_sSNPCodonplots, labels=labels, ncol = 4, nrow = 5, label.y = 0.95, 
+p2 <- ggarrange(plotlist = Recomb_sSNPCodonplots, labels=labels, ncol = 2, nrow = 9, label.y = 0.95, 
                hjust = -1, font.label = list(size=12, face="bold"),
                common.legend = FALSE)
 
-annotate_figure(p2, left = "Number sSNP/Codon", right = "cM/Mbp", fig.lab = "Synonymous SNPs per Codon")
+annotate_figure(p2, left = "Number sSNP/Codon", 
+                right = "cM/Mbp", 
+                fig.lab = "Synonymous SNPs per Codon"
+                )
 
 ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/FigureS3_Recombination_sSNP_codon.pdf")
 
@@ -196,17 +228,17 @@ ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sun
 
 Recomb_dSNP_sSNP_plot <- function(variant_dataset, recombination_dataset, maxY, scaleNum) {
   plot <- ggplot(variant_dataset, aes(x=MiddlePos/1000000, y=(Number_dSNP/Number_Synonymous))) +
-    geom_smooth(method="loess", se=FALSE, color="darkgreen") +
+    geom_smooth(method="loess", se=FALSE, color="#D95F02") +
     theme_minimal() +
     geom_smooth(data=recombination_dataset, aes(x=Mbp, y=cM_Mbp_noOut/scaleNum, color="cM/Mbp"),
                 method="loess", se=FALSE, fullrange=TRUE) +
     scale_y_continuous(name="", limit=c(0,NA), 
                        sec.axis = sec_axis(~ .*scaleNum, name= "")) +
     coord_cartesian(ylim=c(0,maxY)) +
-    labs(x="Mbp", y="", color="Legend") +
+    labs(x="Position (Mbp)", y="", color="Legend") +
     scale_color_manual(values=colors) +
-    theme(plot.margin = margin(1,0,0.25,0, "cm"))
-    #theme(legend.position = "none") # need this if adding legend in as a ggplot object
+    #theme(plot.margin = margin(1,0,0.25,0, "cm")) +
+    theme(legend.position = "none") # need this if adding legend in as a ggplot object
   return (plot)
 }
 
@@ -217,13 +249,21 @@ Recomb_dSNPsSNPplots <- lapply(names(VariantNums_Chromosome), function(x) {
 
 Recomb_dSNPsSNPplots[[18]] <- as_ggplot(get_legend(dSNP_sSNP))
 
-p3 <- ggarrange(plotlist = Recomb_dSNPsSNPplots, labels=labels, ncol = 4, nrow = 5, label.y = 0.95, 
-                hjust = -1, font.label = list(size=12, face="bold"),
+p3 <- ggarrange(plotlist = Recomb_dSNPsSNPplots, 
+                labels=labels, 
+                ncol = 2, nrow = 9, 
+                #label.y = 0.95, 
+                #hjust = -1, 
+                #font.label = list(size=12, face="bold"),
                 common.legend = FALSE)
 
-annotate_figure(p3, left = "Number dSNP/sSNP", right = "cM/Mbp", fig.lab = "Number of Deleterious/Synonymous SNPs")
+annotate_figure(p3, left = "Number dSNP/sSNP", 
+                right = "cM/Mbp", 
+                #fig.lab = "Number of Deleterious/Synonymous SNPs"
+                )
 
-ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/FigureS4_dSNP_sSNP.pdf")
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/FigureS4_dSNP_sSNP_c.pdf",
+       width = 4, height = 9, units = "in")
 
 
 #######################################
@@ -270,6 +310,39 @@ ggarrange(IndChrom, dSNPsSNP_7, RecombPlots[[7]], ncol=1,
 
 ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Figure3_Chromosome7.pdf")
 
+#######################################
+####### BOTH VARIANTS PER CODON #######
+#######################################
+
+Var_Per_codon_Plot <- function(variant_dataset, maxY, scaleNum) {
+  plot <- ggplot(variant_dataset, aes(x=MiddlePos/1000000, y=(Number_dSNP/Num_codons))) +
+    geom_point(size=3, shape=21, aes(fill="dSNP per Codon")) +
+    geom_smooth(method="loess", se=FALSE, aes(color="dSNP per Codon")) +
+    theme_minimal() +
+    geom_point(size=3, shape=21, aes(y=(Number_Synonymous/Num_codons)/scaleNum, fill="sSNP per Codon")) +
+    geom_smooth(method="loess", se=FALSE, aes(y=(Number_Synonymous/Num_codons)/scaleNum, color="sSNP per Codon")) +
+    scale_y_continuous(name="dSNP/Codon", limit=c(0,maxY), 
+                       sec.axis = sec_axis(~ .*scaleNum, name= "sSNPs/Codon")) +
+    labs(x="Mbp", y="Number of Variants/Codon", color="Legend") +
+    theme(plot.margin = margin(1,0,0.25,0, "cm")) +
+    theme(legend.title = element_blank(),
+          legend.position = "top",
+          legend.direction = "horizontal") 
+    #theme(legend.position = "none") # need this if adding legend in as a ggplot object
+  return (plot)
+}
+
+
+Var_Per_codon_Plot(VariantNums_Chromosome[[7]], 0.00125, 10)
+
+VarperCodonPlots <- lapply(VariantNums_Chromosome, function(x) {
+  Var_Per_codon_Plot(x, 0.00125, 10)})
+
+p3 <- ggarrange(plotlist = VarperCodonPlots , labels=labels, ncol = 4, nrow = 5, label.y = 0.95, 
+                hjust = -1, font.label = list(size=12, face="bold"),
+                common.legend = TRUE)
+
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/FigureSx_VariantsPerCodon.pdf")
 
 ###########SCRATCH BELOW
 
