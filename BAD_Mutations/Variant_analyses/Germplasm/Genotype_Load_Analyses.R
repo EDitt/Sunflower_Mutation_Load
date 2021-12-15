@@ -12,7 +12,8 @@ library(car)
 library(emmeans)
 library(ggplot2)
 library(reshape2)
-
+library(dplyr)
+library(patternplot)
 setwd("/Users/emilydittmar/Google Drive/Active Projects/DelMutation/Results/Genotype_patterns")
 
 ######################################
@@ -33,6 +34,15 @@ length(GenoInfo$SequenceName) # 864
 # samples have different numbers of called genotypes
 ### if I want to relativize by number of called genotypes
 
+### get number of called genotypes among categories represented here
+GenoInfo$nCalledGenotypes <- GenoInfo$NumAncestralHom + GenoInfo$NumDerivedHom + GenoInfo$NumHet
+
+GenoInfo_called <- GenoInfo %>%
+  group_by(SequenceName) %>%
+  summarize(nCalledGenotypes_coding=sum(nCalledGenotypes))
+
+GenoInfo <- merge(GenoInfo, GenoInfo_called, by="SequenceName")
+
 #### Note: all numbers correspond to the numbers of *genotypes* 
 ### except TotNum_dSNPs which refers to number of *alleles* (ie 2*nHom)
 
@@ -43,16 +53,17 @@ levels(GenoInfo$type)
 levels(GenoInfo$Mandel)
 
 # relativize by called genotypes
-GenoInfo$NumDerivedHom_REL <- GenoInfo$NumDerivedHom / GenoInfo$CalledGenotypes
+GenoInfo$NumDerivedHom_REL <- GenoInfo$NumDerivedHom / GenoInfo$nCalledGenotypes_coding
 hist(GenoInfo[which(GenoInfo$Consequence=="Deleterious"),"NumDerivedHom_REL"])
-dSNP_GenoInfo[which(GenoInfo$NumDerivedHom_REL < 0.00008),] # PPN136
+GenoInfo[which(GenoInfo$NumDerivedHom_REL < 0.003),] # Hopi
 
-GenoInfo$nHet_REL <- GenoInfo$NumHet / GenoInfo$CalledGenotypes
+GenoInfo$nHet_REL <- GenoInfo$NumHet / GenoInfo$nCalledGenotypes_coding
 
 GenoInfo$Group <- paste0(GenoInfo$heterotic_group, "-", GenoInfo$Oil_NonOil)
 
 GenoInfo[which(GenoInfo$Group=="landrace-NonOil"),]["Group"] <- "Landrace"
 GenoInfo[which(GenoInfo$Group=="OPV-NonOil"),]["Group"] <- "OPV"
+
 
 ######################################
 ############# BOXPLOTS ###############
@@ -64,7 +75,7 @@ GenoInfo$Group <- factor(GenoInfo$Group, levels=c("Landrace", "OPV", "introgress
                                                             "HA-NonOil", "RHA-NonOil", "HA-Oil", "RHA-Oil"))
 
 # make long format:
-GenoLong <- reshape(GenoInfo[,c(1,3,19, 22:24)],
+GenoLong <- reshape(GenoInfo[,c(1,3,19, 24:26)],
                          direction = "long",
                          varying = c("NumDerivedHom_REL", "nHet_REL"),
                          v.names = "Relative_Number_Genotypes",
@@ -82,7 +93,7 @@ ggplot(GenoLong, aes(x=Group, y=Relative_Number_Genotypes)) +
   geom_boxplot(position = position_dodge(), aes(fill=Genotype), notch=FALSE) +
   facet_wrap(~Consequence, scales = "free_y") +
   theme_minimal() +
-  #scale_fill_discrete(labels=c("Homozygous", "Heterozygous")) +
+  scale_fill_discrete(labels=c("Homozygous", "Heterozygous")) +
   ylab("Proportion Derived Genotypes") +
   theme(axis.text = element_text(size=10),
         axis.text.x = element_text(angle=90),
@@ -101,17 +112,67 @@ ggplot(GenoLong, aes(x=Group, y=Relative_Number_Genotypes)) +
   
   
 
-ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Figure4_dSNPperGroup.pdf")
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Figure4_SNPperGroup.pdf")
 
+##################################
+### CONDENSE FOR CLEANER GRAPH ###
+##################################
 
+GenoLong$Group2 <- ifelse(GenoLong$Group=="Landrace" |
+                            GenoLong$Group=="OPV",
+                          "Landrace/OPV",
+                          as.character(GenoLong$Group))
+
+GenoLong[grep("introgressed", GenoLong$Group2),]["Group2"] <- "Introgression"
+
+GenoLongSub <- GenoLong[-grep("-INRA", GenoLong$Group2),]
+GenoLongSub <- GenoLongSub[-grep("other-", GenoLongSub$Group2),]
+
+levels(as.factor(GenoLong$Group2))
+levels(as.factor(GenoLongSub$Group2))
+
+GenoLongSub$Group2 <- factor(GenoLongSub$Group2, levels=c("Landrace/OPV", "Introgression", "RHA-NonOil",
+                                                  "HA-NonOil", "RHA-Oil", "HA-Oil"))
+
+# remove outlier to show scale better
+GenoLongSub <- GenoLongSub[-which(GenoLongSub$Consequence=="Deleterious" &
+                    GenoLongSub$Relative_Number_Genotypes>0.0075),]
+
+ggplot(GenoLongSub[which(GenoLongSub$Consequence!="Tolerated"),], aes(x=Group2, y=Relative_Number_Genotypes)) +
+  geom_boxplot(position = position_dodge(), 
+               aes(fill=Genotype), 
+               notch=FALSE) +
+  facet_wrap(~Consequence, scales = "free_y") +
+  theme_minimal() +
+  scale_fill_discrete(labels=c("Homozygous", "Heterozygous")) +
+  #scale_fill_manual(values = c("#D95F02", "blue"),
+  #                    labels=c("Homozygous", "Heterozygous")) +
+  ylab("Proportion Genotypes in Coding Regions") +
+  theme(axis.text = element_text(size=12),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(angle=45),
+        legend.text = element_text(size=12),
+        strip.text.x = element_text(size = 14, face = "bold"),
+        legend.position = "bottom")
+
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Germplasm_subset.pdf")
+
+# just deleterious
+ggplot(GenoLongSub[which(GenoLongSub$Consequence=="Deleterious" & GenoLongSub$Group2!="Landrace/OPV" &
+                           GenoLongSub$Group2!="Introgression" & GenoLongSub$Genotype=="NumDerivedHom_REL"),], 
+       aes(x=Group2, y=Relative_Number_Genotypes)) +
+  geom_boxplot(position = position_dodge(), aes(fill=Genotype), notch=FALSE) +
+  theme_minimal()
 
 ##########################
 ###### BASIC STATS #######
 ##########################
 
-dSNP_GenoInfo$PropSNPs_deleterious <- dSNP_GenoInfo$TotNum_dSNPs / (2*dSNP_GenoInfo$NumGenotypes)
-hist(dSNP_GenoInfo$PropSNPs_deleterious)
+hist(GenoInfo[which(GenoInfo$Consequence=="Deleterious"), "NumDerivedHom_REL"])
+     
 
+### below is old (need to fix)
 median(dSNP_GenoInfo$PropSNPs_deleterious)
 mean(dSNP_GenoInfo$PropSNPs_deleterious)
 min(dSNP_GenoInfo$PropSNPs_deleterious)
