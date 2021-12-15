@@ -362,3 +362,32 @@ bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 1000
 | bedtools intersect -a - -b ${vcf_dir}/SAM_AltDerivedSynonymous.vcf -c > ${out_dir}/AltDerivedSynonymous_10MbCounts.txt
 
 ```
+
+### Derived SNP Patterns for Different Classes of Germplasm
+Count Number of Alt/Ref Alleles per genotype
+(using bcftools)
+```bash
+cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs
+module load BCFtools/1.10.2-GCC-8.3.0
+
+bcftools stats -s - SAM_RefDerivedDeleterious.vcf |grep "PSC" > Stats/RefDerivedDeleterious_perSampleCounts.txt
+bcftools stats -s - SAM_AltDerivedDeleterious.vcf | grep "PSC" > Stats/AltDerivedDeleterious_perSampleCounts.txt
+
+bcftools stats -s - SAM_RefDerivedTolerated.vcf | grep "PSC" > Stats/RefDerivedTolerated_perSampleCounts.txt
+bcftools stats -s - SAM_AltDerivedTolerated.vcf | grep "PSC" > Stats/AltDerivedTolerated_perSampleCounts.txt
+
+bcftools stats -s - SAM_RefDerivedSynonymous.vcf | grep "PSC" > Stats/RefDerivedSynonymous_perSampleCounts.txt
+bcftools stats -s - SAM_AltDerivedSynonymous.vcf | grep "PSC" > Stats/AltDerivedSynonymous_perSampleCounts.txt
+
+### need total number of genotypes:
+vcf=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz
+bcftools stats -s - $vcf | grep "PSC" > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AllVariantStats.txt
+
+module load R/4.0.0-foss-2019b
+Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Germplasm/Derived_Variant_Numbers.R" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/Stats" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AllVariantStats.txt" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/AlleleNums_Geno.txt"
+
+
+```
