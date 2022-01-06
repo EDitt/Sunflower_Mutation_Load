@@ -10,6 +10,7 @@ options(warn=1)
 # 3.) Text file with chromosome, position, and ancestral allele
 # 4.) Output filename for MAF data
 # 5.) Output filename for derived frequency data
+# 6.) Output filename for RData file that contains entire table
 
 
 #########################
