@@ -37,16 +37,28 @@ module load BCFtools/1.13-GCC-8.3.0
 vcf=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz
 bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' ${vcf} > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt
 
+# take out the sites with allele count of 1 (heterozygous in only 1 sample due to sample pooling)
+Pos_info=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt
+wc -l  $Pos_info # 37,129,915
+awk '{if ($7<0.05) {print $0}}' $Pos_info | wc -l # 28,667,994 in this frequency class
+
+awk '{if ($5==1) {print $0}}' $Pos_info | wc -l # 7,805,470
+awk '{if ($5==2) {print $0}}' $Pos_info | wc -l # 7,625,046
+awk '{if ($5>1) {print $0}}' $Pos_info > All_alleleFreqInfo_noSingleton.txt # 29,324,445
+
+# what about cases where reference exhibits the minor allele only in heterozygote form?
+
 # use R to get histogram bin information
 cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses
 module load R/4.0.0-foss-2019b
 Rscript "SFS_Info.R" \
 "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles" \
-"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo_noSingleton.txt" \
 "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
 "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/MAF_Bins.txt" \
 "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedFreq_Bins.txt" \
 "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/FrequencyInfo.RData" # this file will be used for other purposes
+
 ```
 
 However, to look at derived dSNPs, I need to separate the deleterious alleles in the reference and alternate states (i.e. if a dSNP is in the alternate state, but the reference allele is derived, this allele would not be counted as derived deleterious)
@@ -382,6 +394,11 @@ bcftools stats -s - SAM_AltDerivedSynonymous.vcf | grep "PSC" > Stats/AltDerived
 ### need total number of genotypes:
 vcf=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz
 bcftools stats -s - $vcf | grep "PSC" > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AllVariantStats.txt
+
+### need total number of derived genotypes:
+
+vcf=
+bcftools stats -s - $vcf | grep "PSC" > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AllDerived_VariantStats.txt
 
 module load R/4.0.0-foss-2019b
 Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Germplasm/Derived_Variant_Numbers.R" \
