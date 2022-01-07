@@ -19,4 +19,5 @@ plink --vcf $INPUT_VCF \
 --allow-extra-chr \
 --real-ref-alleles \
 --keep-allele-order \
+--set-missing-var-ids @:# \
 --out $OUT_PREFIX
