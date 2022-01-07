@@ -30,4 +30,4 @@ plink --file ${File_Prefix} \
 --indep-pairwise ${Window_Size} kb ${Step_Size} ${Rsquared} \
 --allow-extra-chr \
 --set-missing-var-ids @:# \
---out ${Output_Dir}/PrunedLists/Prune_${Rquared}
+--out "$(Output_Dir)"/PrunedLists/Plink_"$(Rquared)"
