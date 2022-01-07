@@ -28,11 +28,12 @@ declare -a chrom_array=($(awk '{print $1}' "${GenomeFile}"))
 
 CHROM="${chrom_array[${SLURM_ARRAY_TASK_ID}]}"
 
-plink –-file ${File_Prefix} --allow-extra-chr \
+plink --r2 inter-chr dprime \
+--file ${File_Prefix} \
+--allow-extra-chr \
 --chr ${CHROM} \
---r2 [{inter-chr}] [{dprime}] \
--–ld-window-kb ${Kb_Window_Size} \
+--ld-window-kb ${Kb_Window_Size} \
 --ld-window ${NumVariant_Windows} \
 --ld-window-r2 ${MinR2_Window} \
 --parallel \
--–out ${CHROM}.r0
+--out ${CHROM}.r0
