@@ -29,4 +29,4 @@ mkdir -p ${Output_Dir}/PrunedLists
 plink --file ${File_Prefix} \
 --indep-pairwise ${Window_Size} kb ${Step_Size} ${Rsquared} \
 --allow-extra-chr \
---out ${Output_Dir}/PrunedLists/
+--out ${Output_Dir}/PrunedLists/Prune_${Rquared}
