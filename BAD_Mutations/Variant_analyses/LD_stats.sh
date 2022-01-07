@@ -35,5 +35,4 @@ plink --r2 inter-chr dprime \
 --ld-window-kb ${Kb_Window_Size} \
 --ld-window ${NumVariant_Windows} \
 --ld-window-r2 ${MinR2_Window} \
---parallel \
 --out ${CHROM}.r0
