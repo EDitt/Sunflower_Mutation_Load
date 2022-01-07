@@ -23,7 +23,7 @@ module load PLINK/1.9b_5-x86_64
 ### Kb_Window_Size: the size of window for pairs of SNPs for which to calculate r^2 (default 1000)
 ### NumVariant_Windows: the maximum number of variants between two SNPs allowed for r^2 calculations to be performed on them (default 10)
 ### MinR2_Window: the minimum R2 number, below which will not be reported between variants (default 0.2)
-
+### Output_Dir: the output directory for the output table(s)
 declare -a chrom_array=($(awk '{print $1}' "${GenomeFile}"))
 
 CHROM="${chrom_array[${SLURM_ARRAY_TASK_ID}]}"
@@ -35,4 +35,4 @@ plink --r2 dprime \
 --ld-window-kb ${Kb_Window_Size} \
 --ld-window ${NumVariant_Windows} \
 --ld-window-r2 ${MinR2_Window} \
---out ${CHROM}.r0
+--out ${Output_Dir}/${CHROM}.r0
