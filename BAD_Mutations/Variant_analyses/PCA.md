@@ -12,7 +12,7 @@ vcf=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Var
 outputdir=/scratch/eld72413/SAM_seq/PCA
 
 bcftools filter -e 'F_MISSING > 0.1' --threads 4 $vcf -Ou | bcftools view --min-ac 2[:minor] > ${outputdir}/Sunflower_SAM_SNP_Calling_PCAfilter.vcf
-
+# now contains 13,973,358 variants
 ```
 
 ### 2. Convert to Plink and LD prune
@@ -29,6 +29,13 @@ Kb_Window_Size='1000',\
 NumVariant_Windows='1000',\
 MinR2_Window='0',\
 Output_Dir='/scratch/eld72413/SAM_seq/PCA' LD_stats.sh # submitted batch job 7983974
+
+sbatch --export=Output_Dir='/scratch/eld72413/SAM_seq/PCA',\
+File_Prefix='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter',\
+Window_Size='1',Step_Size='1',Rsquared='0.9' LD_prune.sh # Submitted batch job 7991417
+# Got warning message: step size should be 1 when window size is in kb
+# Pruning complete.  9037810 of 13973358 variants removed (at R^2 of 0.8)
+# Pruning complete.  8460435 of 13973358 variants removed (at R^2 of 0.9)
 ```
 
 
