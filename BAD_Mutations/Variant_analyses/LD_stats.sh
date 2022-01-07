@@ -32,7 +32,5 @@ plink --r2 inter-chr dprime \
 --file ${File_Prefix} \
 --allow-extra-chr \
 --chr ${CHROM} \
---ld-window-kb ${Kb_Window_Size} \
---ld-window ${NumVariant_Windows} \
 --ld-window-r2 ${MinR2_Window} \
 --out ${CHROM}.r0
