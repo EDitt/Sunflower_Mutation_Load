@@ -24,6 +24,7 @@ module load PLINK/1.9b_5-x86_64
 ### NumVariant_Windows: the maximum number of variants between two SNPs allowed for r^2 calculations to be performed on them (default 10)
 ### MinR2_Window: the minimum R2 number, below which will not be reported between variants (default 0.2)
 ### Output_Dir: the output directory for the output table(s)
+
 declare -a chrom_array=($(awk '{print $1}' "${GenomeFile}"))
 
 CHROM="${chrom_array[${SLURM_ARRAY_TASK_ID}]}"
