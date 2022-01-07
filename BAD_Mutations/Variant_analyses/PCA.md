@@ -21,13 +21,14 @@ cd /home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/Plink
 sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter.vcf',OUT_PREFIX='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter' VCF_convert.sh # Submitted batch job 7977411
 
 # calculate r^2 among pairs of SNPs, parallelizing across chromosomes
-cd 
+cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses
+
 sbatch --export=GenomeFile='/scratch/eld72413/SunflowerGenome/GenomeFile.txt',\
-File_Prefix='',\
+File_Prefix='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter',\
 Kb_Window_Size='1000',\
 NumVariant_Windows='1000',\
-MinR2_Window='0' .sh
-
+MinR2_Window='0',\
+Output_Dir='/scratch/eld72413/SAM_seq/PCA' LD_stats.sh # submitted batch job 7983974
 ```
 
 
