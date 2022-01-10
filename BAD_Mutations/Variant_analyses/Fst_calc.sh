@@ -27,7 +27,7 @@ declare -a chrom_array=($(awk '{print $1}' "${GenomeFile}"))
 CHROM="${chrom_array[${SLURM_ARRAY_TASK_ID}]}"
 
 
-vcftools --vcf ${VCF} \
+vcftools --gzvcf ${VCF} \
 --chr ${CHROM} \
 --weir-fst-pop ${LIST1} \
 --weir-fst-pop ${LIST2} \
