@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=LD_stats
+#SBATCH --job-name=LD_prune
 #SBATCH --partition=batch
 
 #SBATCH --nodes=1
@@ -29,5 +29,15 @@ mkdir -p ${Output_Dir}/PrunedLists
 plink --file ${File_Prefix} \
 --indep-pairwise ${Window_Size} kb ${Step_Size} ${Rsquared} \
 --allow-extra-chr \
---set-missing-var-ids @:# \
 --out "${Output_Dir}"/PrunedLists/Plink_"${Rsquared}"
+
+Num_removed=$(wc -l "${Output_Dir}"/PrunedLists/Plink_"${Rsquared}".prune.out)
+Num_kept=$(wc -l "${Output_Dir}"/PrunedLists/Plink_"${Rsquared}".prune.in)
+
+Echo "Pruning SNPs with R^2 more than ${Rsquared} in ${Window_Size} kb windows will remove ${Num_removed} variants, keeping ${Num_kept} variants"
+
+plink --file ${File_Prefix} \
+--extract "${Output_Dir}"/PrunedLists/Plink_"${Rsquared}".prune.in \
+--allow-extra-chr \
+--out "${Output_Dir}"/Pruned_R2_"${Rsquared}" \
+--recode
