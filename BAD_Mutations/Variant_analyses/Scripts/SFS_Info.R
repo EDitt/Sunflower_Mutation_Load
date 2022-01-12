@@ -18,8 +18,8 @@ options(warn=1)
 args <- commandArgs(trailingOnly = TRUE)
 
 SNP_table <- args[1]
-Max_freq <- args[2]
-Increment <- args[3]
+Max_freq <- as.numeric(args[2])
+Increment <- as.numeric(args[3])
 FrequencyColumn <- args[4]
 Output_File <- args[5]
 
