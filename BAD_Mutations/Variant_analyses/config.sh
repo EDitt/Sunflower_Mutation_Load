@@ -22,7 +22,8 @@ ANCESTRAL=/scratch/eld72413/SAM_seq/ANGSD/Ancestral/SRS2413741_0.03_realigned.fa
 	# permanantly saved at: /project2/jmblab/dittmar/ANGSD/Debilis_ancestral
 
 # Spreadsheet with genotype lines and grouping information. "SequenceName" column is the same name that appears in the VCF
-SAM_INFO=/scratch/eld72413/SAM_seq/Fst/LineKeywINFO.csv
+SAM_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/LineKeywINFO.csv
+	# permanently saved on local computer
 
 ###########################################
 #####     CREATED RESOURCE FILES    #######
@@ -36,6 +37,7 @@ ANCESTRAL_STATE=/scratch/eld72413/SAM_seq/Polarized/AncestralStateTable
 
 # VEP report + Compiled preditions + Ancestral State Calls/Category
 DSNP_DATA=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data_Polarized.table
+	# permanently saved at: /project2/jmblab/dittmar/NSF_Proj/dSNP_files
 
 ###########################################
 #########     COMMON VARIABLES    #########
@@ -45,7 +47,7 @@ DSNP_DATA=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data_Polarized.ta
 REPO_DIR=/home/eld72413/DelMut/Sunflower_Mutation_Load
 
 # the directory to save the output of analyses
-OUT_DIR=/home/eld72413/DelMut/Sunflower_Mutation_Load
+OUT_DIR=/scratch/eld72413/SAM_seq/dSNP_results
 
 ############################################
 ########      Dependencies GACRC     #######
