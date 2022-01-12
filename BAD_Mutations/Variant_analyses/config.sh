@@ -39,6 +39,10 @@ ANCESTRAL_STATE=/scratch/eld72413/SAM_seq/Polarized/AncestralStateTable
 DSNP_DATA=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data_Polarized.table
 	# permanently saved at: /project2/jmblab/dittmar/NSF_Proj/dSNP_files
 
+# SNP Position, Ref/Alt alleles, Frequency Info, 
+SNP_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info.txt
+	# permanently saved at: /project2/jmblab/dittmar/NSF_Proj/dSNP_files
+
 ###########################################
 #########     COMMON VARIABLES    #########
 ###########################################
