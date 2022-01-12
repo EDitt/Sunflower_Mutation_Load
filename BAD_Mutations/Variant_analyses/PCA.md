@@ -71,9 +71,6 @@ convertf -p $parfile
 ## numvalidind:    288  maxmiss: 288001
 ## eigenstrat output
 ## ##end of convertf run
-
-
-
 ```
 
 
@@ -81,7 +78,6 @@ do I wnat to change column 6 and alter the "outputgroup" parameter?
 
 ```bash
 awk '{print $1,$2,$3,$4,$5,$6}' /scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_Pruned_R2_0.9.ped | head
-
 ```
 
 ### 4. Calculate PCA using Eigensoft (SmartPCA)
@@ -106,4 +102,55 @@ smartpca.perl -i ${Dir}/Sunflower_SAM.eigenstratgeno \
 # ploteig -i /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_SAM.pca.evec -c 1:2  -p ???  -x  -y  -o /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_Sam_Unlabeled.plot.xtxt 
 # sh: ploteig: command not found
 # evec2pca.perl 10 /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_SAM.pca.evec /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_SAM.ind /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_SAM.pca
+```
+
+### 5. Plot
+```R
+### plot PCA results from SmartPCA
+
+library(ggplot2)
+library(ggsci)
+
+smartpca <- read.table("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/Genotype_patterns/Sunflower_SAM.pca.evec",
+                       col.names=c("Sample", "PC1", "PC2", "PC3", "PC4", "PC5",
+                                   "PC6", "PC7", "PC8", "PC9", "PC10", "Pop"))
+# combine with sample info
+
+sample_info <- read.csv("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/Genotype_patterns/LineKeywINFO.csv",
+                        header=T)
+
+pca_wInfo <- merge(smartpca, sample_info, by.x="Sample", by.y = "PPN")
+
+smartpca[which(!smartpca$Sample %in% pca_wInfo$Sample),]
+
+plot(pca_wInfo$PC1, pca_wInfo$PC2)
+
+pal_jco(palette = c("default"), alpha = 1)
+show_col(pal_jco("default")(10))
+
+ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
+  geom_point(aes(color=heterotic_group, shape=Oil_NonOil), size=2) +
+  #scale_color_uchicago() +
+  scale_color_jco() +
+  theme_minimal()
+
+ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
+  geom_point(aes(color=Mandel), size=2) +
+  scale_color_jco() +
+  theme_minimal()
+
+ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
+  geom_point(aes(color=Oil_NonOil, shape = heterotic_group), size=4) +
+  #scale_color_uchicago() +
+  #scale_color_jco() +
+  scale_color_manual(values = c("#A7303099", "#003C6799", "#EFC00099")) +
+  scale_shape_manual(values = c(16, 7, 8, 12, 9, 21)) +
+  theme_minimal()
+
+ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
+  geom_point(aes(color=Mandel), size=2) +
+  scale_color_manual(values = c("#0073C299", "#EFC00099", "darkgrey", "darkgrey", 
+                                "#CD534C99", "darkgrey", "darkgrey", "#A7303099",
+                                "#003C6799", "#8F770099")) +
+  theme_minimal()
 ```
