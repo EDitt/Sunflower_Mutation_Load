@@ -23,7 +23,7 @@ module load BCFtools/1.10.2-GCC-8.3.0
 mkdir -p ${OUTPUT_DIR}/${group}_sets
 
 #SAM_info=/home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/All_SAM_Info.csv
-SAM_info=SAM_info=/scratch/eld72413/SAM_seq/Fst/LineKeywINFO.csv
+SAM_info=/scratch/eld72413/SAM_seq/Fst/LineKeywINFO.csv
 
 # 1. list of samples in that group
 genotypes=$(awk -v var="$group" -F',' '{if ($11==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_info | paste -sd,)
