@@ -35,11 +35,12 @@ SNP_freq <- function (bcftools_file, SNP_info, group_name) {
 	data <- read.table(bcftools_file, sep = "\t", header=FALSE,
 		col.names=c("Chromosome", "Position", "Ref_allele", "Alt_allele",
 		"Num_Alt_alleles", "Num_alleles", "Alt_Freq"))
-	data$Altfreq <- data$Num_Alt_alleles / data$Num_alleles
-	data$Reffreq <- (data$Num_alleles - data$Num_Alt_alleles) / data$Num_alleles
-	data$MAF <- ifelse(data$Reffreq < data$Altfreq, data$Reffreq, data$Altfreq)
+	Altfreq <- paste0(group_name, "_AltFreq")
+	data[,Altfreq] <- data$Num_Alt_alleles / data$Num_alleles
+	Reffreq <- paste0(group_name, "_RefFreq")
+	data[,Reffreq] <- (data$Num_alleles - data$Num_Alt_alleles) / data$Num_alleles
 	SNP_table <- read.table(SNP_info, sep="\t", header=TRUE)
-	data_Anc <- merge(data, SNP_table[,c("Chromosome", "Position", "MAF", "Ancestral_Allele", "Derived_Freq", "Variant_type")], 
+	data_Anc <- merge(data, SNP_table[,c("Chromosome", "Position", "Altfreq", "Reffreq", "MAF", "Ancestral_Allele", "Derived_Freq", "Variant_type")], 
 		by=c("Chromosome", "Position"))
 	Colname1 <- paste0(group_name, "_Derived_Freq")
 	data_Anc[,Colname1] <- ifelse(data_Anc$Ancestral_Allele==data_Anc$Ref_allele,
@@ -50,7 +51,8 @@ SNP_freq <- function (bcftools_file, SNP_info, group_name) {
 	data_Anc$Num_Alt_alleles, ifelse(data_Anc$Ancestral_Allele==data_Anc$Alt_allele,
 		data_Anc$Num_alleles - data_Anc$Num_Alt_alleles, NA))
 	data_Anc <- with(data_Anc, data_Anc[order(Chromosome, Position),])
-  	return(data_Anc[which(!is.na(data_Anc$Derived_Freq)),c("Chromosome", "Position", "Derived_Freq", "Variant_type", Colname1, Colname2)])
+  	return(data_Anc[,c("Chromosome", "Position", "MAF", "Derived_Freq", 
+  		"Variant_type", Altfreq, Reffreq, Colname1, Colname2)])
 }
 
 #########################
@@ -60,7 +62,7 @@ SNP_freq <- function (bcftools_file, SNP_info, group_name) {
 Group1_table <- SNP_freq(bcftools1, SNP_table, group1)
 Group2_table <- SNP_freq(bcftools2, SNP_table, group2)
 
-Combined_table <- merge(Group1_table, Group2_table, by=c("Chromosome", "Position", "Derived_Freq", "Variant_type"))
+Combined_table <- merge(Group1_table, Group2_table, by=c("Chromosome", "Position", "MAF", "Derived_Freq", "Variant_type"))
 
 write.table(Combined_table, Output_File, sep = "\t", quote=FALSE, row.names=FALSE)
 
