@@ -18,12 +18,21 @@ Hist_bins <- function (dataset, hist_breaks, colName, Annotation) {
 
 # return a binned dataframe with the proportion of private/shared variants for two different groups
 
-Group_freqbins <- function (filename, group1Column, group2Column, Max_Freq, Increment, GroupColumn) {
+Group_freqbins <- function (filename, group1Name, group2Name, AltCol_suffix, RefCol_suffix, Max_Freq, Increment, GroupColumn) {
+	group1_alt <- paste0(group1Name, AltCol_suffix)
+	group1_ref <- paste0(group1Name, RefCol_suffix)
+	group2_alt <- paste0(group2Name, AltCol_suffix)
+	group2_ref <- paste0(group2Name, RefCol_suffix)
 	freqs <- read.table(filename, header=T, sep="\t")
-	freqs$category <- ifelse((freqs[,group1Column] > 1 & freqs[,group2Column]==0) |
-	(freqs[,group1Column]==0 & freqs[,group2Column] > 1), "private",
-	ifelse((freqs[,group1Column] + freqs[,group2Column])==1, "singleton",
-		"shared"))
+	freqs$category <- ifelse(
+		(freqs[,group1_alt] > 1 & freqs[,group2_alt]==0) |
+		(freqs[,group1_alt]==0 & freqs[,group2_alt] > 1) |
+		(freqs[,group1_ref] > 1 & freqs[,group2_ref]==0) |
+		(freqs[,group1_ref]==0 & freqs[,group2_ref] > 1), 
+		"private",
+		ifelse((freqs[,group1_alt] + freqs[,group2_alt])==1 |
+			(freqs[,group1_ref] + freqs[,group2_ref])==1, 
+			"singleton", "shared"))
 	freqs_noSingle <- subset(freqs, category!="singleton")
 	freqs_noSingle$bin <- cut(freqs_noSingle[,GroupColumn],seq(0,Max_Freq,Increment))
 	summary <- aggregate(freqs_noSingle$Position, by=list(freqs_noSingle$bin, freqs_noSingle$category, freqs_noSingle$Variant_type), 
