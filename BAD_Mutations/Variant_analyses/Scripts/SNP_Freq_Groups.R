@@ -32,27 +32,30 @@ Output_File <- args[6]
 
 
 SNP_freq <- function (bcftools_file, SNP_info, group_name) {
+	Altnum <- paste0(group_name, "_Num_Alt_alleles")
 	data <- read.table(bcftools_file, sep = "\t", header=FALSE,
 		col.names=c("Chromosome", "Position", "Ref_allele", "Alt_allele",
-		"Num_Alt_alleles", "Num_alleles", "Alt_Freq"))
+		Altnum, "Num_alleles", "Alt_Freq"))
 	Altfreq <- paste0(group_name, "_AltFreq")
-	data[,Altfreq] <- data$Num_Alt_alleles / data$Num_alleles
+	data[,Altfreq] <- data[,Altnum] / data$Num_alleles
+	Refnum <- paste0(group_name, "_Num_Ref_alleles")
+	data[,Refnum] <- (data$Num_alleles - data[,Altnum])
 	Reffreq <- paste0(group_name, "_RefFreq")
-	data[,Reffreq] <- (data$Num_alleles - data$Num_Alt_alleles) / data$Num_alleles
+	data[,Reffreq] <- data[,Refnum] / data$Num_alleles
 	SNP_table <- read.table(SNP_info, sep="\t", header=TRUE)
 	data_Anc <- merge(data, SNP_table[,c("Chromosome", "Position", "Altfreq", "Reffreq", "MAF", "Ancestral_Allele", "Derived_Freq", "Variant_type")], 
 		by=c("Chromosome", "Position"))
 	Colname1 <- paste0(group_name, "_Derived_Freq")
 	data_Anc[,Colname1] <- ifelse(data_Anc$Ancestral_Allele==data_Anc$Ref_allele,
-	data_Anc$Altfreq, ifelse(data_Anc$Ancestral_Allele==data_Anc$Alt_allele,
-		data_Anc$Reffreq, NA))
+	data[,Altfreq], ifelse(data_Anc$Ancestral_Allele==data_Anc$Alt_allele,
+		data[,Reffreq], NA))
 	Colname2 <- paste0(group_name, "_Derived_Num")
 	data_Anc[,Colname2] <- ifelse(data_Anc$Ancestral_Allele==data_Anc$Ref_allele,
-	data_Anc$Num_Alt_alleles, ifelse(data_Anc$Ancestral_Allele==data_Anc$Alt_allele,
-		data_Anc$Num_alleles - data_Anc$Num_Alt_alleles, NA))
+	data_Anc[,Altnum], ifelse(data_Anc$Ancestral_Allele==data_Anc$Alt_allele,
+		data[,Refnum], NA))
 	data_Anc <- with(data_Anc, data_Anc[order(Chromosome, Position),])
   	return(data_Anc[,c("Chromosome", "Position", "MAF", "Derived_Freq", 
-  		"Variant_type", Altfreq, Reffreq, Colname1, Colname2)])
+  		"Variant_type", Altnum, Refnum, Altfreq, Reffreq, Colname1, Colname2)])
 }
 
 #########################
