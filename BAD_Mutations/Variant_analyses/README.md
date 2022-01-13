@@ -2,12 +2,14 @@
 
 ## Navigation: Jump to Section
 
-- [Annotation Classes](#parse-vep-table-and-predictions-output)
 - [Polarize Ancestral State](#polarize-ancestral-state)
-
-- [Subset VCF](#subset-vcf-by-consequence)
-- [Subset VCF](#subset-vcf-by-consequence)
+- [SNP Annotation Classes](#snp-annotation-classes)
+- [Create SNP Table](#create-snp-table)
 - [Site Frequency Spectra](#site-frequency-spectra)
+- [Germplasm Patterns](#germplasm-patterns)
+
+
+
 - [Genomic Patterns](#genomic-patterns)
 	- [Recombination across genome](#recombination-across-genome)
 	- [Binning SNP classes](#binning-snp-classes)
@@ -15,28 +17,85 @@
 
 ---
 
-## Parse VeP Table and Predictions output
-See: `Variant_class_numbers.md` for commands used to parse the prediction output and VeP output to get the variants for each class
+The compiled dSNP report was merged with VeP output (missense variants only) and processed using criteria detailed in `${REPO_DIR}/2.BAD_Mutations/Post_processing.md`
+
+Resulting file: `/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data.table`
 
 ## Polarize Ancestral State
 
 Created ancestral fasta file with ANGSD. See: ANGSD directory
 
-See `Polarize_SNPs.md` for process of creating ancestral state table.
+See `${REPO_DIR}/Variant_analyses/Polarize_SNPs.md` for process of creating ancestral state table.
 Output a table with ancestral state calls at 13,524,630 variant positions: `/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt`
 
+Merged ancestral states with dsnp_data.table file to get: `/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data_Polarized.table`
 
-## Site Frequency Spectra
+## SNP Annotation Classes
+Parse VeP Table and Predictions output to obtain annotation classes for all SNPs
 
-First, parsed VeP table and dSNP predictions to get the positions of SNPs in each frequency class (see `Variant_class_numbers.md`)
+See: `${REPO_DIR}/Variant_analyses/Variant_class_numbers.md` for commands used to parse the prediction output and VeP output to get the variants for each class
+Tab-delimited lists of variants positions for each annotation class found in: `/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles`
 
-Next, get allele frequency information for all alleles
+## Create SNP Table
+Table with SNP Frequency, Ancestral State, Genotype Calls, Annotation, for all SNPs
+
+Use bcftools to output a table with Allele Position, Reference and Alternate alleles, alternate allele count, total allele count, alternate allele frequency
 ```bash
 srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
-module load BCFtools/1.13-GCC-8.3.0
-vcf=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz
-bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' ${vcf} > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
 
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' ${VCF} > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt
+
+# remove N's from ancestral state table to save memory
+awk '{if ($3 != "N") {print $0}}' ${ANCESTRAL_STATE} > /scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt
+
+# Use R script to combine information
+Rscript "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/Variant_Table.R" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles" \
+"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt" \
+"/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
+"/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info.txt"
+```
+
+## Site Frequency Spectra
+Get frequency bins for graphing (folded and unfolded)
+
+To look at derived dSNPs, I need to remove variants for which the derived variant is not the deleterious variant
+```bash
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
+## Folded SFS:
+Rscript --verbose "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
+"${SNP_INFO}" \
+"0.5" \
+"0.05" \
+"MAF" \
+"/scratch/eld72413/SAM_seq/dSNP_results/MAF_Bins.txt"
+
+## UnFolded SFS:
+#	=> First remove derived frequency information for deleterious SNPs for variants at which the derived variant != the deleterious variant
+awk '{if (($39 == "Alternate_deleterious" && $7 == "Ref_derived") ||  ($39 == "Reference_deleterious" && $7 == "Alt_derived")) {print $0}}' ${DSNP_DATA} | wc -l # 6144
+awk 'BEGIN{FS=OFS="\t"}; {if (($39 == "Alternate_deleterious" && $7 == "Ref_derived") ||  ($39 == "Reference_deleterious" && $7 == "Alt_derived")) {print $8,$9}}' ${DSNP_DATA} | sort -V > ${OUT_DIR}/IntermediateFiles/ToRemove_NotDerived.txt
+
+# remove these lines from dSNP_data from Unfolded SFS calculations:
+grep -w -Ff ${OUT_DIR}/IntermediateFiles/ToRemove_NotDerived.txt ${SNP_INFO} | wc -l # 6141 (3 sites not present in the SNP_INFO table)
+grep -v -w -f ${OUT_DIR}/IntermediateFiles/ToRemove_NotDerived.txt ${SNP_INFO} | sort -V > ${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt
+
+## Unfolded SFS:
+Rscript --verbose "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
+"${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt" \
+"1.0" \
+"0.05" \
+"Derived_Freq" \
+"/scratch/eld72413/SAM_seq/dSNP_results/DerivedFreq_Bins.txt"
+
+rm ${OUT_DIR}/IntermediateFiles/ToRemove_NotDerived.txt
+```
+
+See Plots.R for SFS plot
+
+Do I want to remove singletons?
+```bash
 # take out the sites with allele count of 1 (heterozygous in only 1 sample due to sample pooling)
 Pos_info=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt
 wc -l  $Pos_info # 37,129,915
@@ -47,136 +106,58 @@ awk '{if ($5==2) {print $0}}' $Pos_info | wc -l # 7,625,046
 awk '{if ($5>1) {print $0}}' $Pos_info > All_alleleFreqInfo_noSingleton.txt # 29,324,445
 
 # what about cases where reference exhibits the minor allele only in heterozygote form?
-
-# use R to get histogram bin information
-cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses
-module load R/4.0.0-foss-2019b
-Rscript "SFS_Info.R" \
-"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles" \
-"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo_noSingleton.txt" \
-"/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
-"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/MAF_Bins.txt" \
-"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedFreq_Bins.txt" \
-"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/FrequencyInfo.RData" # this file will be used for other purposes
-
 ```
 
-However, to look at derived dSNPs, I need to separate the deleterious alleles in the reference and alternate states (i.e. if a dSNP is in the alternate state, but the reference allele is derived, this allele would not be counted as derived deleterious)
+----- 
 
-Proportions in each frequency class:
+## Germplasm patterns
+Spreadsheet `scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/LineKeywINFO.csv` contains grouping information for each genotype to match with Variant ID's from VCF
+
+See `${REPO_DIR}/2.BAD_Mutations/PCA.md` for information on the creation of a PCA for genotypes in the SAM pop
+
+Plotted Fst across the genome. See:
+
+## Heterotic Group Differentiaton
+
+First, I will look at the proportion of shared versus private SNPs for deleterious and synonymous across the different frequency classes
 ```bash
-MAF=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/MAF_Bins.txt 
-Derived_freq=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedFreq_Bins.txt
-Derived_dSNPfreq=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Derived_dSNP_freqbins.txt
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
 
-awk '{if ($3=="AllDel") {print $0}}' $MAF
-awk '{if ($3=="NonCoding") {print $0}}' $MAF
-awk '{if ($3=="StopLostGained") {print $0}}' $MAF
-awk '{if ($3=="Synonymous") {print $0}}' $MAF
-awk '{if ($3=="Tolerated") {print $0}}' $MAF
+mkdir -p ${OUT_DIR}/HeteroticGroups
 
-awk '{if ($3=="NonCoding") {print $0}}' $Derived_freq
-awk '{if ($3=="StopLostGained") {print $0}}' $Derived_freq
-awk '{if ($3=="Synonymous") {print $0}}' $Derived_freq
-awk '{if ($3=="Tolerated") {print $0}}' $Derived_freq
+# plot stats separately for HA and RHA
+group=HA
+genotypes=$(awk -v var="$group" -F',' '{if ($11==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_INFO | paste -sd,)
+bcftools view -Ou --samples ${genotypes} ${VCF} |\
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' > ${OUT_DIR}/HeteroticGroups/HA_SNP_info.txt
 
+awk '{if ($5/$6 > 0.9) {print $0}}' ${OUT_DIR}/HeteroticGroups/HA_SNP_info.txt | wc -l # 34,593
+
+group=RHA
+genotypes=$(awk -v var="$group" -F',' '{if ($11==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_INFO | paste -sd,)
+bcftools view -Ou --samples ${genotypes} ${VCF} |\
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' > ${OUT_DIR}/HeteroticGroups/RHA_SNP_info.txt
+
+awk '{if ($5/$6 > 0.9) {print $0}}' ${OUT_DIR}/HeteroticGroups/RHA_SNP_info.txt | wc -l # 200,499
+
+# reduce SNP table to just deleterious and synonymous to save memory in R
+awk '{print $13}' $SNP_INFO | sort -u
+awk '{if ($13=="AllDel" || $13=="Synonymous" || $13=="Variant_type") {print $0}}' $SNP_INFO > ${OUT_DIR}/HeteroticGroups/SNP_Info_Reduced.txt
+
+# combine 
+Rscript --verbose "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SNP_Freq_Groups.R" \
+"${OUT_DIR}/HeteroticGroups/HA_SNP_info.txt" \
+"HA" \
+"${OUT_DIR}/HeteroticGroups/RHA_SNP_info.txt" \
+"RHA" \
+"${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt" \
+"${OUT_DIR}/HeteroticGroups/HA_RHA_DerivedFreqs.txt"
 ```
-
-#### Deleterious SNPs
-Compiled Report was used to identify variant classes (see `2.BAD_Mutations/Post_processing.md` and positions files created in `Variant_class_numbers.md`)
-
-First, subset vcf file to make separate vcfs of deleterious (for both reference and alternate alleles)
-```bash
-cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/2.BAD_Mutations
-
-# deleterious in reference
-sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Reference_DelPositions.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_Refdeleterious' Subset_vcf.sh # Submitted batch job 4232837
-
-grep -v "#" SAM_Refdeleterious.vcf | wc -l # 11796
-
-# deleterious in alternate
-sbatch --export=positions='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Alternate_DelPositionsNoDups.txt',vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',outputdir='/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results',name='SAM_Altdeleterious' Subset_vcf.sh # Submitted batch job 4232853
-
-grep -v "#" SAM_Altdeleterious.vcf | wc -l # 76016
-
-# use bcftools to get stats for each allele
-module load BCFtools/1.13-GCC-8.3.0
-
-# need to bgzip vcf files:
-module load HTSlib/1.10.2-GCC-8.3.0
-bgzip -c --threads 4 /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf.gz
-tabix -p vcf /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Refdeleterious.vcf.gz
-
-# derived deleterious in alternate
-bgzip -c --threads 4 /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf.gz
-tabix -p vcf /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/SAM_Altdeleterious.vcf.gz
-
-# reference deleterious
-bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\n' SAM_Refdeleterious.vcf.gz > AlleleFreqs/SAM_Refdeleterious_AC_AN.txt
-# alternate deleterious
-bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\n' SAM_Altdeleterious.vcf.gz > AlleleFreqs/SAM_Altdeleterious_AC_AN.txt
-
-# N_ALT : number of alternate alleles
-# AC : count of alternate alleles
-# AN : number of alleles in called genotypes
-
-### need to calculate frequency of deleterious allele (for deleterious reference it's AN - AC/AN; for deleterious alternate it's AC/AN)
-```
-
-Use R to wrangle
-```R
-#module load R/4.0.0-foss-2019b
-#R
-
-dSNPNums <- function (Alt_file, Ref_file, AncestralState_file) {
-	Alt_dSNP <- read.table(Alt_file, sep = "\t", header=FALSE)
-	colnames(Alt_dSNP) <- c("Chromosome", "Position", "Ref_allele", "Del_allele",
-		"Num_Alt_alleles", "Num_alleles")
-	Alt_dSNP$dSNP_freq <- Alt_dSNP$Num_Alt_alleles / Alt_dSNP$Num_alleles
-	Ref_dSNP <- read.table(Ref_file, sep = "\t", header=FALSE)
-	colnames(Ref_dSNP) <- c("Chromosome", "Position", "Del_allele", "Alt_allele",
-		"Num_Alt_alleles", "Num_alleles")
-	Ref_dSNP$dSNP_freq <- (Ref_dSNP$Num_alleles - Ref_dSNP$Num_Alt_alleles) / Ref_dSNP$Num_alleles
-	All_dSNP_freq <- rbind(Ref_dSNP[,c(1:3,7)], Alt_dSNP[,c(1,2,4,7)])
-	All_dSNP_freq$Chromosome <- as.factor(All_dSNP_freq$Chromosome)
-	All_dSNP_freq <- with(All_dSNP_freq, All_dSNP_freq[order(Chromosome, Position),])
-	Polarized <- read.table(AncestralState_file)
-	colnames(Polarized) <- c("Chromosome", "Position", "AncestralAllele")
-	dSNP_summary_AA <- merge(All_dSNP_freq, Polarized, by=c("Chromosome", "Position"), all.x=TRUE)
-	dSNP_summary_AA$Cat <- ifelse(dSNP_summary_AA$AncestralAllele==dSNP_summary_AA$Del_allele, "Ancestral_dSNP",
-	ifelse(dSNP_summary_AA$AncestralAllele!=dSNP_summary_AA$Del_allele,"Derived_dSNP", NA))
-  	return(dSNP_summary_AA)
-}
-
-dSNP_summary <- dSNPNums("SAM_Altdeleterious_AC_AN.txt", "SAM_Refdeleterious_AC_AN.txt", "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt")
-
-#duplicates?
-length(unique(paste0(dSNP_summary$Chromosome,"_", dSNP_summary$Position))) # 87794 (out of 87812) 18 duplicated
-# how many of these are polarized?
-aggregate(dSNP_summary$Position, by=list(dSNP_summary$Cat), length)
-# ancestral dSNP= 6141; derived dSNP= 56360 (total 62,501) <- still have 14 duplicate positions
-
-derived_breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1)
-Derived_dSNP_histogram <- hist(dSNP_summary[which(dSNP_summary$Cat=="Derived_dSNP"), "dSNP_freq"],
-	plot = FALSE, breaks=derived_breaks)
-sum(Derived_dSNP_histogram$counts) # 56360
-
-# use "Hist_bins" function from SFS_Info.R
-Derived_dSNP <- Hist_bins(dSNP_summary[which(dSNP_summary$Cat=="Derived_dSNP"),],
-	derived_breaks, "dSNP_freq", "dSNP")
-colnames(Derived_dSNP)[1] <- "breaks"
-write.table(Derived_dSNP, file="/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Derived_dSNP_freqbins.txt", sep = "\t", quote=FALSE, row.names=FALSE)
-
-```
-
 
 ----- 
 
 Continued with `dSNP_DerAncBINS.R` <- for binning across genome
-
------ 
-
-
 
 ## Genomic Patterns
 
