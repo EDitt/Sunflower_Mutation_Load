@@ -64,10 +64,10 @@ plink --genome \
 awk '{print $2, $4, $12}' ${outputdir}/Intermediates/TEMP_${output_prefix}.genome > ${outputdir}/${output_prefix}_IBS.txt
 
 sed -i 's/PPN285/Hopi_PPN285/g' ${outputdir}/${output_prefix}_IBS.txt
-sed -i 's/33/SF_33/g' ${outputdir}/${output_prefix}_IBS.txt
+sed -i 's/[[:<:]]33[[:>:]]/SF_33/g' ${outputdir}/${output_prefix}_IBS.txt
 sed -i 's/PPN136/NMS373_PPN136/g' ${outputdir}/${output_prefix}_IBS.txt
 sed -i 's/PPN251/RHA415-4_PPN251/g' ${outputdir}/${output_prefix}_IBS.txt
 sed -i 's/531071/PI_531071/g' ${outputdir}/${output_prefix}_IBS.txt
 
-
+# rm ${outputdir}/Intermediates/TEMP_*
 
