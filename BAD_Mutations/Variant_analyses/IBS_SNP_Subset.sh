@@ -37,17 +37,17 @@ plink --file  ${Input_prefix} \
 --extract ${SNP_List} \
 --indep-pairwise ${Window_Size} kb ${Step_Size} ${Rsquared} \
 --allow-extra-chr \
---out ${outputdir}/Intermediates/TEMP_Plink_${Rsquared}
+--out ${outputdir}/Intermediates/TEMP_${output_prefix}_Plink_${Rsquared}
 
-Num_removed=$(wc -l ${outputdir}/Intermediates/TEMP_Plink_${Rsquared}.prune.out)
-Num_kept=$(wc -l ${outputdir}/Intermediates/TEMP_Plink_${Rsquared}.prune.in)
+Num_removed=$(wc -l ${outputdir}/Intermediates/TEMP_${output_prefix}_Plink_${Rsquared}.prune.out)
+Num_kept=$(wc -l ${outputdir}/Intermediates/TEMP_${output_prefix}_Plink_${Rsquared}.prune.in)
 
 echo "Pruning SNPs with R^2 more than ${Rsquared} in ${Window_Size} kb windows will remove ${Num_removed} variants, keeping ${Num_kept} variants"
 
 ### combine pruned list with input list
-comm -12 --check-order <(sort ${outputdir}/Intermediates/TEMP_Plink_${Rsquared}.prune.in) <(sort ${SNP_List}) > ${outputdir}/Intermediates/TEMP_SNPsToKeep.txt
+comm -12 --check-order <(sort ${outputdir}/Intermediates/TEMP_${output_prefix}_Plink_${Rsquared}.prune.in) <(sort ${SNP_List}) > ${outputdir}/Intermediates/TEMP_${output_prefix}_SNPsToKeep.txt
 
-Num_SNPs=$(wc -l ${outputdir}/Intermediates/TEMP_SNPsToKeep.txt)
+Num_SNPs=$(wc -l ${outputdir}/Intermediates/TEMP_${output_prefix}_SNPsToKeep.txt)
 
 echo "Pairwise IBS will be calculated using ${Num_SNPs} SNPs"
 
@@ -55,7 +55,7 @@ echo "Pairwise IBS will be calculated using ${Num_SNPs} SNPs"
  
 plink --genome \
 --file ${Input_prefix} \
---extract ${outputdir}/Intermediates/TEMP_SNPsToKeep.txt \
+--extract ${outputdir}/Intermediates/TEMP_${output_prefix}_SNPsToKeep.txt \
 --allow-extra-chr \
 --out ${outputdir}/Intermediates/TEMP_${output_prefix}
 
@@ -69,5 +69,5 @@ sed -i 's/PPN136/NMS373_PPN136/g' ${outputdir}/${output_prefix}_IBS.txt
 sed -i 's/PPN251/RHA415-4_PPN251/g' ${outputdir}/${output_prefix}_IBS.txt
 sed -i 's/531071/PI_531071/g' ${outputdir}/${output_prefix}_IBS.txt
 
-# rm ${outputdir}/Intermediates/TEMP_*
+# rm ${outputdir}/Intermediates/TEMP_${output_prefix}*
 
