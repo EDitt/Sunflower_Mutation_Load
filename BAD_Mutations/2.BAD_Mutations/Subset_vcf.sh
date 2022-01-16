@@ -13,4 +13,4 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 
 module load BCFtools/1.10.2-GCC-8.3.0
-bcftools view -R ${positions} ${vcf} > ${outputdir}/${name}.vcf
+bcftools view -Oz -R ${positions} ${vcf} > ${outputdir}/${name}.vcf.gz
