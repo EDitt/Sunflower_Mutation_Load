@@ -15,6 +15,18 @@ ImportFilesAsList <- function (Dir, Suffix, Prefix) {
   	return(my_data)
   }
 
+# import files as list. Make a column with the name of the list and combine into a dataframe
+ImportFilesAsDf <- function (Dir, Suffix, Prefix, Colnames) {
+	my_list <- ImportFilesAsList(Dir, Suffix, Prefix)
+	for (i in seq_along(my_list)) {
+    name <- names(my_list[i])
+    colnames(my_list[[i]]) <- Colnames
+    my_list[[i]]["Variant_type"] <- name
+  	}
+  	my_dataframe <- do.call("rbind", my_list)
+  	return(my_dataframe)
+  }
+
 # import chromosome files into a dataframe
 Combine_Chromosomes <- function (Dir, Suffix, Prefix) {
 	my_files <- list.files(path = Dir, pattern = Suffix, full.names = TRUE)
@@ -95,4 +107,41 @@ FreqScatterplot <- function(df, crit_fst, Del_name, Synon_name, Group1_col, Grou
     xlab(Group1_col) + ylab(Group2_col)
   return(p)
 }
+
+# creates a joint SFS for 2 groups, with counts on the log scale
+JointSFSPlot1 <- function(df, BinWidth, Group1Col, Group2Col, Group1_X_label, Group2_Y_label) {
+  p <- ggplot(data=df, aes(x=df[,Group1Col], y=df[,Group2Col])) +
+    geom_bin2d(binwidth = c(BinWidth, BinWidth)) + 
+    scale_fill_viridis_c(trans="log10") + 
+    #scale_fill_viridis_c() +
+    theme_minimal() +
+    theme(panel.grid.minor = element_blank()) +
+    xlab(Group1_X_label) + ylab(Group2_Y_label)
+  return(p)
+}
+
+# creates a scatterplot with density contours and histograms for the x and y labels
+JointSFSPlot2 <- function(df, BinNum, Group1Col, Group2Col, Group1_X_label, Group2_Y_label) {
+  p <- ggplot(data=df, aes(x=df[,Group1Col], y=df[,Group2Col])) + 
+    geom_point(alpha=0.05, color = "grey") + theme_minimal() + 
+    geom_density_2d(aes(color = ..level..), bins=BinNum) +
+    scale_color_viridis_c() +
+    theme(panel.grid.minor = element_blank()) +
+    xlab(Group1_X_label) + ylab(Group2_Y_label) +
+    geom_abline(slope=1, intercept = 0, lty="dotted")
+  p2 <- ggMarginal(p, type = "histogram", fill = "grey")
+  return(p2)
+}
+
+
+
+###########################################
+################ LIBRARIES ################
+###########################################
+
+library(ggplot2)
+library(dplyr)
+library(viridis)
+library(ggExtra)
+library(ggpubr)
 
