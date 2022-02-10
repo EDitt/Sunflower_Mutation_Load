@@ -26,9 +26,12 @@ SAM_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/LineKeywINFO.csv
 	# permanently saved on local computer
 
 ###########################################
-#####     CREATED RESOURCE FILES    #######
+########     CREATED RESOURCES    #########
 ###########################################
 #	Files created by scripts in the current directory
+
+# Directory with lists of SNP positions for different variant classes
+POSITIONS_DIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles
 
 # Ancestral alleles at all sites in VCF (only 13.5 M out of 37 M with calls). Used R to parse a .bed file
 ANCESTRAL_STATE=/scratch/eld72413/SAM_seq/Polarized/AncestralStateTable
