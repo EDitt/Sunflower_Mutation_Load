@@ -7,6 +7,10 @@ options(warn=1)
 ### Command line arguments:
 # 1.) Directory output from "grep PSC" bcftools stats command (tab delimited table with numbers of variants in each class)
 # 2.) File + directory info for "grep PSC" from bcftools stats on the whole VCF file (to get total number of genotype calls for each sample)
+# 3.) Output file name + directory
+# 4.) Prefix/suffix: pattern common to all files to be removed from naming
+# 5.) String that characterizes reference file
+# 6.) String that characterizes alternate file
 
 #########################
 ##### READ IN DATA ######
@@ -17,25 +21,28 @@ args <- commandArgs(trailingOnly = TRUE)
 Directory <- args[1]
 AllStats <- args[2]
 OutputFile <- args[3]
+PreSuffix <- args[4]
+Ref_Name <- args[5]
+Alt_Name <- args[6]
 
 #########################
 ####### FUNCTIONS #######
 #########################
 
 # import tables with positions for various variant classes and edit variant class names for clarity
-ImportTxts <- function (DirPath) {
+ImportTxts <- function (DirPath, pattern, ref_name, alt_name) {
   my_files <- list.files(path = DirPath, pattern = "*.txt", full.names = TRUE)
   my_data <- lapply(my_files, read.table)
   names(my_data) <- gsub("\\.txt$", "", my_files)
   names(my_data) <- gsub(DirPath, "", names(my_data))
   names(my_data) <- gsub("/", "", names(my_data))
-  names(my_data) <- gsub("_perSampleCounts", "", names(my_data))
-  my_data_RefDerived <- my_data[grep("RefDerived", names(my_data))]
+  names(my_data) <- gsub(pattern, "", names(my_data))
+  my_data_RefDerived <- my_data[grep(ref_name, names(my_data))]
   for (i in seq_along(my_data_RefDerived)) {
     name <- names(my_data_RefDerived[i])
     colnames(my_data_RefDerived[[i]]) <- c("PSC", "id", "sample", "nDerivedHom", "nAncestralHom", "nHets", "nTransitions", "nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissing")
   }
-  my_data_AltDerived <- my_data[grep("AltDerived", names(my_data))]
+  my_data_AltDerived <- my_data[grep(alt_name, names(my_data))]
   for (i in seq_along(my_data_AltDerived)) {
     name <- names(my_data_AltDerived[i])
     colnames(my_data_AltDerived[[i]]) <- c("PSC", "id", "sample", "nAncestralHom", "nDerivedHom", "nHets", "nTransitions", "nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissing")
@@ -63,7 +70,7 @@ CombineRefAlt <- function(DataList, Category, AllData) {
 # APPLY FUNCTIONS TO DATA #
 #########################
 
-SampleLists <- ImportTxts(Directory)
+SampleLists <- ImportTxts(Directory, PreSuffix, Ref_Name, Alt_Name)
 
 Full_stats <- read.table(AllStats)
 colnames(Full_stats) <- c("PSC", "id", "sample", "nRefHom", "nNonRefHom", "nHets", "nTransitions", "nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissingTotal")
