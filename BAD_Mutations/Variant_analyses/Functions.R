@@ -49,6 +49,39 @@ Hist_bins <- function (dataset, hist_breaks, colName, Annotation) {
 }
 
 ###########################################
+########### GERMPLASM PATTERNS ############
+###########################################
+
+# to get a table of the total number of deleterious genotypes per sample (taking into account whether reference or alternate allele is deleterious)
+# DirPath: directory containing .txt files output from bcftools stats | grep "PSC"
+# ref_name: name of reference file (can be a string contained in filename)
+# alt_name: name of alternate file ("")
+# all_stats: a dataframe with the total number of genotypes across all SNPs
+
+Genotype_dSNP_count <- function (DirPath, ref_name, alt_name, all_stats) {
+  my_files <- list.files(path = DirPath, pattern = "*.txt", full.names = TRUE)
+  my_data <- lapply(my_files, read.table)
+  names(my_data) <- gsub("\\.txt$", "", my_files)
+  names(my_data) <- gsub(DirPath, "", names(my_data))
+  names(my_data) <- gsub("/", "", names(my_data))
+  for (i in seq_along(my_data)) {
+    colnames(my_data[[i]]) <- c("PSC", "id", "sample", "nRefHom", "nNonRefHom", "nHets", "nTransitions", "nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissing")
+  }
+  my_data_RefDel <- my_data[[grep(ref_name, names(my_data))]]
+  my_data_AltDel <- my_data[[grep(alt_name, names(my_data))]]
+  combined <- merge(my_data_RefDel, my_data_AltDel, by="sample", suffixes=c("_RefDel", "_AltDel"))
+  combined$nDeleterious_Hom <- combined$nRefHom_RefDel + combined$nNonRefHom_AltDel
+  combined$nNonDel_Hom <- combined$nNonRefHom_RefDel + combined$nRefHom_AltDel
+  combined$nHet <- combined$nHets_RefDel + combined$nHets_AltDel
+  combined$nMissingDel <- combined$nMissing_RefDel + combined$nMissing_AltDel
+  all_data <- merge(combined[,c("sample", "nDeleterious_Hom", "nNonDel_Hom", "nHet", "nMissingDel")], 
+    all_stats,
+    by="sample")
+  return(all_data)
+}
+
+
+###########################################
 ##### HETEROTIC GROUP DIFFERENTIATION #####
 ###########################################
 
