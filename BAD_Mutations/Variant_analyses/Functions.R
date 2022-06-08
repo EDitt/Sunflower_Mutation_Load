@@ -173,8 +173,36 @@ JointSFSPlot2 <- function(df, BinNum, Group1Col, Group2Col, Group1_X_label, Grou
 ###########################################
 
 library(ggplot2)
+library("ggplot2")
 library(dplyr)
 library(viridis)
 library(ggExtra)
 library(ggpubr)
+library(RColorBrewer)
+library(gridExtra)
+library(cowplot)
+library(gridGraphics)
 
+###########################################
+############### COLOR SCHEME ##############
+###########################################
+
+Col_NonCoding <- "grey"
+Col_Synonymous <- "#7570B3"
+Col_Tolerated <- "#1B9E77"
+Col_Deleterious <- "#D95F02"
+Col_StopStart <- "#E6AB02"
+Col_Splice <- "#E7298A"
+
+scale_fill_manual(values= c("#999999", "#00AFBB", "#C3D7A4", "#FC4E07", "#E7B800"),
+                  name = "Variant Class", labels = c("Non-coding", "Synonymous", "Tolerated", "Deleterious", "Stop Codon Lost/Gained"))
+
+###########################################
+################# PLOTS ##################
+###########################################
+
+piechart_data <- function(slices, labels, color_names) {
+  pct <- round(slices/sum(slices)*100, digit = 2)
+  New_labels <- (paste0(labels, " ", pct, "%"))
+  return(pie(slices, labels=New_labels, col=color_names))
+}

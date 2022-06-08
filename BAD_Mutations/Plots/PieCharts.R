@@ -1,30 +1,76 @@
-### pie chart for Sunflower dSNP project
+## Pie Charts showing the proportion of variants in different annotation classes
 
-slices <- c(35219747, 826378, 620210, 87812, 21281)
-annotation <- c("Non-coding", "Synonymous", "Nonsynonymous- tolerated or unknown", "Nonsynonymous- deleterious",
-                "Stop Lost/Gained")
-pct <- round(slices/sum(slices)*100, digit = 2)
 
-labels <- (paste0(annotation, " ", pct, "%"))
+source("BAD_Mutations/Variant_analyses/Functions.R")
 
-pie(slices, labels=labels, col=rainbow(length(labels)))
+#######################################
+########## CODING/NON-CODING ##########
+#######################################
 
-# as function
-piechart_data <- function(slices, labels) {
-  pct <- round(slices/sum(slices)*100, digit = 2)
-  New_labels <- (paste0(labels, " ", pct, "%"))
-  return(pie(slices, labels=New_labels, col=rainbow(length(New_labels))))
-}
+### non-coding v. coding
 
-piechart_data(slices, annotation) ## coding regions are too 
+piechart_data(c(35453937, 1666175), 
+              c("Non-coding", "Coding"),
+              c("grey", "white"))
 
-### non-coding, synonymous, non-synonymous
 
-piechart_data(c(35219747, 826378, 708022), 
-              c("Non-coding", "Synonymous", "Nonsynonymous"))
+pdf(NULL)
+dev.control(displaylist="enable")
+piechart_data(c(35453937, 1666175), 
+              c("Non-coding", "Coding"),
+              c("grey", "white"))
+p1 <- recordPlot()
+invisible(dev.off())
 
-### coding regions only
+grid::grid.newpage()
+p1
 
-piechart_data(c(826378, 620210, 87812, 21281),
-              c("Synonymous", "Nonsynonymous- tolerated or unknown", "Nonsynonymous- deleterious",
-                "Stop Lost/Gained"))
+setEPS
+postscript("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/Pie1.eps", 
+           height=10, width=10)
+p1
+dev.off()
+
+#######################################
+######### CODING ANNOTATIONS ##########
+#######################################
+
+CodingCatNums <- c(927677, 553720, 66750, 87794, 23383, 6851)
+CodingCats <- c("Synonymous", "Nonsynonymous - tolerated",
+                "Nonsynonymous- unalignable",
+                "Nonsynonymous- deleterious",
+                "Stop Lost/Gained",
+                "Splice Variant")
+ColorCats <- c(Col_Synonymous, Col_Tolerated,
+               "#66A61E",
+               Col_Deleterious,
+               Col_StopStart,
+               Col_Splice)
+
+piechart_data(CodingCatNums, 
+              CodingCats,
+              ColorCats)
+
+pdf(NULL)
+dev.control(displaylist="enable")
+piechart_data(CodingCatNums, 
+              CodingCats,
+              ColorCats)
+p2 <- recordPlot()
+invisible(dev.off())
+
+grid::grid.newpage()
+p2
+
+setEPS
+postscript("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/Pie2.eps", 
+           height=10, width=10)
+p2
+dev.off()
+
+############################
+######### ARRANGE ##########
+############################
+
+
+plot_grid(p1,p2, nrow=1)
