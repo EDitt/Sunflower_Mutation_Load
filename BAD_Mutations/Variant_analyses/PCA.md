@@ -121,7 +121,12 @@ sample_info <- read.csv("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutati
 
 pca_wInfo <- merge(smartpca, sample_info, by.x="Sample", by.y = "PPN")
 
-smartpca[which(!smartpca$Sample %in% pca_wInfo$Sample),]
+smartpca[which(!smartpca$Sample %in% pca_wInfo$Sample),] # PI 531071 and SF-33
+
+# make groups for graphing
+pca_wInfo$group <- ifelse(pca_wInfo$heterotic_group=="OPV" |
+                    pca_wInfo$heterotic_group=="landrace", "OPV/landrace",
+                    paste0(pca_wInfo$heterotic_group, "-", pca_wInfo$Oil_NonOil))
 
 plot(pca_wInfo$PC1, pca_wInfo$PC2)
 
@@ -139,18 +144,32 @@ ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
   scale_color_jco() +
   theme_minimal()
 
+## using the code below
 ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
   geom_point(aes(color=Oil_NonOil, shape = heterotic_group), size=4) +
   #scale_color_uchicago() +
   #scale_color_jco() +
-  scale_color_manual(values = c("#A7303099", "#003C6799", "#EFC00099")) +
-  scale_shape_manual(values = c(16, 7, 8, 12, 9, 21)) +
-  theme_minimal()
+  scale_color_manual(values = c("#A7303099", "#EFC00099")) +
+  #scale_fill_manual(values = c("#A7303099", "#EFC00099")) +
+  #scale_color_manual(values = c("#A7303099", "#003C6799", "#EFC00099")) +
+  scale_shape_manual(values = c(16, 7, 8, 12, 21)) +
+  theme_minimal() +
+  geom_text(aes(label=SequenceName, color=Oil_NonOil))
 
 ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
-  geom_point(aes(color=Mandel), size=2) +
-  scale_color_manual(values = c("#0073C299", "#EFC00099", "darkgrey", "darkgrey", 
-                                "#CD534C99", "darkgrey", "darkgrey", "#A7303099",
-                                "#003C6799", "#8F770099")) +
+  geom_point(aes(color=group), size=2) +
+  #scale_color_uchicago() +
+  #scale_color_jco() +
+  #scale_color_manual(values = c("#0073C299", "#EFC00099", "darkgrey","darkgrey","#CD534C99", "darkgrey","darkgrey","#A7303099","#003C6799", "#8F770099")) +
+  theme_minimal() +
+  geom_text(aes(label=SequenceName, color=group))
+  
+ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
+  geom_point(aes(color=heterotic_group, shape = Oil_NonOil, ), size=4) +
+  #scale_color_uchicago() +
+  scale_color_jco() +
+  #scale_color_manual(values = c("#A7303099", "#003C6799", "#EFC00099")) +
+  scale_shape_manual(values = c(16, 7, 8, 12, 9, 21)) +
   theme_minimal()
+  
 ```
