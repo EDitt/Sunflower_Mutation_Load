@@ -9,7 +9,9 @@ library(RColorBrewer)
 ############# FOLDED SFS ##############
 #######################################
 
-folded_sfs <- read.table("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/SFS/MAF_Bins.txt",
+#folded_sfs <- read.table("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/SFS/MAF_Bins.txt",
+#                         sep="\t", header = T)
+folded_sfs <- read.table("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/SFS/MAF_Bins_noOneOrTwo.txt",
                          sep="\t", header = T)
 # order by severity
 folded_sfs$Annotation <- factor(folded_sfs$Annotation, levels=c("NonCoding", "Synonymous",
