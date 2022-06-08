@@ -10,7 +10,7 @@ VCF=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/Var
 	# permanantly saved at: /project2/jmblab/dittmar/FinalSNPsets/Filtered
 
 # The output of VeP run on the final, filtered VCF file
-VEP=/scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm
+VEP=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/SAM_SNP_Final_BiallelicNorm
 	# permanently saved at: /project2/jmblab/dittmar/NSF_Proj/dSNP_files
 
 # The compiled report output from BAD_Mutations
@@ -31,7 +31,7 @@ SAM_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/LineKeywINFO.csv
 #	Files created by scripts in the current directory
 
 # Directory with lists of SNP positions for different variant classes
-POSITIONS_DIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs/FinalPositionFiles
+POSITIONS_DIR=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/FinalPositionFiles
 
 # Ancestral alleles at all sites in VCF (only 13.5 M out of 37 M with calls). Used R to parse a .bed file
 ANCESTRAL_STATE=/scratch/eld72413/SAM_seq/Polarized/AncestralStateTable

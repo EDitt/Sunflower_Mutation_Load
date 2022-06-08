@@ -16,49 +16,44 @@ After removing duplicate sites:
 	- total number of synonymous variants: (excluding duplicates within and across more severe consequences): 826,378
 	- total number of intergenic variants: 24,148,083
 
-## Parse deleterious predictions
+
+### VeP annotation classes represented:
 
 ```bash
-srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
-dsnp_data=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data_Polarized.table
-
-grep "Tolerated" ${dsnp_data} | wc -l # 557,317
-grep "Deleterious" ${dsnp_data} | wc -l # 87,891
-
-# how many duplicates?
-#awk '{print $19}' ${dsnp_data} | wc -l # 645,209
-#awk '{print $19}' ${dsnp_data} | sort -u | wc -l # 641,515
-awk 'NR>1 {print $17}' $dSNP_table | wc -l # 645,208
-awk 'NR>1 {print $17}' $dSNP_table | sort -u | wc -l # 641,514
-
-awk -F'\t' '{print NF; exit}' ${dsnp_data} # 39 columns
-
-## deleterious positions in reference:
-awk '{if ($39=="Reference_deleterious") {print $0}}' ${dsnp_data} | awk '{print $25}' | awk '{$1=$1}1' FS=':' OFS='\t' > Reference_DelPositions.txt
-wc -l Reference_DelPositions.txt # 11,796
-awk '{print $0}' Reference_DelPositions.txt | sort -u | wc -l # 11,796 no duplicates
-
-# alternate deleterious:
-awk '{if ($39=="Alternate_deleterious") {print $0}}' ${dsnp_data} | awk '{print $25}' | awk '{$1=$1}1' FS=':' OFS='\t' > Alternate_DelPositions.txt
-wc -l Alternate_DelPositions.txt # 76,095
-awk '{print $0}' Alternate_DelPositions.txt | sort -u | wc -l # 76,016
-awk '{print $0}' Alternate_DelPositions.txt | sort -u  > Alternate_DelPositionsNoDups.txt
-wc -l Alternate_DelPositionsNoDups.txt # 76,016
-
-# Tolerated:
-awk '{if ($39=="Tolerated") {print $0}}' ${dsnp_data} | awk '{print $25}' | awk '{$1=$1}1' FS=':' OFS='\t' > ToleratedPositions.txt
-wc -l ToleratedPositions.txt # 556,577 (740 duplicate positions represented in deleterious set already removed - see 2.BAD_Mutations/Post_processing.md)
-awk '{print $0}' ToleratedPositions.txt | sort -u | wc -l # 553,720
-awk '{print $0}' ToleratedPositions.txt | sort -u > ToleratedPositionsNoDups.txt
-wc -l ToleratedPositionsNoDups.txt # 553,720
+# VeP categories:
+grep -v "#" $VEP | awk '{print $7}' | sort -u
 
 ```
-Note: there are 18 positions that are the same in the alternate deleterious & reference deleterious sets (not removed)
 
-Duplicates removed:
-- 79 duplicates within alternate deleterious category
-- 740 duplicates that were represented in deleterious & tolerated categories (removed from tolerated)
-- 2,857 duplicates within tolerated category
+In order of severity (according to VeP):
+1.) Splice donor/acceptor variant
+		splice_acceptor_variant
+		splice_donor_variant
+2.) Stop/Start Lost/Gained
+		start_lost
+		start_lost,splice_region_variant
+		stop_gained
+		stop_gained,splice_region_variant
+		stop_lost
+		stop_lost,splice_region_variant
+3.) Missense Variant
+		missense_variant
+4.) Synonymous (includes splice region variant and stop retained variants)
+		missense_variant,splice_region_variant (because this wasn't in the group tested by BAD_Mutations)
+		stop_retained_variant
+		synonymous_variant
+		splice_region_variant,stop_retained_variant
+		splice_region_variant,synonymous_variant
+		splice_region_variant,3_prime_UTR_variant
+		splice_region_variant,5_prime_UTR_variant
+		splice_region_variant,intron_variant
+5.) Non-coding (includes 5' UTR, 3' UTR, intron, upstream, downstream, intergenic)
+		3_prime_UTR_variant
+		5_prime_UTR_variant
+		downstream_gene_variant
+		intergenic_variant
+		intron_variant
+		upstream_gene_variant
 
 
 ## Parse VeP

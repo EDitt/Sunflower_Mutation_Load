@@ -64,6 +64,9 @@ Rscript "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/Variant_Table.R" \
 "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/All_alleleFreqInfo.txt" \
 "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
 "/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info.txt"
+
+awk 'NR>1 {print $1,$2}' $SNP_INFO | wc -l # 36,708,692
+awk 'NR>1 {print $1,$2}' $SNP_INFO | sort -u | wc -l # 36,708,692
 ```
 
 ## Site Frequency Spectra
