@@ -1,25 +1,15 @@
 # Numbers in each variant class
 
-### Numbers in various allele classes (excluding duplicates)
-- The number of deleterious and tolerated sites were identified and duplicates excluded from variant lists (see `2.BAD_Mutations/Post_processing.md`)
+## Navigation: Jump to Section
 
-After removing duplicate sites:
-- Total Deleterious: 87,812
-	- Reference allele deleterious: 11,796
-	- Alternate allele deleterious: 76,016
-- Total Tolerated: 553,720
+- [VeP annotation classes represented](#)
+- [0. Parse deleterious predictions](#0.-parse-deleterious-predictions)
 
-- Also want to identify- (see below for code used to parse numbers)
-	- the number of premature stop codons: 19,081
-	- stop codon lost: 2,241
-	- total number of missense variants: 708,022 (708,311- 289 represented as early stop codons or stop lost)
-	- total number of synonymous variants: (excluding duplicates within and across more severe consequences): 826,378
-	- total number of intergenic variants: 24,148,083
-
-
-### VeP annotation classes represented:
+## VeP annotation classes represented:
 
 ```bash
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
 # VeP categories:
 grep -v "#" $VEP | awk '{print $7}' | sort -u
 
@@ -56,169 +46,180 @@ In order of severity (according to VeP):
 		upstream_gene_variant
 
 
-## Parse VeP
+## 0.) Parse deleterious predictions
+- The number of deleterious and tolerated sites were identified and duplicates excluded from variant lists (see `2.BAD_Mutations/Post_processing.md`)
 
+### Deleterious
 ```bash
-DIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
 
-cd $DIR
+grep "Tolerated" ${DSNP_DATA} | wc -l # 557,317
+grep "Deleterious" ${DSNP_DATA} | wc -l # 87,891
 
-wc -l Reference_DelPositions.txt # 11796
-wc -l Alternate_DelPositionsNoDups.txt # 76016
-wc -l ToleratedPositionsNoDups.txt # 553720
-#wc -l Synonymous_positionsNoDups.txt # 827102
+# how many duplicates?
+awk 'NR>1 {print $2}' $DSNP_DATA | wc -l # 645,208
+awk 'NR>1 {print $2}' $DSNP_DATA | sort -u | wc -l # 641,514
 
-VEP=/scratch/eld72413/SAM_seq/VeP/SAM_SNP_Final_BiallelicNorm
-grep -v "#" $VEP | wc -l # 43,019,114
-grep -v "#" $VEP | awk '{print $2}' | sort -u | wc -l # 37,120,112 (why diff. from VCF: #37,129,915?)
-# total of 5,899,002 duplicates
+awk -F'\t' '{print NF; exit}' ${DSNP_DATA} # 39 columns
 
-# how many categories represented?
-awk '{print $7}' $VEP | sort -u
+## deleterious positions in reference:
+awk '{if ($39=="Reference_deleterious") {print $0}}' ${DSNP_DATA} | awk '{print $25}' | awk '{$1=$1}1' FS=':' OFS='\t' | wc -l # 11,796
+awk '{if ($39=="Reference_deleterious") {print $0}}' ${DSNP_DATA} | awk '{print $25}' | awk '{$1=$1}1' FS=':' OFS='\t' > $OUT_DIR/IntermediateFiles/Reference_DelPositions.txt # 11,796 no duplicates
 
-### premature stop codon:
-grep -v "#" $VEP | awk '{if ($7~"stop_gained") {print $2}}' | wc -l # 19,101
-grep -v "#" $VEP | awk '{if ($7~"stop_gained") {print $2}}' | sort -u | wc -l # 19,081
-grep -v "#" $VEP | awk '{if ($7~"stop_gained") {print $2}}' | sort -u > All_StopGained.txt
 
-### loss of stop codon:
-grep -v "#" $VEP | awk '{if ($7~"stop_lost") {print $2}}' | wc -l # 2,241
-grep -v "#" $VEP | awk '{if ($7~"stop_lost") {print $2}}' | sort -u | wc -l # 2,241
-grep -v "#" $VEP | awk '{if ($7~"stop_lost") {print $2}}' | sort -u > All_StopLost.txt
+# alternate deleterious:
+awk '{if ($39=="Alternate_deleterious") {print $0}}' ${DSNP_DATA} | awk '{print $25}' | awk '{$1=$1}1' FS=':' OFS='\t' | wc -l # 76,095
 
-### overlap?:
-sort All_StopGained.txt All_StopLost.txt | uniq -d | wc -l # 1
+awk '{if ($39=="Alternate_deleterious") {print $0}}' ${DSNP_DATA} | awk '{print $25}' | awk '{$1=$1}1' FS=':' OFS='\t' | sort -u > $OUT_DIR/IntermediateFiles/Alternate_DelPositions.txt # 76,016
 
-### how many overlap predicted deleterious missense mutations?
-cat Reference_DelPositions.txt Alternate_DelPositionsNoDups.txt | awk 'BEGIN {OFS=":"; print $0}{$1=$1}1' | wc -l # 87,813
-cat Reference_DelPositions.txt Alternate_DelPositionsNoDups.txt | awk 'BEGIN {OFS=":"; print $0}{$1=$1}1' | sort -u | wc -l # 87,795
-cat Reference_DelPositions.txt Alternate_DelPositionsNoDups.txt | awk 'BEGIN {OFS=":"; print $0}{$1=$1}1' | sort -u > All_dSNP_Positions.txt
-sort All_dSNP_Positions.txt All_StopGained.txt | uniq -d | wc -l # 34
-sort All_dSNP_Positions.txt All_StopLost.txt | uniq -d | wc -l # 6
+# Total dSNPs
+cat $OUT_DIR/IntermediateFiles/Reference_DelPositions.txt $OUT_DIR/IntermediateFiles/Alternate_DelPositions.txt | wc -l # 87,812
 
-### all missense
-grep -v "#" $VEP | awk '{if ($7~"missense_variant") {print $2}}' | wc -l # 712,631
-grep -v "#" $VEP | awk '{if ($7~"missense_variant") {print $2}}' | sort -u | wc -l # 708,311 (previously 699,805 until ~)
-grep -v "#" $VEP | awk '{if ($7~"missense_variant") {print $2}}' | sort -u > All_missense_variant.txt
-# 4,270 duplicates within missense
-# 553,720 tolerated & 87,812 deleterious = 641,532 (remainder due to not being able to align?)
-
-sort All_missense_variant.txt All_StopGained.txt | uniq -d | wc -l # 232 (34 represented as deleterious or tolerated)
-sort All_missense_variant.txt All_StopLost.txt | uniq -d | wc -l # 57 (6 represented as deleterious or tolerated)
-# subtract 232+57 = 289 from total missense
-uniq -d <(sort <(sort -u All_missense_variant.txt) <(sort -u All_StopLost.txt All_StopGained.txt)) | wc -l # 289
-
-### synonymous (some synonymous also annotated as 'splice region variant' but going by most severe consequence, thus using ==)
-grep -v "#" $VEP | awk '{if ($7=="synonymous_variant") {print $2}}' | wc -l # 835,622 (846,651 using ~)
-grep -v "#" $VEP | awk '{if ($7=="synonymous_variant") {print $2}}' | sort -u | wc -l # 832,090 (843,074 using ~)
-# 3,577 duplicates within synonymous
-
-### Number of synonymous mutations annotated as missense OR as premature stop codon/stop lost
-grep -v "#" $VEP | awk '{if ($7=="synonymous_variant") {print $2}}' | sort -u > All_SynonymousList.txt
-
-sort All_missense_variant.txt All_SynonymousList.txt | uniq -d | wc -l # 5384
-sort All_StopGained.txt All_SynonymousList.txt | uniq -d | wc -l # 274
-# both?
-uniq -d <(sort <(sort -u All_SynonymousList.txt) <(sort -u All_missense_variant.txt All_StopGained.txt)) | wc -l #5658
-
-sort All_StopLost.txt All_SynonymousList.txt | uniq -d | wc -l # 54
-uniq -d <(sort <(sort -u All_SynonymousList.txt) <(sort -u All_missense_variant.txt All_StopLost.txt)) | wc -l # 5438
-uniq -d <(sort <(sort -u All_SynonymousList.txt) <(sort -u All_StopGained.txt All_StopLost.txt)) | wc -l # 328
-
-### out of 832,090 unique synonymous variants:
-# 5384 annotated as missense
-# 274 annotated as stop gained
-# 54 annotated as stop lost
-### after removing 5,712 variants annotated in a more severe variant class, there is: 826,378 synonymous variants
+cat $OUT_DIR/IntermediateFiles/Reference_DelPositions.txt $OUT_DIR/IntermediateFiles/Alternate_DelPositions.txt |sort -u > $OUT_DIR/SupportingFiles/FinalPositionFiles/AllDel_Positions.txt 
+# 87794 (87812 - 18)
 
 ```
 
-### Final position lists to use for subsetting VCF:
-
-##### Synonymous
+### Tolerated
 ```bash
-## make a list of missense and stop codon gained/lost
-uniq <(sort <(sort -u All_missense_variant.txt) <(sort -u All_StopLost.txt All_StopGained.txt)) | wc -l # 729,343
-# total unique missense: 708,022, + 19081 (premature stop) + 2241 (stop lost) - 1 (annotated as stop gained & lost)
+awk '{if ($39=="Tolerated") {print $0}}' ${DSNP_DATA} | awk '{print $25}' | awk '{$1=$1}1' FS=':' OFS='\t' | wc -l # 556,577 (740 duplicate positions represented in deleterious set already removed - see 2.BAD_Mutations/Post_processing.md)
 
-uniq <(sort <(sort -u All_missense_variant.txt) <(sort -u All_StopLost.txt All_StopGained.txt)) > Missense_StopLostGained.txt
+awk '{if ($39=="Tolerated") {print $0}}' ${DSNP_DATA} | awk '{print $25}' | awk '{$1=$1}1' FS=':' OFS='\t' | sort -u > $OUT_DIR/IntermediateFiles/ToleratedPositions.txt # 553,720
 
-# check- synonymous sites to remove from list:
-sort All_SynonymousList.txt Missense_StopLostGained.txt | uniq -d | wc -l # 5712 synonymous mutations also annotated as missense or stop lost/gained
-# 5384 annotated as missense, 274 annotated as stop gained, 54 annotated as stop lost
+# check
+comm -12 --check-order $OUT_DIR/IntermediateFiles/ToleratedPositions.txt $OUT_DIR/SupportingFiles/FinalPositionFiles/AllDel_Positions.txt | wc -l # 0
 
-# Synonymous that don't include missense or stop lost/gained (output with tab delimiter)
-comm -23 --check-order All_SynonymousList.txt Missense_StopLostGained.txt | wc -l # 826,378
+cp $OUT_DIR/IntermediateFiles/ToleratedPositions.txt $OUT_DIR/SupportingFiles/FinalPositionFiles
+```
 
-comm -23 --check-order All_SynonymousList.txt Missense_StopLostGained.txt | awk '{$1=$1}1' FS=':' OFS='\t' > FinalPositionFiles/Synonymous_positionsNoDups.txt
+### Total number that were aligned and tested
+```bash
+# number that were aligned + tested
+# combine with tolerated
+cat $OUT_DIR/SupportingFiles/FinalPositionFiles/AllDel_Positions.txt $OUT_DIR/IntermediateFiles/ToleratedPositions.txt | sort -u  > $OUT_DIR/IntermediateFiles/Missense_Tested.txt # 641,514
+
+```
+After removing duplicate sites:
+- Total Deleterious: 87,794 (87,812 - 18)
+	- Reference allele deleterious: 11,796
+	- Alternate allele deleterious: 76,016
+- Total Tolerated: 553,720
+
+- Total tested: 641,514
+
+Note: there are 18 positions that are the same in the alternate deleterious & reference deleterious sets (not removed)
+
+Duplicates removed:
+- 79 duplicates within alternate deleterious category
+- 740 duplicates that were represented in deleterious & tolerated categories (removed from tolerated)
+- 2,857 duplicates within tolerated category
+
+## 1.) Splice donor/acceptor variant
+
+```bash
+# 1.)
+grep -v "#" $VEP | awk '{if ($7=="splice_acceptor_variant" || $7=="splice_donor_variant") {print $2}}' | awk -F":" '{print $1"\t"$2}' | sort -u > $OUT_DIR/IntermediateFiles/Splice_AcceptorDonor.txt # 6907
+
+# remove tested missense SNPs
+comm -23 --check-order $OUT_DIR/IntermediateFiles/Splice_AcceptorDonor.txt $OUT_DIR/IntermediateFiles/Missense_Tested.txt | wc -l # 6851
+
+comm -23 --check-order $OUT_DIR/IntermediateFiles/Splice_AcceptorDonor.txt $OUT_DIR/IntermediateFiles/Missense_Tested.txt > $OUT_DIR/SupportingFiles/FinalPositionFiles/Splice_AcceptorDonor_Nodups.txt
 
 ```
 
-##### Stop Gained/Lost
-```bash
-sort -u All_StopGained.txt All_StopLost.txt | wc -l # 21,321 (1 overlap that is removed)
-sort -u All_StopGained.txt All_StopLost.txt > All_StopGainedLost.txt
-# remove dSNP positions (already accounted for, N=40):
-comm -23 --check-order All_StopGainedLost.txt All_dSNP_Positions.txt | wc -l # 21,281
-comm -23 --check-order All_StopGainedLost.txt All_dSNP_Positions.txt | awk '{$1=$1}1' FS=':' OFS='\t' > FinalPositionFiles/StopLostGained_positionsNoDups.txt
+## 2.) Start/Stop Lost/Gained
 
-### overlap with tolerated?
-cat ToleratedPositionsNoDups.txt| awk '{$1=$1}1' FS='\t' OFS=':' | sort -u | comm -23 --check-order All_StopGainedLost.txt - | wc -l # 21,093
-cat ToleratedPositionsNoDups.txt| awk '{$1=$1}1' FS='\t' OFS=':' | sort - All_StopGainedLost.txt | uniq -d | wc -l # 228
+```bash
+# 2.)
+grep -v "#" $VEP | awk '{if ($7~"lost" || $7~"gained") {print $2}}' | awk -F":" '{print $1"\t"$2}' | sort -u > $OUT_DIR/IntermediateFiles/StartStop_LostGained.txt # 23,734
+
+### VeP 'most severe' number is: 23,732 (so most likely 2 are also annotated as splice acceptor/donor variant)
+comm -12 --check-order $OUT_DIR/IntermediateFiles/Splice_AcceptorDonor.txt $OUT_DIR/IntermediateFiles/StartStop_LostGained.txt | wc -l # 2 - yes
+
+comm -13 --check-order $OUT_DIR/IntermediateFiles/Splice_AcceptorDonor.txt $OUT_DIR/IntermediateFiles/StartStop_LostGained.txt > $OUT_DIR/IntermediateFiles/StartStop_LostGained_noDups.txt # 23,732
+
+# remove tested missense mutations
+comm -23 --check-order $OUT_DIR/IntermediateFiles/StartStop_LostGained_noDups.txt $OUT_DIR/IntermediateFiles/Missense_Tested.txt > $OUT_DIR/SupportingFiles/FinalPositionFiles/StartStop_LostGained_noDups.txt # 23,383
+```
+
+concatenate the two classes & with tested missense mutations
+```bash
+cat $OUT_DIR/SupportingFiles/FinalPositionFiles/Splice_AcceptorDonor_Nodups.txt $OUT_DIR/SupportingFiles/FinalPositionFiles/StartStop_LostGained_noDups.txt | sort -u > $OUT_DIR/IntermediateFiles/severe12.txt # 30,234
+
+cat $OUT_DIR/IntermediateFiles/severe12.txt $OUT_DIR/IntermediateFiles/Missense_Tested.txt | sort -u > $OUT_DIR/IntermediateFiles/severe12_missenseTested.txt # 671,748
 
 ```
 
-##### Deleterious & Tolerated
+## 3.) Missense Variants
+
 ```bash
-# deleterious
-cat Reference_DelPositions.txt Alternate_DelPositionsNoDups.txt | wc -l
-cat Reference_DelPositions.txt Alternate_DelPositionsNoDups.txt | sort -u | wc -l # 87794
-cat Reference_DelPositions.txt Alternate_DelPositionsNoDups.txt | sort -u > FinalPositionFiles/All_DelPositions.txt
+# missed due to double annotation
+grep -v "#" $VEP | awk '{if ($7=="missense_variant,splice_region_variant") {print $2}}' | awk '{$1=$1}1' FS=':' OFS='\t' | sort -u > $OUT_DIR/IntermediateFiles/Missense_DoubleAnnotated.txt # 8555
 
-# tolerated
-### remove Stop Lost/Gained
-cat ToleratedPositionsNoDups.txt| awk '{$1=$1}1' FS='\t' OFS=':'  | sort -u | comm -23 --check-order - All_StopGainedLost.txt | wc -l # 553,492
+# all missense
+grep -v "#" $VEP | awk '{if ($7=="missense_variant") {print $2}}' | awk '{$1=$1}1' FS=':' OFS='\t' | sort -u > $OUT_DIR/IntermediateFiles/All_missense.txt # 699,805
 
-cat ToleratedPositionsNoDups.txt| awk '{$1=$1}1' FS='\t' OFS=':'  | sort -u | comm -23 --check-order - All_StopGainedLost.txt | awk '{$1=$1}1' FS=':' OFS='\t' > FinalPositionFiles/ToleratedPositionsNoDups.txt
+# any shared between these two annotations?
+comm -12 --check-order $OUT_DIR/IntermediateFiles/Missense_DoubleAnnotated.txt $OUT_DIR/IntermediateFiles/All_missense.txt | wc -l # 49
+
+# list of "missense, splice region variant" SNPs that are not in "All missense"
+comm -23 --check-order $OUT_DIR/IntermediateFiles/Missense_DoubleAnnotated.txt $OUT_DIR/IntermediateFiles/All_missense.txt > $OUT_DIR/IntermediateFiles/Missense_DoubleAnnotated_NoDups.txt # 8506
+
+# in more severe class?
+comm -12 --check-order $OUT_DIR/IntermediateFiles/Splice_AcceptorDonor.txt $OUT_DIR/IntermediateFiles/Missense_DoubleAnnotated_NoDups.txt | wc -l # 11
+comm -12 --check-order $OUT_DIR/IntermediateFiles/StartStop_LostGained.txt $OUT_DIR/IntermediateFiles/Missense_DoubleAnnotated_NoDups.txt | wc -l # 0
+
+# which missense snps are in more severe class
+comm -12 --check-order $OUT_DIR/IntermediateFiles/Splice_AcceptorDonor.txt $OUT_DIR/IntermediateFiles/All_missense.txt | wc -l # 62
+comm -12 --check-order $OUT_DIR/IntermediateFiles/StartStop_LostGained.txt $OUT_DIR/IntermediateFiles/All_missense.txt | wc -l # 379
+
+# remove all previous classes
+comm -13 --check-order $OUT_DIR/IntermediateFiles/severe12_missenseTested.txt $OUT_DIR/IntermediateFiles/Missense_DoubleAnnotated_NoDups.txt > $OUT_DIR/IntermediateFiles/Missense_DoubleAnnotated_NoDups2.txt
 
 ```
+there were 8495 missense SNPs that were not tested due to being annotated as "missense_variant,splice_region_variant" & not in a more severe category
+(49 annotated as "missense" in a duplicate position, 11 annotated as splice acceptor/donor)
 
-##### Non-coding
-Will consider categories: intergenic, downstream_gene_variant, intron_variant, upstream_gene_variant (not including splice variants)
-Intergenic: 24,148,083
-Intron: 2,819,301
-Up or Downstream gene variant: 10,164,676
-Total=  (37,132,060 - duplicates)
+
+### Un-alignable - some missense variants were not able to be aligned and thus have no tolerated/deleterious annotation
 ```bash
-### Number of intergenic mutations annotated as synonymous, missense, or premature stop
-grep -v "#" $VEP | awk '{if ($7=="intergenic_variant") {print $2}}' | wc -l # 24,148,083
-grep -v "#" $VEP | awk '{if ($7=="intergenic_variant") {print $2}}' | sort -u | wc -l # 24,148,083
-grep -v "#" $VEP | awk '{if ($7=="intergenic_variant") {print $2}}' | sort -u > All_Intergenic.txt
 
-sort All_Intergenic.txt All_SynonymousList.txt | uniq -d | wc -l # 0
-uniq -d <(sort <(sort -u All_Intergenic.txt) <(sort -u All_missense_variant.txt All_StopGained.txt)) | wc -l #0
+# number that were not aligned and tested
+comm -23 --check-order $OUT_DIR/IntermediateFiles/All_missense.txt $OUT_DIR/IntermediateFiles/Missense_Tested.txt | sort -u > $OUT_DIR/IntermediateFiles/Missense_UnAligned.txt #58,291
 
+comm -12 --check-order $OUT_DIR/SupportingFiles/FinalPositionFiles/Splice_AcceptorDonor_Nodups.txt $OUT_DIR/IntermediateFiles/Missense_UnAligned.txt | wc -l # 6
 
-grep -v "#" $VEP | awk '{if ($7=="intron_variant") {print $2}}' | wc -l # 2,873,055
-grep -v "#" $VEP | awk '{if ($7=="intron_variant") {print $2}}' | sort -u | wc -l # 2,819,301
-grep -v "#" $VEP | awk '{if ($7=="intron_variant") {print $2}}' | sort -u > All_Intron.txt
+comm -12 --check-order $OUT_DIR/SupportingFiles/FinalPositionFiles/StartStop_LostGained_noDups.txt $OUT_DIR/IntermediateFiles/Missense_UnAligned.txt | wc -l # 30
 
-grep -v "#" $VEP | awk '{if ($7=="upstream_gene_variant" || $7=="downstream_gene_variant") {print $2}}' | wc -l # 13,646,713
-grep -v "#" $VEP | awk '{if ($7=="upstream_gene_variant" || $7=="downstream_gene_variant") {print $2}}' | sort -u | wc -l # 10,164,676
-grep -v "#" $VEP | awk '{if ($7=="upstream_gene_variant" || $7=="downstream_gene_variant") {print $2}}' | sort -u > All_UpDownStream
-
-uniq -d <(sort <(sort -u All_Intergenic.txt) <(sort -u All_Intron.txt All_UpDownStream)) | wc -l # 0
-sort All_Intron.txt All_UpDownStream | uniq -d | wc -l # 1,155,817
-
-uniq <(sort <(sort -u All_Intergenic.txt) <(sort -u All_Intron.txt All_UpDownStream)) > All_Noncoding.txt
-wc -l All_Noncoding.txt # 35,976,243 (all duplicates in intron-up/down stream)
-
-comm -23 --check-order All_Noncoding.txt All_SynonymousList.txt | wc -l # 35,575,304
-comm -23 --check-order All_Noncoding.txt Missense_StopLostGained.txt | wc -l # 35,618,092
-
-# exclude total of everything other than non-coding
-sort -u All_SynonymousList.txt Missense_StopLostGained.txt | wc -l # 1,555,721
-sort -u All_SynonymousList.txt Missense_StopLostGained.txt | comm -23 --check-order All_Noncoding.txt - | wc -l # 35,219,747
-sort -u All_SynonymousList.txt Missense_StopLostGained.txt | comm -23 --check-order All_Noncoding.txt - | awk '{$1=$1}1' FS=':' OFS='\t' > FinalPositionFiles/NonCodingPositionsNoDups.txt
+comm -13 --check-order $OUT_DIR/IntermediateFiles/severe12_missenseTested.txt $OUT_DIR/IntermediateFiles/Missense_UnAligned.txt > $OUT_DIR/IntermediateFiles/Missense_UnAligned_noDups.txt # 58,255
 ```
 
+Combine the two groups of 'missed' missense mutations
+```bash
+cat $OUT_DIR/IntermediateFiles/Missense_DoubleAnnotated_NoDups2.txt $OUT_DIR/IntermediateFiles/Missense_UnAligned_noDups.txt | sort -u > $OUT_DIR/SupportingFiles/FinalPositionFiles/Missense_Other.txt # 66,750
+
+# combine all severe variant classes
+cat $OUT_DIR/IntermediateFiles/severe12_missenseTested.txt $OUT_DIR/SupportingFiles/FinalPositionFiles/Missense_Other.txt | sort -u > $OUT_DIR/IntermediateFiles/severe12_missense.txt # 738,498
+```
+
+## 4.) Synonymous Variants
+```bash
+grep -v "#" $VEP | awk '{if ($7~"splice_region_variant" || $7~"synonymous_variant" || $7~"stop_retained_variant") {print $2}}' | awk -F":" '{print $1"\t"$2}' | sort -u > $OUT_DIR/IntermediateFiles/Synonymous_positions.txt # 943,011
+
+# remove those represented in a more severe variant class
+comm -13 --check-order $OUT_DIR/IntermediateFiles/severe12_missense.txt $OUT_DIR/IntermediateFiles/Synonymous_positions.txt > $OUT_DIR/SupportingFiles/FinalPositionFiles/Synonymous_Nodups.txt # 927,677
+
+
+# combine all previous variant classes
+cat $OUT_DIR/IntermediateFiles/severe12_missense.txt $OUT_DIR/SupportingFiles/FinalPositionFiles/Synonymous_Nodups.txt | sort -u > $OUT_DIR/IntermediateFiles/All_Coding.txt # 1,666,175
+```
+
+## 5.) Non-coding Variants
+
+```bash
+grep -v "#" $VEP | awk '{if ($7~"UTR" || $7~"intergenic" || $7~"downstream" || $7~"upstream" || $7~"intron") {print $2}}' | awk -F":" '{print $1"\t"$2}' | sort -u > $OUT_DIR/IntermediateFiles/NonCoding.txt # 36,336,841
+
+# remove those represented in a more severe variant class
+comm -13 --check-order $OUT_DIR/IntermediateFiles/All_Coding.txt $OUT_DIR/IntermediateFiles/NonCoding.txt > $OUT_DIR/SupportingFiles/FinalPositionFiles/NonCoding_Nodups.txt # 35,453,937
+```
