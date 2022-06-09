@@ -30,7 +30,7 @@ Normalizing VCF
 Indexing final VCF
 
 Looking at stats file(`bcftools stats`) generated from the GWAS_filters.sh script:
-Final SNP set (after selecting for biallelic sites) has 20026451 variants
+Final SNP set (after selecting for biallelic sites) has 20,026,451 variants
 
 ### Convert to Plink file format
 plink requires .ped and .map files
@@ -38,7 +38,7 @@ plink requires .ped and .map files
 Used VCF_convert.sh script
 ```bash
 cd /home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/Plink
-sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/ForGWAS/Sunflower_SAM_SNP_GWAS_BIALLELIC_NORM.vcf.gz',OUT_PREFIX='/scratch/eld72413/SAM_seq/ForGWAS/Sunflower_SAM_SNP_GWAS_BIALLELIC_NORM' VCF_convert.sh # Submitted batch job 5555917
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/ForGWAS/Sunflower_SAM_SNP_GWAS_BIALLELIC_NORM.vcf.gz',OUT_PREFIX='/scratch/eld72413/SAM_seq/ForGWAS/Sunflower_SAM_SNP_GWAS_BIALLELIC_NORM' VCF_convert.sh # Submitted batch job 9342523
 ```
 
 ### Missing Data
@@ -56,7 +56,7 @@ awk '{if ($3==0) {print $0}}' plink.lmiss | wc -l # 1,177,639
 ### what about the 261 genotypes in the salt set?
 plink --file /scratch/eld72413/SAM_seq/ForGWAS/Sunflower_SAM_SNP_GWAS_BIALLELIC_NORM \
 --keep /scratch/eld72413/SAM_seq/Plink/Genotypes_261set.txt \
---missing --allow-extra-chr
+--missing --allow-extra-chr 
 
 awk '{if ($3==0) {print $0}}' plink.lmiss | wc -l # 1,363,909
 
