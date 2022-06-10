@@ -11,7 +11,7 @@
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --array=0-7
+#SBATCH --array=0-6
 
 
 # outputs files with SNP counts for all variant classes
@@ -27,7 +27,7 @@ module load BCFtools/1.13-GCC-8.3.0
 
 mkdir -p ${outputdir}/intermediates/positions
 
-declare -a annotation_array=($(awk '{print $13}' $Table | sort -u))
+declare -a annotation_array=($(awk 'NR>1 {print $13}' $Table | sort -u))
 
 VariantClass="${annotation_array[${SLURM_ARRAY_TASK_ID}]}"
 
