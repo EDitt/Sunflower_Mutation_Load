@@ -69,7 +69,7 @@ awk 'NR>1 {print $1,$2}' $SNP_INFO | wc -l # 36,708,692
 awk 'NR>1 {print $1,$2}' $SNP_INFO | sort -u | wc -l # 36,708,692
 
 awk 'NR>1 {print $1,$2}' All_SNP_Info_new.txt | wc -l # 37,120,112
-awk 'NR>1 {print $1,$2}' All_SNP_Info_new.txt | sort -u | wc -l # 
+awk 'NR>1 {print $1,$2}' All_SNP_Info_new.txt | sort -u | wc -l # 37,120,112
 ```
 
 ## Site Frequency Spectra
@@ -78,6 +78,9 @@ Get frequency bins for graphing (folded and unfolded)
 To look at derived dSNPs, I need to remove variants for which the derived variant is not the deleterious variant
 ```bash
 source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
+# use new SNP_INFO file (after edits)
+SNP_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info_new.txt
 
 ## Folded SFS:
 Rscript --verbose "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
@@ -107,7 +110,7 @@ Rscript --verbose "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R
 # rm ${OUT_DIR}/IntermediateFiles/ToRemove_NotDerived.txt
 ```
 
-See Plots.R for SFS plot
+See Plots directory for SFS plot
 
 Do I want to remove singletons?
 ```bash
@@ -133,6 +136,34 @@ See `${REPO_DIR}/Variant_analyses/PCA.md` for information on the creation of a P
 ### Heterotic Group Differentiaton
 
 Plotted Fst across the genome. See: `${REPO_DIR}/Variant_analyses/Fst.md`
+
+### Number of derived SNPs per genotype
+
+First get number of called genotypes for polarized positions
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
+awk 'BEGIN{FS=OFS="\t"}; NR>1 {if ($11!="NA") {print $1,$2}}' ${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt > /scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/PolarizedSNP_Posititions.txt
+
+bcftools view -Oz ${VCF} -R ${OUT_DIR}/IntermediateFiles/PolarizedSNP_Posititions.txt | \
+bcftools stats -s - | \
+grep "PSC" > ${OUT_DIR}/GenotypeInfo/AllDerived_VariantStats.txt
+```
+
+Use scripts to output a table with all 
+```bash
+awk '{print $13}' ${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt | sort -u #  annotation classes
+
+
+sbatch --export=Table='${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt',\
+vcf='${VCF}',\
+outputdir='${OUT_DIR}/GenotypeInfo/SampleCounts' /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/GenotypeStats_Class.sh
+
+```
+
+
+############# May redo the code below:
 
 #### Private/Shared
 I will look at the proportion of shared versus private SNPs for deleterious and synonymous across the different frequency classes as well as plot the frequencies of all SNPs for both groups
@@ -362,85 +393,7 @@ Mod2 <- lm(IBS.Deleterious ~ IBS.Synonymous + Cross,
 ## write.table(IBS_GroupWide, file = "/scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/IBS_syndel.txt", sep = "\t", quote=FALSE, row.names=FALSE)
 ```
 
-### Derived SNP Patterns for Different Classes of Germplasm
-Count Number of Alt/Ref Alleles per genotype
-(using bcftools)
-```bash
-srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
-source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
 
-
-### issues with passing comma separated list as variable"Argument list too long"
-#positions=$(awk 'BEGIN{FS="\t"; OFS=":"}; {if ($39 == "Alternate_deleterious" && $7 == "Alt_derived") {print $8,$9}}' ${DSNP_DATA} | paste -sd,)
-
-awk 'BEGIN{FS=OFS="\t"}; {if ($39 == "Alternate_deleterious" && $7 == "Alt_derived") {print $8,$9}}' ${DSNP_DATA} > ${OUT_DIR}/IntermediateFiles/AltDeleteriousPositions.txt
-positions="${OUT_DIR}/IntermediateFiles/AltDeleteriousPositions.txt"
-
-### note: the bcftools stats "-s -" flag means to include all samples
-bcftools view -Oz ${VCF} -R ${positions} | \
-bcftools stats -s - | \
-grep "PSC" > ${OUT_DIR}/GenotypeInfo/SampleCounts/SampleCounts_AltDeleterious.txt
-
-awk 'BEGIN{FS=OFS="\t"}; {if ($39 == "Reference_deleterious" && $7 == "Ref_derived") {print $8,$9}}' ${DSNP_DATA} > ${OUT_DIR}/IntermediateFiles/RefDeleteriousPositions.txt
-positions="${OUT_DIR}/IntermediateFiles/RefDeleteriousPositions.txt"
-
-bcftools view -Oz ${VCF} -R ${positions} | \
-bcftools stats -s - | \
-grep "PSC" > ${OUT_DIR}/GenotypeInfo/SampleCounts/SampleCounts_RefDeleterious.txt
-
-# Already ran command on entire vcf file: "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AllVariantStats.txt"
-
-```
-
-Use R function to output a text file with counts of dSNPs for all genotypesa
-```R
-source("/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Functions.R")
-# all_stats[c("sample", "CalledGenotypes", "nMissingTotal")],
-
-Full_stats <- read.table("/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AllVariantStats.txt")
-colnames(Full_stats) <- c("PSC", "id", "sample", "nRefHom", "nNonRefHom", "nHets", "nTransitions", "nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissingTotal")
-Full_stats$CalledGenotypes <- Full_stats$nRefHom + Full_stats$nNonRefHom + Full_stats$nHets
-
-dSNP_table <- Genotype_dSNP_count("/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/SampleCounts", "RefDeleterious", "AltDeleterious", Full_stats[,c("sample", "CalledGenotypes", "nMissingTotal", "nRefHom", "nNonRefHom", "nHets")])
-
-write.table(dSNP_table, "/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/All_dSNP_stats.txt", sep = "\t", quote=FALSE, row.names=FALSE)
-```
-
-scratch in chunk below (for now)
-```bash
-
-###
-
-### updating this
-cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs
-module load BCFtools/1.10.2-GCC-8.3.0
-
-bcftools stats -s - SAM_RefDerivedDeleterious.vcf |grep "PSC" > Stats/RefDerivedDeleterious_perSampleCounts.txt
-bcftools stats -s - SAM_AltDerivedDeleterious.vcf | grep "PSC" > Stats/AltDerivedDeleterious_perSampleCounts.txt
-
-bcftools stats -s - SAM_RefDerivedTolerated.vcf | grep "PSC" > Stats/RefDerivedTolerated_perSampleCounts.txt
-bcftools stats -s - SAM_AltDerivedTolerated.vcf | grep "PSC" > Stats/AltDerivedTolerated_perSampleCounts.txt
-
-bcftools stats -s - SAM_RefDerivedSynonymous.vcf | grep "PSC" > Stats/RefDerivedSynonymous_perSampleCounts.txt
-bcftools stats -s - SAM_AltDerivedSynonymous.vcf | grep "PSC" > Stats/AltDerivedSynonymous_perSampleCounts.txt
-
-### need total number of genotypes:
-vcf=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz
-bcftools stats -s - $vcf | grep "PSC" > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AllVariantStats.txt
-
-### need total number of derived genotypes:
-
-vcf=
-bcftools stats -s - $vcf | grep "PSC" > /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AllDerived_VariantStats.txt
-
-module load R/4.0.0-foss-2019b
-Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Germplasm/Derived_Variant_Numbers.R" \
-"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/Stats" \
-"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AllVariantStats.txt" \
-"/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs/AlleleNums_Geno.txt"
-
-
-```
 
 
 ----- 
