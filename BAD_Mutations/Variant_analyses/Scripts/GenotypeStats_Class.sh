@@ -25,7 +25,7 @@
 
 module load BCFtools/1.13-GCC-8.3.0
 
-mkdir -p ${outputdir}/intermediates
+mkdir -p ${outputdir}/intermediates/positions
 
 declare -a annotation_array=($(awk '{print $13}' $Table | sort -u))
 
@@ -34,18 +34,18 @@ VariantClass="${annotation_array[${SLURM_ARRAY_TASK_ID}]}"
 
 # subset alt and ref derived
 
-awk -v var="$VariantClass" 'BEGIN{FS=OFS="\t"}; {if ($3 == $11 && $13 == var) {print $1,$2}}' ${Table} > ${outputdir}/intermediates/${VariantClass}_Alt_derivedPositions.txt
+awk -v var="$VariantClass" 'BEGIN{FS=OFS="\t"}; {if ($3 == $11 && $13 == var) {print $1,$2}}' ${Table} > ${outputdir}/intermediates/positions/${VariantClass}_Alt_derivedPositions.txt
 
-awk -v var="$VariantClass" 'BEGIN{FS=OFS="\t"}; {if ($4 == $11 && $13 == var) {print $1,$2}}' ${Table} > ${outputdir}/intermediates/${VariantClass}_Ref_derivedPositions.txt
+awk -v var="$VariantClass" 'BEGIN{FS=OFS="\t"}; {if ($4 == $11 && $13 == var) {print $1,$2}}' ${Table} > ${outputdir}/intermediates/positions/${VariantClass}_Ref_derivedPositions.txt
 
 # output sample counts for all samples
 
 ### note: the bcftools stats "-s -" flag means to include all samples
-bcftools view -Oz ${vcf} -R ${outputdir}/intermediates/${VariantClass}_Alt_derivedPositions.txt | \
+bcftools view -Oz ${vcf} -R ${outputdir}/intermediates/positions/${VariantClass}_Alt_derivedPositions.txt | \
 bcftools stats -s - | \
 grep "PSC" > ${outputdir}/intermediates/${VariantClass}_Alt_derivedCounts.txt
 
-bcftools view -Oz ${vcf} -R ${outputdir}/intermediates/${VariantClass}_Ref_derivedPositions.txt | \
+bcftools view -Oz ${vcf} -R ${outputdir}/intermediates/positions/${VariantClass}_Ref_derivedPositions.txt | \
 bcftools stats -s - | \
 grep "PSC" > ${outputdir}/intermediates/${VariantClass}_Ref_derivedCounts.txt
 
