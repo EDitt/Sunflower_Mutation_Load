@@ -13,7 +13,7 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --array=0-5
 
-
+module load BCFtools/1.13-GCC-8.3.0
 
 ## a script to get frequency distribution for different groups of germplasm
 
