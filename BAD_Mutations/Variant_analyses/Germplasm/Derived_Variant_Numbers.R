@@ -6,11 +6,11 @@ options(warn=1)
 
 ### Command line arguments:
 # 1.) Directory output from "grep PSC" bcftools stats command (tab delimited table with numbers of variants in each class)
-# 2.) File + directory info for "grep PSC" from bcftools stats on the whole VCF file (to get total number of genotype calls for each sample)
-# 3.) Output file name + directory
-# 4.) Prefix/suffix: pattern common to all files to be removed from naming
-# 5.) String that characterizes reference file
-# 6.) String that characterizes alternate file
+            # .) File + directory info for "grep PSC" from bcftools stats on the whole VCF file (to get total number of genotype calls for each sample)
+# 2.) Output file name + directory
+# 3.) Prefix/suffix: pattern common to all files to be removed from naming
+# 4.) String that characterizes reference file
+# 5.) String that characterizes alternate file
 
 #########################
 ##### READ IN DATA ######
@@ -19,11 +19,11 @@ options(warn=1)
 args <- commandArgs(trailingOnly = TRUE)
 
 Directory <- args[1]
-AllStats <- args[2]
-OutputFile <- args[3]
-PreSuffix <- args[4]
-Ref_Name <- args[5]
-Alt_Name <- args[6]
+#AllStats <- args[2]
+OutputFile <- args[2]
+PreSuffix <- args[3]
+Ref_Name <- args[4]
+Alt_Name <- args[5]
 
 #########################
 ####### FUNCTIONS #######
@@ -50,7 +50,8 @@ ImportTxts <- function (DirPath, pattern, ref_name, alt_name) {
   return(c(my_data_RefDerived, my_data_AltDerived))
 }
 
-CombineRefAlt <- function(DataList, Category, AllData) {
+#CombineRefAlt <- function(DataList, Category, AllData) {
+CombineRefAlt <- function(DataList, Category) {
 	my_data1 <- DataList[grep(Category, names(DataList))]
 	Combined_data <- merge(my_data1[[1]][,c("sample", "nAncestralHom", "nDerivedHom", "nHets", "nMissing")],
 	my_data1[[2]][,c("sample", "nAncestralHom", "nDerivedHom", "nHets", "nMissing")],
@@ -60,10 +61,10 @@ CombineRefAlt <- function(DataList, Category, AllData) {
 	Combined_data$NumHet <- Combined_data$nHets_Ref + Combined_data$nHets_Alt
 	Combined_data$NumMissing <- Combined_data$nMissing_Ref + Combined_data$nMissing_Alt
 	Combined_data$Consequence <- Category
-	Combined_data2 <- merge(Combined_data, 
-		AllData[,c("sample", "CalledGenotypes", "nMissingTotal")],
-		by="sample")
-	return(Combined_data2[,c("sample", "NumAncestralHom", "NumDerivedHom", "NumHet", "NumMissing", "Consequence", "CalledGenotypes", "nMissingTotal")])
+	#Combined_data2 <- merge(Combined_data, 
+	#	AllData[,c("sample", "CalledGenotypes", "nMissingTotal")],
+	#	by="sample")
+	return(Combined_data[,c("sample", "NumAncestralHom", "NumDerivedHom", "NumHet", "NumMissing", "Consequence", "CalledGenotypes", "nMissingTotal")])
 }
 
 #########################
@@ -72,13 +73,14 @@ CombineRefAlt <- function(DataList, Category, AllData) {
 
 SampleLists <- ImportTxts(Directory, PreSuffix, Ref_Name, Alt_Name)
 
-Full_stats <- read.table(AllStats)
-colnames(Full_stats) <- c("PSC", "id", "sample", "nRefHom", "nNonRefHom", "nHets", "nTransitions", "nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissingTotal")
-Full_stats$CalledGenotypes <- Full_stats$nRefHom + Full_stats$nNonRefHom + Full_stats$nHets
+#Full_stats <- read.table(AllStats)
+#colnames(Full_stats) <- c("PSC", "id", "sample", "nRefHom", "nNonRefHom", "nHets", "nTransitions", "nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissingTotal")
+#Full_stats$CalledGenotypes <- Full_stats$nRefHom + Full_stats$nNonRefHom + Full_stats$nHets
 
-Categories <- list("Deleterious", "Tolerated", "Synonymous")
+Categories <- list("SpliceAcceptorDonorNodups", "StartStopLostGainednoDups", "AllDel", "MissenseOther", "Tolerated", "SynonymousNodups", "NonCodingNodups")
 
-AnnotationList <- lapply(Categories, function(x) {CombineRefAlt(SampleLists, x, Full_stats)})
+#AnnotationList <- lapply(Categories, function(x) {CombineRefAlt(SampleLists, x, Full_stats)})
+AnnotationList <- lapply(Categories, function(x) {CombineRefAlt(SampleLists, x)})
 
 All_Derived <- do.call("rbind", AnnotationList)
 
