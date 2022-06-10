@@ -77,7 +77,8 @@ SampleLists <- ImportTxts(Directory, PreSuffix, Ref_Name, Alt_Name)
 #colnames(Full_stats) <- c("PSC", "id", "sample", "nRefHom", "nNonRefHom", "nHets", "nTransitions", "nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissingTotal")
 #Full_stats$CalledGenotypes <- Full_stats$nRefHom + Full_stats$nNonRefHom + Full_stats$nHets
 
-Categories <- list("SpliceAcceptorDonorNodups", "StartStopLostGainednoDups", "AllDel", "MissenseOther", "Tolerated", "SynonymousNodups", "NonCodingNodups")
+#Categories <- list("SpliceAcceptorDonorNodups", "StartStopLostGainednoDups", "AllDel", "MissenseOther", "Tolerated", "SynonymousNodups", "NonCodingNodups")
+Categories <- list("AllDel", "Tolerated", "SynonymousNodups")
 
 #AnnotationList <- lapply(Categories, function(x) {CombineRefAlt(SampleLists, x, Full_stats)})
 AnnotationList <- lapply(Categories, function(x) {CombineRefAlt(SampleLists, x)})
