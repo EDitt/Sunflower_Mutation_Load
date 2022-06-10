@@ -137,7 +137,7 @@ See `${REPO_DIR}/Variant_analyses/PCA.md` for information on the creation of a P
 
 Plotted Fst across the genome. See: `${REPO_DIR}/Variant_analyses/Fst.md`
 
-### Number of derived SNPs per genotype
+### Number of derived SNPs for each genotype
 
 First get number of called genotypes for polarized positions
 ```bash
@@ -151,16 +151,26 @@ bcftools stats -s - | \
 grep "PSC" > ${OUT_DIR}/GenotypeInfo/AllDerived_VariantStats.txt
 ```
 
-Use scripts to output a table with all 
+Use scripts to output a table with number of derived variants across all variant classes
 ```bash
-awk '{print $13}' ${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt | sort -u #  annotation classes
+awk 'NR>1 {print $13}' ${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt | sort -u #  annotation classes
 
+sbatch --export=Table='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/SNPINFO_ForUnfolded.txt',\
+vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
+outputdir='/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/SampleCounts' /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/GenotypeStats_Class.sh # Submitted batch job 12443241
 
-sbatch --export=Table='${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt',\
-vcf='${VCF}',\
-outputdir='${OUT_DIR}/GenotypeInfo/SampleCounts' /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/GenotypeStats_Class.sh
-
+Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Germplasm/Derived_Variant_Numbers.R" \
+"/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/SampleCounts/intermediates" \
+"/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/Annotation_VariantStats.txt" \
+"derivedCounts" \
+"_Ref_" \
+"_Alt_"
 ```
+
+### Frequency of derived SNPs for different germplasm groups
+
+
+
 
 
 ############# May redo the code below:
