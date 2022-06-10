@@ -64,7 +64,7 @@ CombineRefAlt <- function(DataList, Category) {
 	#Combined_data2 <- merge(Combined_data, 
 	#	AllData[,c("sample", "CalledGenotypes", "nMissingTotal")],
 	#	by="sample")
-	return(Combined_data[,c("sample", "NumAncestralHom", "NumDerivedHom", "NumHet", "NumMissing", "Consequence", "CalledGenotypes", "nMissingTotal")])
+	return(Combined_data[,c("sample", "NumAncestralHom", "NumDerivedHom", "NumHet", "NumMissing", "Consequence")])
 }
 
 #########################
