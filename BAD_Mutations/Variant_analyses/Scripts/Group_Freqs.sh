@@ -34,7 +34,7 @@ genotypes=$(awk -v var="$Group" -F',' '{if ($14==var && $9!="HA412" && $9!="NA")
 bcftools view -Ou --samples ${genotypes} ${VCF} |\
 bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' > ${outputdir}/intermediates/${Group}_SNP_freq.txt
 
-Rscript "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/Variant_Table.R" \
+Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Variant_Table.R" \
 "/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/FinalPositionFiles" \
 "${outputdir}/intermediates/${Group}_SNP_freq.txt" \
 "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
@@ -43,7 +43,7 @@ Rscript "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/Variant_Table.R" \
 grep -v -w -f ${snps_remove} "${outputdir}/${Group}_SNP_info.txt" | sort -V > "${outputdir}/intermediates/${Group}_SNP_info_ForUnfolded.txt"
 
 
-Rscript --verbose "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
+Rscript --verbose "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
 "${outputdir}/intermediates/${Group}_SNP_info_ForUnfolded.txt" \
 "1.0" \
 "0.05" \
