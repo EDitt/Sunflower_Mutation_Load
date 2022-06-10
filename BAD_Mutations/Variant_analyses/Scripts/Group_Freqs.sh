@@ -40,7 +40,7 @@ Rscript "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/Variant_Table.R" \
 "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
 "${outputdir}/${Group}_SNP_info.txt"
 
-grep -v -w -f snps_remove "${outputdir}/${Group}_SNP_info.txt" | sort -V > "${outputdir}/intermediates/${Group}_SNP_info_ForUnfolded.txt"
+grep -v -w -f ${snps_remove} "${outputdir}/${Group}_SNP_info.txt" | sort -V > "${outputdir}/intermediates/${Group}_SNP_info_ForUnfolded.txt"
 
 
 Rscript --verbose "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
