@@ -169,7 +169,14 @@ Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_ana
 
 ### Frequency of derived SNPs for different germplasm groups
 
+```bash
+sbatch --export=SAM_INFO=/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/LineKeywINFO.csv',\
+VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
+outputdir='/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/GroupFreqs' /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Group_Freqs.sh
 
+
+
+```
 
 
 
