@@ -77,6 +77,6 @@ Position_lists <- ImportTxts(Directory)
 Positions_annotate <- do.call("rbind", Position_lists)
 
 # Combine allele frequency data, ancestral state calls, and variant annotation class and output a table
-AllInfo <- SNP_Info(SNP_freq_table, Ancestral_file, Positions_annotate)
+AllInfo <- SNP_Info(Input_file, Ancestral_file, Positions_annotate)
 
 write.table(AllInfo, Output_File, sep = "\t", quote=FALSE, row.names=FALSE)
