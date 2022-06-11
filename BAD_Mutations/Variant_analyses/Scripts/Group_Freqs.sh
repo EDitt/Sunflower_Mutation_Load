@@ -7,11 +7,12 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=50G
+#SBATCH --mem-per-cpu=8G
 #SBATCH --time=36:00:00
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --array=0-5
+#SBATCH --array=0
 
 module load BCFtools/1.13-GCC-8.3.0
 module load R/4.0.0-foss-2019b
