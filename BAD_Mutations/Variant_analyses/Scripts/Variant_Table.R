@@ -18,9 +18,12 @@ options(warn=1)
 args <- commandArgs(trailingOnly = TRUE)
 
 Directory <- args[1]
-SNP_freq_table <- args[2]
-Ancestral_file <- args[3]
-Output_File <- args[4]
+Ancestral_file <- args[2]
+Output_Dir <- args[4]
+Group_name <- args[5]
+
+Input_file <- paste0(Output_Dir, "/intermediates/", Group_name, "_SNP_freq.txt")
+Output_file <- paste0(Output_Dir, "/", Group_name, "_SNP_info.txt")
 
 #########################
 ####### FUNCTIONS #######
