@@ -46,10 +46,10 @@ grep -v -w -f ${snps_remove} "${outputdir}/${Group}_SNP_info.txt" | sort -V > "$
 
 
 Rscript --verbose "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
-"${outputdir}/intermediates/${Group}_SNP_info_ForUnfolded.txt" \
+"${Group}" \
 "1.0" \
 "0.05" \
 "Derived_Freq" \
-"${outputdir}/${Group}_DerivedFreq_Bins.txt"
+"${outputdir}"
 
 
