@@ -59,4 +59,4 @@ SNP_Info <- function (bcftools_file, ancestral_allele_file, annotation_file) {
 # Combine allele frequency data, ancestral state calls, and variant annotation class and output a table
 AllInfo <- SNP_Info(Input_file, Ancestral_file, Annotations)
 
-write.table(AllInfo, Output_File, sep = "\t", quote=FALSE, row.names=FALSE)
+write.table(AllInfo, Output_file, sep = "\t", quote=FALSE, row.names=FALSE)
