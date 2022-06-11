@@ -4,10 +4,9 @@
 #SBATCH --partition=batch
 
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
+#SBATCH --ntasks-per-node=8
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=50G
-#SBATCH --mem-per-cpu=8G
 #SBATCH --time=36:00:00
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
