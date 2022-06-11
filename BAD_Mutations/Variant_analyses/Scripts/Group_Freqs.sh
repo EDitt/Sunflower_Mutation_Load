@@ -11,7 +11,7 @@
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --array=0
+#SBATCH --array=0-5
 
 module load BCFtools/1.13-GCC-8.3.0
 module load R/4.0.0-foss-2019b
