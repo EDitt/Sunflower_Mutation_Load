@@ -30,8 +30,8 @@ SAM_INFO=/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/LineKeywINF
 ###########################################
 #	Files created by scripts in the current directory
 
-# Directory with lists of SNP positions for different variant classes
-POSITIONS_DIR=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/FinalPositionFiles
+# File with SNPs and their annotation
+POSITIONS_ANNOTATED=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_Positions.txt 
 
 # Ancestral alleles at all sites in VCF (only 13.5 M out of 37 M with calls). Used R to parse a .bed file
 ANCESTRAL_STATE=/scratch/eld72413/SAM_seq/Polarized/AncestralStateTable
