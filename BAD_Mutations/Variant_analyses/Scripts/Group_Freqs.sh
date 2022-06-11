@@ -11,7 +11,7 @@
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --array=0
+#SBATCH --array=0-5
 
 module load BCFtools/1.13-GCC-8.3.0
 module load R/4.0.0-foss-2019b
@@ -37,7 +37,7 @@ echo Group is $Group
 #bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' > ${outputdir}/intermediates/${Group}_SNP_freq.txt
 
 Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Variant_Table.R" \
-"/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/FinalPositionFiles" \
+"/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_Positions.txt" \
 "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
 "${outputdir}" \
 "${Group}"
