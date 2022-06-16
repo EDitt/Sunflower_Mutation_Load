@@ -199,7 +199,26 @@ snps_remove='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/ToRemove_N
 
 # this returns tables for all groups of variants with the 
 ```
-test: Submitted batch job 12460630
+
+### Frequency of Haplotypes in haplotype blocks across genome
+Haplotype block coordinates obtained from Plink by Andries Temme (uploaded to cluster "blocks_with_delmut261.csv")
+
+Use vcftools to get the number of unique haplotypes for each region
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l # tmux window in ss-sub4
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
+# convert to 0-based numbering with Chromosome, start, end, name
+# remove quotation marks from characters
+awk 'BEGIN { FS=","; OFS="\t" } { gsub("\"", "") } { $1=$1 } 1' ${OUT_DIR}/Haplotypes/blocks_with_delmut.csv | awk 'NR>1 {{OFS="\t"}; print $3,$4-1,$5,$2}' > ${OUT_DIR}/Haplotypes/blocks_with_delmut.bed
+
+module load VCFtools/0.1.16-GCC-8.3.0-Perl-5.30.0
+
+vcftools --gzvcf ${VCF} --hapcount ${OUT_DIR}/Haplotypes/blocks_with_delmut.bed --out ${OUT_DIR}/Haplotypes/HaploBlocks
+
+
+```
+
 
 
 ############# May redo the code below:
