@@ -45,8 +45,20 @@ Parse VeP Table and Predictions output to obtain annotation classes for all SNPs
 See: `${REPO_DIR}/Variant_analyses/Variant_class_numbers.md` for commands used to parse the prediction output and VeP output to get the variants for each class
 Tab-delimited lists of variants positions for each annotation class found in: `/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/FinalPositionFiles`
 
+Save list of SNPs & annotation
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
+Rscript "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SNP_annotation.R" \
+"/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/FinalPositionFiles" \
+"/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_Positions.txt"
+
+```
+
 ## Create SNP Table
 Table with SNP Frequency, Ancestral State, Genotype Calls, Annotation, for all SNPs
+** note: I changed R script after using this code so will have to change the input arguments for the Rscript commands to work again
 
 Use bcftools to output a table with Allele Position, Reference and Alternate alleles, alternate allele count, total allele count, alternate allele frequency
 ```bash
@@ -139,7 +151,7 @@ Plotted Fst across the genome. See: `${REPO_DIR}/Variant_analyses/Fst.md`
 
 ### Number of derived SNPs for each genotype
 
-First get number of called genotypes for polarized positions
+First get number of called genotypes for polarized positions ** note: this failed
 ```bash
 srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
 source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
@@ -155,29 +167,39 @@ Use scripts to output a table with number of derived variants across all variant
 ```bash
 awk 'NR>1 {print $13}' ${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt | sort -u #  annotation classes
 
+# script to return nRefHom, nNonRefHom, nHets, etc. for all genotypes (for all variant classes)
 sbatch --export=Table='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/SNPINFO_ForUnfolded.txt',\
 vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
 outputdir='/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/SampleCounts' /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/GenotypeStats_Class.sh # Submitted batch job 12443241
 
+# I moved just the deleterious, tolerated and nonsynonymous into a sub-directory "ToUse" to combine this information 
+# This script converts the numbers to derived and ancestral and combines across the variant classes
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
 Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Germplasm/Derived_Variant_Numbers.R" \
-"/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/SampleCounts/intermediates" \
+"/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/SampleCounts/intermediates/ToUse" \
 "/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/Annotation_VariantStats.txt" \
 "derivedCounts" \
 "_Ref_" \
 "_Alt_"
 ```
 
+See graph of derived dSNPs/sSNPs at: Plots/Germplasm_boxplot.R
+
+
 ### Frequency of derived SNPs for different germplasm groups
 
+
 ```bash
-sbatch --export=SAM_INFO=/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/LineKeywINFO.csv',\
+sbatch --export=SAM_INFO='/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/LineKeywINFO.csv',\
 VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
-outputdir='/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/GroupFreqs' /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Group_Freqs.sh
+outputdir='/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/GroupFreqs',\
+snps_remove='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/ToRemove_NotDerived.txt' /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Group_Freqs.sh # Submitted batch job 12461287
 
-
-
+# this returns tables for all groups of variants with the 
 ```
-
+test: Submitted batch job 12460630
 
 
 ############# May redo the code below:
