@@ -17,16 +17,16 @@ options(warn=1)
 
 args <- commandArgs(trailingOnly = TRUE)
 
-Group_name <- args[1]
+SNP_table <- args[1]
 Max_freq <- as.numeric(args[2])
 Increment <- as.numeric(args[3])
 FrequencyColumn <- args[4]
-Output_Dir <- args[5]
+Output_File <- args[5]
 
 
-SNP_table <- paste0(Output_Dir, "/intermediates/", Group_name, "_SNP_info_ForUnfolded.txt")
+#SNP_table <- paste0(Output_Dir, "/intermediates/", Group_name, "_SNP_info_ForUnfolded.txt")
 
-Output_File <- paste0(Output_Dir, "/", Group_name, "_DerivedFreq_Bins.txt")
+#Output_File <- paste0(Output_Dir, "/", Group_name, "_DerivedFreq_Bins.txt")
 
 #########################
 ####### FUNCTIONS #######
