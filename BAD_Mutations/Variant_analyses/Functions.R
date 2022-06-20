@@ -88,32 +88,32 @@ Genotype_dSNP_count <- function (DirPath, ref_name, alt_name, all_stats) {
 # return a binned dataframe with the proportion of private/shared variants for two different groups
 
 Group_freqbins <- function (filename, group1Name, group2Name, AltCol_suffix, RefCol_suffix, Max_Freq, Increment, GroupColumn) {
-	group1_alt <- paste0(group1Name, AltCol_suffix)
-	group1_ref <- paste0(group1Name, RefCol_suffix)
-	group2_alt <- paste0(group2Name, AltCol_suffix)
-	group2_ref <- paste0(group2Name, RefCol_suffix)
-	freqs <- read.table(filename, header=T, sep="\t")
-	freqs$category <- ifelse(
-		(freqs[,group1_alt] > 1 & freqs[,group2_alt]==0) |
-		(freqs[,group1_alt]==0 & freqs[,group2_alt] > 1) |
-		(freqs[,group1_ref] > 1 & freqs[,group2_ref]==0) |
-		(freqs[,group1_ref]==0 & freqs[,group2_ref] > 1), 
-		"private",
-		ifelse((freqs[,group1_alt] + freqs[,group2_alt])==1 |
-			(freqs[,group1_ref] + freqs[,group2_ref])==1, 
-			"singleton", "shared"))
-	freqs_noSingle <- subset(freqs, category!="singleton")
-	freqs_noSingle$bin <- cut(freqs_noSingle[,GroupColumn],seq(0,Max_Freq,Increment))
-	summary <- aggregate(freqs_noSingle$Position, by=list(freqs_noSingle$bin, freqs_noSingle$category, freqs_noSingle$Variant_type), 
-	length, drop=FALSE)
-	colnames(summary) <- c("Bin", "Category", "Annotation", "Number")
-	summary_wide <- reshape(summary,
-	idvar = c("Bin", "Annotation"),
-	timevar="Category",
-	direction= "wide")
-	summary_wide$NumPrivate <- ifelse(is.na(summary_wide$Number.private), 0, as.numeric(summary_wide$Number.private))
-	summary_wide$PropPrivate <- summary_wide$NumPrivate / summary_wide$Number.shared
-  	return(subset(summary_wide, select=-c(Number.private)))
+  group1_alt <- paste0(AltCol_suffix, group1Name)
+  group1_ref <- paste0(RefCol_suffix, group1Name)
+  group2_alt <- paste0(AltCol_suffix, group2Name)
+  group2_ref <- paste0(RefCol_suffix, group2Name)
+  freqs <- read.table(filename, header=T, sep="\t")
+  freqs$category <- ifelse(
+    (freqs[,group1_alt] > 1 & freqs[,group2_alt]==0) |
+    (freqs[,group1_alt]==0 & freqs[,group2_alt] > 1) |
+    (freqs[,group1_ref] > 1 & freqs[,group2_ref]==0) |
+    (freqs[,group1_ref]==0 & freqs[,group2_ref] > 1), 
+    "private",
+    ifelse((freqs[,group1_alt] + freqs[,group2_alt])==1 |
+      (freqs[,group1_ref] + freqs[,group2_ref])==1, 
+      "singleton", "shared"))
+  freqs_noSingle <- subset(freqs, category!="singleton")
+  freqs_noSingle$bin <- cut(freqs_noSingle[,GroupColumn],seq(0,Max_Freq,Increment))
+  summary <- aggregate(freqs_noSingle$Position, by=list(freqs_noSingle$bin, freqs_noSingle$category, freqs_noSingle$Variant_type), 
+  length, drop=FALSE)
+  colnames(summary) <- c("Bin", "Category", "Annotation", "Number")
+  summary_wide <- reshape(summary,
+  idvar = c("Bin", "Annotation"),
+  timevar="Category",
+  direction= "wide")
+  summary_wide$NumPrivate <- ifelse(is.na(summary_wide$Number.private), 0, as.numeric(summary_wide$Number.private))
+  summary_wide$PropPrivate <- summary_wide$NumPrivate / summary_wide$Number.shared
+    return(subset(summary_wide, select=-c(Number.private)))
 }
 
 # creates a scatterplot of allele frequencies for 2 groups, highlighting points above a critical Fst value
