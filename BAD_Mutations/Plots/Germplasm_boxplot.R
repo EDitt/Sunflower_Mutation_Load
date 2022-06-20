@@ -127,7 +127,7 @@ ggplot(GenoProportions[which(GenoProportions$group!="landrace"),],
                                           GenoProportions$Consequence=="AllDel"),], 
              position = "identity",
              aes(x=1.25, y=PropHetGenos, fill = Consequence),
-             shape=c(21,22,23), size = 3) +
+             shape=c(22,23,24), size = 3) +
   scale_fill_manual(values= c(Col_Synonymous, Col_Tolerated, Col_Deleterious),
                     name = "Variant Class", labels = c("Synonymous", "Tolerated", "Deleterious")) +
   scale_color_manual(values= c(Col_Synonymous, Col_Tolerated, Col_Deleterious),
@@ -136,16 +136,17 @@ ggplot(GenoProportions[which(GenoProportions$group!="landrace"),],
                                           GenoProportions$Consequence=="Tolerated"),], 
              position = "identity",
              aes(x=1, y=PropHetGenos, fill = Consequence),
-             shape=c(21,22,23), size = 3) +
+             shape=c(22,23,24), size = 3) +
   geom_point(data=GenoProportions[which(GenoProportions$group=="landrace" &
                                           GenoProportions$Consequence=="SynonymousNodups"),], 
              position = "identity",
              aes(x=0.75, y=PropHetGenos, fill = Consequence),
-             shape=c(21,22,23), size = 3) +
+             shape=c(22,23,24), size = 3) +
   theme(axis.text = element_text(size=10),
         axis.text.x = element_text(angle=90),
         legend.text = element_text(size=12),
         strip.text.x = element_text(size = 12))
   
-
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/Figure2_GenotypeBoxplot.pdf",
+       width = 5, height = 7)
 
