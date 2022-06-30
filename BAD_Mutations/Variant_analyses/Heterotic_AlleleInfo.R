@@ -99,3 +99,5 @@ Chromosomes <- aggregate(HighFreqDerived$Position, by=list(HighFreqDerived$Chrom
 save(Oil_FreqBins, NonOil_FreqBins, Both_FreqBins, 
 	Oil_DerivedFreqBins, NonOil_DerivedFreqBins, Both_DerivedFreqBins,
 	file="FreqBins.RData")
+
+# also using "/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/HeteroticGroup/AlleleInfo_derived.txt" for joint SFS figures
