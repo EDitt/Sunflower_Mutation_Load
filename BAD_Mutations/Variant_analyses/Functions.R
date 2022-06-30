@@ -5,9 +5,9 @@
 ###########################################
 
 # import files into a list and make informative names
-ImportFilesAsList <- function (Dir, Suffix, Prefix) {
+ImportFilesAsList <- function (Dir, Suffix, Prefix, headerTF) {
 	my_files <- list.files(path = Dir, pattern = Suffix, full.names = TRUE)
-  	my_data <- lapply(my_files, function(x) {read.table(x, header=T, na.strings=c("NaN"))})
+  	my_data <- lapply(my_files, function(x) {read.table(x, header=headerTF, na.strings=c("NaN"))})
   	names(my_data) <- gsub(Suffix, "", my_files)
   	names(my_data) <- gsub(Dir, "", names(my_data))
   	names(my_data) <- gsub("/", "", names(my_data))
@@ -16,8 +16,8 @@ ImportFilesAsList <- function (Dir, Suffix, Prefix) {
   }
 
 # import files as list. Make a column with the name of the list and combine into a dataframe
-ImportFilesAsDf <- function (Dir, Suffix, Prefix, Colnames) {
-	my_list <- ImportFilesAsList(Dir, Suffix, Prefix)
+ImportFilesAsDf <- function (Dir, Suffix, Prefix, Colnames, headerTF) {
+	my_list <- ImportFilesAsList(Dir, Suffix, Prefix, headerTF)
 	for (i in seq_along(my_list)) {
     name <- names(my_list[i])
     colnames(my_list[[i]]) <- Colnames
@@ -112,7 +112,7 @@ Group_freqbins <- function (filename, group1Name, group2Name, AltCol_suffix, Ref
   timevar="Category",
   direction= "wide")
   summary_wide$NumPrivate <- ifelse(is.na(summary_wide$Number.private), 0, as.numeric(summary_wide$Number.private))
-  summary_wide$PropPrivate <- summary_wide$NumPrivate / summary_wide$Number.shared
+  summary_wide$PropPrivate <- summary_wide$NumPrivate / (summary_wide$NumPrivate + summary_wide$Number.shared)
     return(subset(summary_wide, select=-c(Number.private)))
 }
 
