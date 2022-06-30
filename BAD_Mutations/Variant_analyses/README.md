@@ -149,25 +149,13 @@ See `${REPO_DIR}/Variant_analyses/PCA.md` for information on the creation of a P
 
 Plotted Fst across the genome. See: `${REPO_DIR}/Variant_analyses/Fst.md`
 
-### Number of derived SNPs for each genotype
-
-First get number of called genotypes for polarized positions ** note: this failed
-```bash
-srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
-source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
-
-awk 'BEGIN{FS=OFS="\t"}; NR>1 {if ($11!="NA") {print $1,$2}}' ${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt > /scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/PolarizedSNP_Posititions.txt
-
-bcftools view -Oz ${VCF} -R ${OUT_DIR}/IntermediateFiles/PolarizedSNP_Posititions.txt | \
-bcftools stats -s - | \
-grep "PSC" > ${OUT_DIR}/GenotypeInfo/AllDerived_VariantStats.txt
-```
+### Numbers of Derived Variants for all Genotypes for different variant classes
 
 Use scripts to output a table with number of derived variants across all variant classes
 ```bash
 awk 'NR>1 {print $13}' ${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt | sort -u #  annotation classes
 
-# script to return nRefHom, nNonRefHom, nHets, etc. for all genotypes (for all variant classes)
+# script to return nRefHom, nNonRefHom, nHets, etc. for all genotypes (for all variant classes) for those that are polarized
 sbatch --export=Table='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/SNPINFO_ForUnfolded.txt',\
 vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
 outputdir='/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/SampleCounts' /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/GenotypeStats_Class.sh # Submitted batch job 12443241
@@ -185,11 +173,11 @@ Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_ana
 "_Alt_"
 ```
 
-See graph of derived dSNPs/sSNPs at: Plots/Germplasm_boxplot.R
+See graph of derived dSNPs/sSNPs for different germplasm groups at: Plots/Germplasm_boxplot.R
 
+See GenotypeLoadNums.md for getting the number of dSNPs per genotype
 
 ### Frequency of derived SNPs for different germplasm groups
-
 
 ```bash
 sbatch --export=SAM_INFO='/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/LineKeywINFO.csv',\
@@ -225,15 +213,265 @@ See: R code at Heterotic_AlleleInfo.R for data wrangling
 
 See: Joint_SFS.R
 
+#### IBS patterns
+Scatterplot showing relationship between pairwise IBS for synonymous versus deleterious variants.
+Difference between inter and intra heterotic group crosses?
+
+```bash
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
+awk '{print $13}' $SNP_INFO | sort -u
+
+### using the "PCA filter" Plink file which was converted from a VCF with singletons removed (see `${REPO_DIR}/Variant_analyses/PCA.md`)
+
+# synonymous positions
+type="SynonymousNodups"
+awk -v var="$type" 'BEGIN{OFS=":"}; {if ($13==var) {print $1,$2}}' $SNP_INFO > /scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/Synonymous_Pos4Plink.txt
+
+sbatch --export=Input_prefix='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter',\
+SNP_List='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/Synonymous_Pos4Plink.txt',\
+Window_Size='1',\
+Step_Size='1',\
+Rsquared='0.9',\
+outputdir='/scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups',\
+output_prefix='Synonymous' ${REPO_DIR}/BAD_Mutations/Variant_analyses/IBS_SNP_Subset.sh # Submitted batch job 12569029
+
+# deleterious positions
+type="AllDel"
+awk -v var="$type" 'BEGIN{OFS=":"}; {if ($13==var) {print $1,$2}}' $SNP_INFO > /scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/Deleterious_Pos4Plink.txt
+
+sbatch --export=Input_prefix='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter',\
+SNP_List='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/Deleterious_Pos4Plink.txt',\
+Window_Size='1',\
+Step_Size='1',\
+Rsquared='0.9',\
+outputdir='/scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups',\
+output_prefix='Deleterious' ${REPO_DIR}/BAD_Mutations/Variant_analyses/IBS_SNP_Subset.sh # Submitted batch job 12569031
+```
+
+Synonymous:
+Pruning SNPs with R^2 more than 0.9 in 1 kb windows will remove 128706 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_Plink_0.9.prune.out variants, 
+keeping 257340 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_Plink_0.9.prune.in variants
+Pairwise IBS will be calculated using 257340 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_SNPsToKeep.txt SNPs
+
+Deleterious:
+Pruning SNPs with R^2 more than 0.9 in 1 kb windows will remove 4586 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_Plink_0.9.prune.out variants, 
+keeping 32210 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_Plink_0.9.prune.in variants
+Pairwise IBS will be calculated using 32210 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_SNPsToKeep.txt SNPs
+
+Combine and analyze with R
+```R
+# srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+# source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+source("/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Functions.R")
+
+IBS_table <- ImportFilesAsDf("/scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups", "_IBS.txt", "Prefix", c("Genotype1", "Genotype2", "IBS")) # no prefix # N=82656
+
+SAM_info <- read.csv("/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/LineKeywINFO.csv", header=T)
+
+IBS_GroupInfo <- merge(IBS_table, SAM_info[,c(9,11)], by.x="Genotype1", by.y="SequenceName")
+colnames(IBS_GroupInfo)[5] <- c("HeteroticGroup1")
+IBS_GroupInfo <- merge(IBS_GroupInfo, SAM_info[,c(9,11)], by.x="Genotype2", by.y="SequenceName")
+colnames(IBS_GroupInfo)[6] <- c("HeteroticGroup2")
+
+# define cross type
+IBS_GroupInfo$Cross <- ifelse((IBS_GroupInfo$HeteroticGroup1=="HA" & IBS_GroupInfo$HeteroticGroup2=="HA") |
+								(IBS_GroupInfo$HeteroticGroup1=="RHA" & IBS_GroupInfo$HeteroticGroup2=="RHA"),
+								"Within_Group", ifelse((IBS_GroupInfo$HeteroticGroup1=="HA" & IBS_GroupInfo$HeteroticGroup2=="RHA") |
+								(IBS_GroupInfo$HeteroticGroup1=="RHA" & IBS_GroupInfo$HeteroticGroup2=="HA"),
+								"Between_Group", "Other"))
+aggregate(IBS_GroupInfo$IBS, by=list(IBS_GroupInfo$Cross), length)
+aggregate(IBS_GroupInfo$IBS, by=list(IBS_GroupInfo$HeteroticGroup1, IBS_GroupInfo$HeteroticGroup2, IBS_GroupInfo$Cross), length) # check
+
+
+Mod1 <- lm(IBS ~ Variant_type + Cross + Variant_type:Cross,
+	data=IBS_GroupInfo[which(IBS_GroupInfo$Cross!="Other"),]) # significant Variant type : cross interaction
+drop1(Mod1, test = "F") # F=33.887, p<0.0001
+
+# make wide
+IBS_GroupWide <- reshape(IBS_GroupInfo[which(IBS_GroupInfo$Cross!="Other"),],
+	idvar=c("Genotype1", "HeteroticGroup1", "Genotype2", "HeteroticGroup2", "Cross"),
+	timevar="Variant_type",
+	direction="wide")
+
+Mod2 <- lm(IBS.Deleterious ~ IBS.Synonymous + Cross +
+	IBS.Synonymous:Cross,
+	data = IBS_GroupWide)
+drop1(Mod2, test = "F") # p <0.0001, F=148.83
+library(car)
+Anova(Mod2)
+summary(Mod2)
+
+## write.table(IBS_GroupWide, file = "/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/HeteroticGroup/IBS_syndel.txt", sep = "\t", quote=FALSE, row.names=FALSE)
+```
+
 ---
 
 
 ## Genomic Patterns
 
-### Frequency of Haplotypes in haplotype blocks across genome
+Continued with `dSNP_DerAncBINS.R` <- for binning across genome
+
+
+### Recombination across genome
+
+Using John Bowers genetic map information, I used the file I manipulated for the truth SNPs: `SNP_Genetic_Map_Unique.txt` for the cM distance of the markers. This file contains 6984 markers that mapped uniquely. 
+- The first column is the linkage group (chromosome number), second column is the locus name, third column is the distance in cM.
+
+I also used the vcf file that I created with SNPutils- `MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf` where I mapped the SNPs to the new genome build. (N=6523)
+- Here the first column is the chromosome, 2nd is the position in bp, third is Locus name
+
+##### Create Recombination Data Files
+```bash
+GeneticMap=/scratch/eld72413/SAM_seq/Recombination/SNP_Genetic_Map_Unique.txt
+RemappedVCF=/scratch/eld72413/SNParray/FinalFiles/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf
+
+cd /scratch/eld72413/SAM_seq/Recombination
+
+grep -v "#" $RemappedVCF | awk '{print $1,"\t",$2,"\t",$3}' > SNParray_BPpositions.txt
+
+awk '{print $1,"\t",$2,"\t",$3}' $GeneticMap > SNParray_cMpositions.txt
+
+
+# I need to change the chromosome names to match:
+
+awk '{print $1}' SNParray_BPpositions.txt | sort -u | awk 'NR > 4 {print $0}' # need to remove the four contigs
+awk '{print $1}' SNParray_BPpositions.txt | sort -u | awk 'NR > 4 {print $0}' | cat -n > ChromNames.txt 
+
+
+while read line; do
+	OldChromName=$(echo $line | awk '{print $1}')
+	NewChromName=$(echo $line | awk '{print $2}')
+	echo "$OldChromName to $NewChromName"
+	sed -i 's/'^"${OldChromName}"'\b/'"${NewChromName}"'/g' SNParray_cMpositions.txt
+done < ChromNames.txt
+```
+
+To graph Recombination patterns across genome, I used R (see Genomic_Patterns/Recombination.R script).
+
+## Binning SNP classes across Genome
+
+
+### Number of codons per window
+```bash
+srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+module load BEDTools/2.30.0-GCC-8.3.0
+
+GFF3=/scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.gff3
+#OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/GenomicBins
+
+awk '{if ($3=="mRNA") {print $1,$4,$5}}' $GFF3 | wc -l # 72995
+
+# use bedtools to find # bp (and # counts) for each mRNA feature in 10Mbp window- divide by 3 to get number of codons
+bedtools makewindows -g /scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.genome.fasta.fai -w 10000000 \
+| bedtools intersect -a - -b $GFF3 -wo \
+| awk '{if ($6=="mRNA") {print $0}}' \
+| bedtools groupby -g 1,2,3,6 -c 13 -o sum,count \
+| awk '{print $1,$2,$3,$4, $5,$6, $5/3}' > ${OUT_DIR}/GenomicPatterns/Bins/Mbp_10/mRNA_10MbpNumCodonCounts.txt
+
+```
+
+### Number of dSNPs and sSNPs per window
+```bash
+SNP_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info_new.txt
+
+# save a windows file to use for bedtools intersect commands
+
+# make genome file with only 17 chromosomes (no scaffolds)
+awk -v OFS='\t' {'print $1,$2'} "/scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.genome.fasta.fai" | head -17 > "/scratch/eld72413/SunflowerGenome/GenomeFile.bed"
+
+bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 > $OUT_DIR/IntermediateFiles/Mbp10_windows.bed
+
+# number of dSNPs and sSNPs
+VariantClass="AllDel"
+VariantClass="SynonymousNodups"
+
+awk -v var="$VariantClass" 'OFS="\t" {if ($13==var){print $1, $2-1, $2}}' $SNP_INFO \
+| bedtools intersect -a $OUT_DIR/IntermediateFiles/Mbp10_windows.bed -b - -c > ${OUT_DIR}/GenomicPatterns/Bins/Mbp_10/Num_${VariantClass}_10MbpCounts.bed
+
+```
+
+High frequency alleles
+- high derived frequency (> 0.9) (N=2091 deleterious)
+- high MAF (0.1-0.50) (N=12,557 deleterious)
+
+- low MAF (<0.5) N= 67,005 (and not high derived)
+	- 31,267 are only present in single individuals
+```bash
+SNP_INFO_2=${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt # with deleterious alleles where the deleterious is not derived relative to the outgroup are removed (N=6141)
+awk '{if ($13=="AllDel") {print $0}}' $SNP_INFO_2 | wc -l #81,653 (including header)
+
+# high derived allele frequency
+awk '{if ($12 > 0.9 && $12!="NA") {print $0}}' $SNP_INFO_2 | wc -l # 1,667,416
+awk '{if ($12 > 0.9 && $12!="NA" && $13=="AllDel") {print $0}}' $SNP_INFO_2 | wc -l # 2091 (an additional 2617 fit this category bc the ancestral allele is deleterious!)
+
+awk 'NR>1 {if ($12 > 0.9 && $12!="NA") {print $0}}' $SNP_INFO_2 > ${OUT_DIR}/GenomicPatterns/Freq/HighDerivedFreqAlleles.txt
+
+# number of dSNPs and sSNPs
+VariantClass="AllDel"
+VariantClass="SynonymousNodups"
+
+awk -v var="$VariantClass" 'OFS="\t" {if ($13==var){print $1, $2-1, $2}}' ${OUT_DIR}/GenomicPatterns/Freq/HighDerivedFreqAlleles.txt \
+| bedtools intersect -a $OUT_DIR/IntermediateFiles/Mbp10_windows.bed -b - -c > ${OUT_DIR}/GenomicPatterns/Freq/Num_HighDerFreq${VariantClass}_10MbpCounts.bed
+
+
+# high MAF
+awk '{if ($10 >= 0.1 && $10 <= 0.5) {print $0}}' $SNP_INFO_2 | wc -l # #6,542,031
+awk '{if ($10 >= 0.1 && $10 <= 0.5 && $13=="AllDel" ) {print $0}}' $SNP_INFO_2 | wc -l # 12,557
+
+awk '{if ($10 >= 0.1 && $10 <= 0.5) {print $0}}' $SNP_INFO_2 > ${OUT_DIR}/GenomicPatterns/Freq/HighMAFAlleles.txt
+
+# number of dSNPs and sSNPs
+VariantClass="AllDel"
+VariantClass="SynonymousNodups"
+
+awk -v var="$VariantClass" 'OFS="\t" {if ($13==var){print $1, $2-1, $2}}' ${OUT_DIR}/GenomicPatterns/Freq/HighMAFAlleles.txt \
+| bedtools intersect -a $OUT_DIR/IntermediateFiles/Mbp10_windows.bed -b - -c > ${OUT_DIR}/GenomicPatterns/Freq/Num_HighMAF${VariantClass}_10MbpCounts.bed
+
+
+# low MAF to make sure numbers add up
+awk '{if (($10 < 0.1 && $12 < 0.9) || ($10 < 0.1 && $12 == "NA")) {print $0}}' $SNP_INFO_2 | awk '{if ($13=="AllDel") {print $0}}' | wc -l #67,005
+awk '{if (($10 < 0.1 && $12 < 0.9) || ($10 < 0.1 && $12 == "NA")) {print $0}}' $SNP_INFO_2 > ${OUT_DIR}/GenomicPatterns/Freq/LowMAFAlleles.txt
+
+VariantClass="AllDel"
+VariantClass="SynonymousNodups"
+
+awk -v var="$VariantClass" 'OFS="\t" {if ($13==var){print $1, $2-1, $2}}' ${OUT_DIR}/GenomicPatterns/Freq/LowMAFAlleles.txt \
+| bedtools intersect -a $OUT_DIR/IntermediateFiles/Mbp10_windows.bed -b - -c > ${OUT_DIR}/GenomicPatterns/Freq/Num_LowMAF${VariantClass}_10MbpCounts.bed
+```
+
+Singletons or private doubletons with VCFtools
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l # tmux window in ss-sub4
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
+module load VCFtools/0.1.16-GCC-8.3.0-Perl-5.30.0
+
+vcftools --gzvcf ${VCF} --singletons --out ${OUT_DIR}/GenomicPatterns/Freq/All_snps
+wc -l All_snps.singletons # 12,803,824
+awk '{if ($3=="D") {print $0}}' All_snps.singletons | wc -l # 4,997,248 are private doubletons
+
+awk 'OFS="\t" {print $1,$2}' ${OUT_DIR}/GenomicPatterns/Freq/All_snps.singletons > ${OUT_DIR}/GenomicPatterns/Freq/SingletonPositions.txt
+
+grep -w -Ff ${OUT_DIR}/GenomicPatterns/Freq/SingletonPositions.txt ${SNP_INFO_2} | wc -l # 12,798,551
+grep -w -Ff ${OUT_DIR}/GenomicPatterns/Freq/SingletonPositions.txt ${SNP_INFO_2} > ${OUT_DIR}/GenomicPatterns/Freq/SingleIndiv_Alleles.txt
+
+# number of dSNPs and sSNPs
+VariantClass="AllDel"
+VariantClass="SynonymousNodups"
+
+awk -v var="$VariantClass" 'OFS="\t" {if ($13==var){print $1, $2-1, $2}}' ${OUT_DIR}/GenomicPatterns/Freq/SingleIndiv_Alleles.txt \
+| bedtools intersect -a $OUT_DIR/IntermediateFiles/Mbp10_windows.bed -b - -c > ${OUT_DIR}/GenomicPatterns/Freq/SingleIndiv_Alleles${VariantClass}_10MbpCounts.bed
+# 265202 synonymous
+# 31267 deleterious
+```
+
+See R script
+
+### Haplotypes blocks across genome
 Haplotype block coordinates obtained from Plink by Andries Temme (uploaded to cluster "blocks_with_delmut261.csv")
 
-Use vcftools to get the number of unique haplotypes for each region
 ```bash
 srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l # tmux window in ss-sub4
 source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
@@ -249,11 +487,43 @@ vcftools --gzvcf ${VCF} --hapcount ${OUT_DIR}/Haplotypes/blocks_with_delmut.bed 
 
 ```
 
+Find coordinates of the longest block on chromosome 10
+```bash
+SNP_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info_new.txt
+awk '{if ($3-$2 > 50000000) {print $1":"$2+1"-"$3}}' ${OUT_DIR}/Haplotypes/blocks_with_delmut.bed
+# 20 larger than 10M, 8 larger than 20M (one on block 10 > 70M)
+
+
+awk '{if ($1=="Ha412HOChr10" && $2 > 40336916 && $2 <= 113115980) {print $0}}' $SNP_INFO > ${OUT_DIR}/Haplotypes/Chrom10/BranchingHaplotypeSNPs
+# 631,584 ()
+awk '{if ($1=="Ha412HOChr10" && $2 > 40336916 && $2 <= 113115980 && $13=="AllDel" && $12!="NA") {print $0}}' $SNP_INFO | wc -l # 801 (537 polarized)
+awk '{if ($1=="Ha412HOChr10" && $2 > 40336916 && $2 <= 113115980 && $13=="SynonymousNodups" && $12!="NA") {print $0}}' $SNP_INFO | wc -l # 5855 (3968 polarized)
+# above numbers are without the snps removed where ancestral allele = deleterious allele
+
+#bcftools view -Ou -r - ${VCF} |\
+#bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' > ${OUT_DIR}/Haplotypes/Chrom10/
+```
+See code in Joint_SFS.R for getting info for HA/RHA derived freqs for this region
+
+```bash
+Rscript --verbose "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
+"${OUT_DIR}/Haplotypes/Chrom10/Haplotype_Chr10_Info.txt" \
+"1.0" \
+"0.05" \
+"Derived_Freq_HA" \
+"${OUT_DIR}/Haplotypes/Chrom10/DerivedFreq_Chr10_HA_Bins.txt"
+
+Rscript --verbose "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
+"${OUT_DIR}/Haplotypes/Chrom10/Haplotype_Chr10_Info.txt" \
+"1.0" \
+"0.05" \
+"Derived_Freq_RHA" \
+"${OUT_DIR}/Haplotypes/Chrom10/DerivedFreq_Chr10_RHA_Bins.txt"
+```
+
 
 
 ############# May redo the code below:
-
-
 
 
 
@@ -299,155 +569,14 @@ print(plot)
 dev.off()
 ```
 
-#### IBS patterns
-Scatterplot showing relationship between pairwise IBS for synonymous versus deleterious variants.
-Difference between inter and intra heterotic group crosses?
 
-```bash
-source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
-
-### using the "PCA filter" Plink file which was converted from a VCF with singletons removed (see `${REPO_DIR}/Variant_analyses/PCA.md`)
-
-# synonymous positions
-type="Synonymous"
-awk -v var="$type" 'BEGIN{OFS=":"}; {if ($13==var) {print $1,$2}}' $SNP_INFO > /scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/Synonymous_Pos4Plink.txt
-
-sbatch --export=Input_prefix='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter',\
-SNP_List='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/Synonymous_Pos4Plink.txt',\
-Window_Size='1',\
-Step_Size='1',\
-Rsquared='0.9',\
-outputdir='/scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups',\
-output_prefix='Synonymous' ${REPO_DIR}/BAD_Mutations/Variant_analyses/IBS_SNP_Subset.sh # Submitted batch job 8178681 (formerly 8177892)
-
-# deleterious positions
-type="AllDel"
-awk -v var="$type" 'BEGIN{OFS=":"}; {if ($13==var) {print $1,$2}}' $SNP_INFO > /scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/Deleterious_Pos4Plink.txt
-
-sbatch --export=Input_prefix='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter',\
-SNP_List='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/Deleterious_Pos4Plink.txt',\
-Window_Size='1',\
-Step_Size='1',\
-Rsquared='0.9',\
-outputdir='/scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups',\
-output_prefix='Deleterious' ${REPO_DIR}/BAD_Mutations/Variant_analyses/IBS_SNP_Subset.sh # Submitted batch job 8178683 (formerly 8178631)
-```
-
-Synonymous:
-Pruning SNPs with R^2 more than 0.9 in 1 kb windows will remove 128706 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_Plink_0.9.prune.out variants, 
-keeping 257340 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_Plink_0.9.prune.in variants
-Pairwise IBS will be calculated using 257340 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_SNPsToKeep.txt SNPs
-
-Deleterious:
-Pruning SNPs with R^2 more than 0.9 in 1 kb windows will remove 4586 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_Plink_0.9.prune.out variants, 
-keeping 32210 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_Plink_0.9.prune.in variants
-Pairwise IBS will be calculated using 32210 /scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/Intermediates/TEMP_SNPsToKeep.txt SNPs
-
-Combine and analyze with R
-```R
-# srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
-# source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
-source("/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Functions.R")
-
-IBS_table <- ImportFilesAsDf("/scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups", "_IBS.txt", "Prefix", c("Genotype1", "Genotype2", "IBS")) # no prefix # N=82656
-
-SAM_info <- read.csv("/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/LineKeywINFO.csv", header=T)
-
-IBS_GroupInfo <- merge(IBS_table, SAM_info[,c(9,11)], by.x="Genotype1", by.y="SequenceName")
-colnames(IBS_GroupInfo)[5] <- c("HeteroticGroup1")
-IBS_GroupInfo <- merge(IBS_GroupInfo, SAM_info[,c(9,11)], by.x="Genotype2", by.y="SequenceName")
-colnames(IBS_GroupInfo)[6] <- c("HeteroticGroup2")
-
-# define cross type
-IBS_GroupInfo$Cross <- ifelse((IBS_GroupInfo$HeteroticGroup1=="HA" & IBS_GroupInfo$HeteroticGroup2=="HA") |
-								(IBS_GroupInfo$HeteroticGroup1=="RHA" & IBS_GroupInfo$HeteroticGroup2=="RHA"),
-								"Within_Group", ifelse((IBS_GroupInfo$HeteroticGroup1=="HA" & IBS_GroupInfo$HeteroticGroup2=="RHA") |
-								(IBS_GroupInfo$HeteroticGroup1=="RHA" & IBS_GroupInfo$HeteroticGroup2=="HA"),
-								"Between_Group", "Other"))
-aggregate(IBS_GroupInfo$IBS, by=list(IBS_GroupInfo$Cross), length)
-aggregate(IBS_GroupInfo$IBS, by=list(IBS_GroupInfo$HeteroticGroup1, IBS_GroupInfo$HeteroticGroup2), length) # check
-
-
-Mod1 <- lm(IBS ~ Variant_type + Cross + Variant_type:Cross,
-	data=IBS_GroupInfo[which(IBS_GroupInfo$Cross!="Other"),]) # significant Variant type : cross interaction
-drop1(Mod1, test = "F") # F=33.887, p<0.0001
-
-# make wide
-IBS_GroupWide <- reshape(IBS_GroupInfo[which(IBS_GroupInfo$Cross!="Other"),],
-	idvar=c("Genotype1", "HeteroticGroup1", "Genotype2", "HeteroticGroup2", "Cross"),
-	timevar="Variant_type",
-	direction="wide")
-
-Mod2 <- lm(IBS.Deleterious ~ IBS.Synonymous + Cross,
-	data = IBS_GroupWide)
-# slope = 0.7786, within-group cross estimate is positive
-
-## write.table(IBS_GroupWide, file = "/scratch/eld72413/SAM_seq/dSNP_results/HeteroticGroups/IBS_syndel.txt", sep = "\t", quote=FALSE, row.names=FALSE)
-```
 
 
 
 
 ----- 
 
-Continued with `dSNP_DerAncBINS.R` <- for binning across genome
 
-## Genomic Patterns
-
-### Recombination across genome
-
-Using John Bowers genetic map information, I used the file I manipulated for the truth SNPs: `SNP_Genetic_Map_Unique.txt` for the cM distance of the markers. This file contains 6984 markers that mapped uniquely. 
-- The first column is the linkage group (chromosome number), second column is the locus name, third column is the distance in cM.
-
-I also used the vcf file that I created with SNPutils- `MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf` where I mapped the SNPs to the new genome build. (N=6523)
-- Here the first column is the chromosome, 2nd is the position in bp, third is Locus name
-
-##### Create Recombination Data Files
-```bash
-GeneticMap=/scratch/eld72413/SAM_seq/Recombination/SNP_Genetic_Map_Unique.txt
-RemappedVCF=/scratch/eld72413/SNParray/FinalFiles/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf
-
-cd /scratch/eld72413/SAM_seq/Recombination
-
-grep -v "#" $RemappedVCF | awk '{print $1,"\t",$2,"\t",$3}' > SNParray_BPpositions.txt
-
-awk '{print $1,"\t",$2,"\t",$3}' $GeneticMap > SNParray_cMpositions.txt
-
-
-# I need to change the chromosome names to match:
-
-awk '{print $1}' SNParray_BPpositions.txt | sort -u | awk 'NR > 4 {print $0}' # need to remove the four contigs
-awk '{print $1}' SNParray_BPpositions.txt | sort -u | awk 'NR > 4 {print $0}' | cat -n > ChromNames.txt 
-
-
-while read line; do
-	OldChromName=$(echo $line | awk '{print $1}')
-	NewChromName=$(echo $line | awk '{print $2}')
-	echo "$OldChromName to $NewChromName"
-	sed -i 's/'^"${OldChromName}"'\b/'"${NewChromName}"'/g' SNParray_cMpositions.txt
-done < ChromNames.txt
-```
-
-To graph Recombination patterns across genome, I used R (see Genomic_Patterns/Recombination.R script).
-
-## Binning SNP classes across Genome
-
-
-### Number of codons per window
-```bash
-GFF3=/scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.gff3
-OUTPUTDIR=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/GenomicBins
-
-awk '{if ($3=="mRNA") {print $1,$4,$5}}' $GFF3 | wc -l # 72995
-
-# use bedtools to find # bp (and # counts) for each mRNA feature in 10Mbp window- divide by 3 to get number of codons
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b $GFF3 -wo \
-| awk '{if ($6=="mRNA") {print $0}}' \
-| bedtools groupby -g 1,2,3,6 -c 13 -o sum,count \
-| awk '{print $1,$2,$3,$4, $5,$6, $5/3}' > ${OUTPUTDIR}/mRNA_bpNumCodonCounts.txt
-
-```
 
 ### Number of different SNP classes per window
 Using R object saved from SFS_Info.R script
@@ -533,59 +662,4 @@ write.table(All_info2, file="/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Gen
 ```
 
 
-#### Older way I binned across genome:
-Make windows to bin count of each class of SNPs-
-dSNPs, sSNPs, Tolerated SNPs
-```bash
-# make genome file
-cd /scratch/eld72413/SunflowerGenome
-awk -v OFS='\t' {'print $1,$2'} "Ha412HOv2.0-20181130.fasta.fai" | head -17 > "GenomeFile.txt"
-
-cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results
-mkdir GenomicBins
-
-srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
-module load BEDTools/2.30.0-GCC-8.3.0
-
-vcf_dir=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AlleleClassVCFs
-out_dir=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/GenomicBins
-
-### dSNPs per window
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b ${vcf_dir}/SAM_Refdeleterious.vcf -c > ${out_dir}/RefDeleterious_10MbCounts.txt
-
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b ${vcf_dir}/SAM_Altdeleterious.vcf -c > ${out_dir}/AltDeleterious_10MbCounts.txt
-
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b ${vcf_dir}/SAM_tolerated.vcf.gz -c > ${out_dir}/Tolerated_10MbCounts.txt
-
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b ${vcf_dir}/SAM_synonymous.vcf.gz -c > ${out_dir}/Synonymous_10MbCounts.txt
-
-### do the same for the derived alleles
-vcf_dir=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/AlleleClassVCFs
-out_dir=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/DerivedAlleles/GenomicBins
-
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b ${vcf_dir}/SAM_RefDerivedDeleterious.vcf -c > ${out_dir}/RefDerivedDeleterious_10MbCounts.txt
-
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b ${vcf_dir}/SAM_RefDerivedTolerated.vcf -c > ${out_dir}/RefDerivedTolerated_10MbCounts.txt
-
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b ${vcf_dir}/SAM_RefDerivedSynonymous.vcf -c > ${out_dir}/RefDerivedSynonymous_10MbCounts.txt
-
-
-##
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b ${vcf_dir}/SAM_AltDerivedDeleterious.vcf -c > ${out_dir}/AltDerivedDeleterious_10MbCounts.txt
-
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b ${vcf_dir}/SAM_AltDerivedTolerated.vcf -c > ${out_dir}/AltDerivedTolerated_10MbCounts.txt
-
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 10000000 \
-| bedtools intersect -a - -b ${vcf_dir}/SAM_AltDerivedSynonymous.vcf -c > ${out_dir}/AltDerivedSynonymous_10MbCounts.txt
-
-```
 
