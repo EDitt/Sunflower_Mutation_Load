@@ -3,67 +3,61 @@
 ### Setup
 ```bash
 srun --pty  -p inter_p  --mem=22G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+```
+
+### Average dSNPs per individual
+First, get total number of called sites
+```bash
+# Already ran command on entire vcf file: "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/AllVariantStats.txt"
+
+### note: the bcftools stats "-s -" flag means to include all samples
+bcftools stats -s - ${VCF} | grep "PSC" > ${OUT_DIR}/GenotypeInfo/All_SNP_stats.txt
 
 ```
 
-# Count Number of Alt/Ref Alleles per genotype
+#### Parse total number of dSNPs per genotype
+Count Number of Alt/Ref Alleles per genotype
 (using bcftools)
 ```bash
-cd /scratch/eld72413/SAM_seq/BAD_Mut_Files/Results
-module load BCFtools/1.10.2-GCC-8.3.0
+mkdir ${OUT_DIR}/IntermediateFiles/dSNPCounts_perGeno
+### issues with passing comma separated list as variable"Argument list too long"
+#positions=$(awk 'BEGIN{FS="\t"; OFS=":"}; {if ($39 == "Alternate_deleterious" && $7 == "Alt_derived") {print $8,$9}}' ${DSNP_DATA} | paste -sd,)
 
-bcftools stats -s - SAM_Refdeleterious.vcf > RefDeleterious_StatsperSample.txt
-grep "PSC" RefDeleterious_StatsperSample.txt > RefDeleterious_perSampleCounts.txt
+awk 'BEGIN{FS=OFS="\t"}; {if ($39 == "Alternate_deleterious") {print $8,$9}}' ${DSNP_DATA} > ${OUT_DIR}/IntermediateFiles/AltDeleteriousPositions.txt # 76,095 (51,009 when including only those derived relative to H. debilis)
+positions="${OUT_DIR}/IntermediateFiles/AltDeleteriousPositions.txt"
 
-bcftools stats -s - SAM_Altdeleterious.vcf > AltDeleterious_StatsperSample.txt
-grep "PSC" AltDeleterious_StatsperSample.txt > AltDeleterious_perSampleCounts.txt
+### note: the bcftools stats "-s -" flag means to include all samples
+bcftools view -Oz ${VCF} -R ${positions} | \
+bcftools stats -s - | \
+grep "PSC" > ${OUT_DIR}/IntermediateFiles/dSNPCounts_perGeno/SampleCounts_AltDeleterious.txt
+
+awk 'BEGIN{FS=OFS="\t"}; {if ($39 == "Reference_deleterious") {print $8,$9}}' ${DSNP_DATA} > ${OUT_DIR}/IntermediateFiles/RefDeleteriousPositions.txt # 11,796 (4954 when including only those derived relative to H. debilis)
+positions="${OUT_DIR}/IntermediateFiles/RefDeleteriousPositions.txt"
+
+bcftools view -Oz ${VCF} -R ${positions} | \
+bcftools stats -s - | \
+grep "PSC" > ${OUT_DIR}/IntermediateFiles/dSNPCounts_perGeno/SampleCounts_RefDeleterious.txt
+
 ```
 
 # Add Deleterious Mutations from both lists for each genotype
-```bash
-module load R/4.0.0-foss-2019b
-R
-```
+
+Use R function to output a text file with counts of dSNPs for all genotypesa
 ```R
-DelRef_data <- read.table("RefDeleterious_perSampleCounts.txt", sep = "\t", header=FALSE, stringsAsFactors = FALSE)
-colnames(DelRef_data) <- c("PSC", "id", "sample", "nRefHom", "nNonRefHom", "nHets", "nTransitions", "nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissing")
+source("/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Functions.R")
+# all_stats[c("sample", "CalledGenotypes", "nMissingTotal")],
 
-#DelRef_data <- subset(DelRef_data, select = -c(PSC, id, nIndels, nHapRef, nHapAlt))
+Full_stats <- read.table("/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/All_SNP_stats.txt")
+colnames(Full_stats) <- c("PSC", "id", "sample", "nRefHom", "nNonRefHom", "nHets", "nTransitions", "nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissingTotal")
+Full_stats$CalledGenotypes <- Full_stats$nRefHom + Full_stats$nNonRefHom + Full_stats$nHets
 
-DelRef_data$Total <- DelRef_data$nRefHom + DelRef_data$nNonRefHom + DelRef_data$nHets + DelRef_data$nMissing
+dSNP_table <- Genotype_dSNP_count("/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/dSNPCounts_perGeno",
+	"RefDeleterious", "AltDeleterious", 
+	Full_stats[,c("sample", "CalledGenotypes", "nMissingTotal", "nRefHom", "nNonRefHom", "nHets")])
 
-DelAlt_data <- read.table("AltDeleterious_perSampleCounts.txt", sep = "\t", header=FALSE, stringsAsFactors = FALSE)
-colnames(DelAlt_data) <- c("PSC", "id", "sample", "nRefHom", "nNonRefHom", "nHets", "nTransitions", "nTransversions", "nIndels", "average_depth", "nSingletons", "nHapRef", "nHapAlt", "nMissing")
-
-#DelAlt_data <- subset(DelAlt_data, select = -c(PSC, id, nIndels, nHapRef, nHapAlt))
-
-DelAlt_data$Total <- DelAlt_data$nRefHom + DelAlt_data$nNonRefHom + DelAlt_data$nHets + DelAlt_data$nMissing
-
-# merge datasets
-Deldata <- merge(DelRef_data[,c(3:6,14:15)], 
-					DelAlt_data[,c(3:6,14:15)],
-					by="sample",
-					suffixes=c("_DelRef", "_DelAlt"))
-length(Deldata$sample) #288
-
-# Number of Deleterious Alleles:
-Deldata$TotNum_dSNPs <- 2*Deldata$nRefHom_DelRef +
-						Deldata$nHets_DelRef +
-						2*Deldata$nNonRefHom_DelAlt +
-						Deldata$nHets_DelAlt
-
-# Number of homozygous deleterious sites:
-Deldata$nHom_dSNPs <- Deldata$nRefHom_DelRef +
-					Deldata$nNonRefHom_DelAlt
-
-# Number of heterozygous deleterious sites:
-Deldata$nHet_dSNPs <- Deldata$nHets_DelRef +
-					Deldata$nHets_DelAlt
-
-# total number of SNPs (for proportions?)
-Deldata$Total <- Deldata$Total_DelRef + Deldata$Total_DelAlt
-Deldata$TotalMissing <- Deldata$nMissing_DelRef + Deldata$nMissing_DelAlt
-
-# save file
-write.table(Deldata[,c(1,12:16)], "/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/Genotype_dSNP_counts.txt", sep = "\t", quote=FALSE, row.names=FALSE)
+write.table(dSNP_table, "/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/All_dSNP_stats.txt", sep = "\t", quote=FALSE, row.names=FALSE)
 ```
+
+
+### Total homozygous and heterogzygous load
