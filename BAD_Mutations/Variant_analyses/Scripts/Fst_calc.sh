@@ -31,4 +31,6 @@ vcftools --gzvcf ${VCF} \
 --chr ${CHROM} \
 --weir-fst-pop ${LIST1} \
 --weir-fst-pop ${LIST2} \
+--fst-window-size 1000000 \
+--fst-window-step 1000000 \
 --out ${OUT_PREFIX}_${CHROM}
