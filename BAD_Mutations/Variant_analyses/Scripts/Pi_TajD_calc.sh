@@ -25,8 +25,13 @@ declare -a chrom_array=($(awk '{print $1}' "${GenomeFile}"))
 CHROM="${chrom_array[${SLURM_ARRAY_TASK_ID}]}"
 
 
+#vcftools --gzvcf ${VCF} \
+#--chr ${CHROM} \
+#--window-pi 1000000 \
+#--window-pi-step 1000000 \
+#--out ${OUT_PREFIX}_${CHROM}
+
 vcftools --gzvcf ${VCF} \
 --chr ${CHROM} \
---window-pi 1000000 \
---window-pi-step 1000000 \
+--TajimaD 1000000 \
 --out ${OUT_PREFIX}_${CHROM}
