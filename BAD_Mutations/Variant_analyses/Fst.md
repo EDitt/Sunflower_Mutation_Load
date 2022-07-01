@@ -1,28 +1,35 @@
 # Calculate Fst across genome
 
+### Subset VCF file:
+
+Starting with VCF file from Step 1 of PCA.md with singletons and sites missing more than 10% of data are removed:
+  `bcftools filter -e 'F_MISSING > 0.1' --threads 4 ${VCF} -Ou | bcftools view --min-ac 2[:minor] > /scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter.vcf`
+
+### Gzip/Index VCF file
+```bash
+VCF_sub="/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter.vcf"
+
+bgzip -c ${VCF_sub} > /scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter.vcf.gz
+tabix -p vcf /scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter.vcf.gz
+```
+
 ### Make lists of HA and RHA / Oil and NonOil lines
 ```bash
-mkdir /scratch/eld72413/SAM_seq/Fst
-
-# uploaded file: LineKeysINFO.txt to directory
-
-SAM_info=/scratch/eld72413/SAM_seq/Fst/LineKeywINFO.csv
-
 # HA lines
-awk -F',' '{if ($11=="HA" && $9!="NA" && $9!="HA412") {print $0}}' $SAM_info | wc -l # 131
-awk -F',' '{if ($11=="HA" && $9!="NA" && $9!="HA412") {print $9}}' $SAM_info > /scratch/eld72413/SAM_seq/Fst/HA_lines.txt
+awk -F',' '{if ($11=="HA" && $9!="NA" && $9!="HA412") {print $0}}' $SAM_INFO | wc -l # 145
+awk -F',' '{if ($11=="HA" && $9!="NA" && $9!="HA412") {print $9}}' $SAM_INFO > ${OUT_DIR}/Fst/HA_lines.txt
 
 # RHA lines
-awk -F',' '{if ($11=="RHA" && $9!="NA" && $9!="HA412") {print $0}}' $SAM_info | wc -l # 104
-awk -F',' '{if ($11=="RHA" && $9!="NA" && $9!="HA412") {print $9}}' $SAM_info > /scratch/eld72413/SAM_seq/Fst/RHA_lines.txt
+awk -F',' '{if ($11=="RHA" && $9!="NA" && $9!="HA412") {print $0}}' $SAM_INFO | wc -l # 112
+awk -F',' '{if ($11=="RHA" && $9!="NA" && $9!="HA412") {print $9}}' $SAM_INFO > ${OUT_DIR}/Fst/RHA_lines.txt
 
 # Oil lines
-awk -F',' '{if ($12=="Oil" && $9!="NA" && $9!="HA412") {print $0}}' $SAM_info | wc -l #151
-awk -F',' '{if ($12=="Oil" && $9!="NA" && $9!="HA412") {print $9}}' $SAM_info > /scratch/eld72413/SAM_seq/Fst/Oil_lines.txt
+awk -F',' '{if ($12=="Oil" && $9!="NA" && $9!="HA412") {print $0}}' $SAM_INFO | wc -l #193
+awk -F',' '{if ($12=="Oil" && $9!="NA" && $9!="HA412") {print $9}}' $SAM_INFO > ${OUT_DIR}/Fst/Oil_lines.txt
 
 # NonOil lines
-awk -F',' '{if ($12=="NonOil" && $9!="NA" && $9!="HA412") {print $0}}' $SAM_info | wc -l #108
-awk -F',' '{if ($12=="NonOil" && $9!="NA" && $9!="HA412") {print $9}}' $SAM_info > /scratch/eld72413/SAM_seq/Fst/NonOil_lines.txt
+awk -F',' '{if ($12=="NonOil" && $9!="NA" && $9!="HA412") {print $0}}' $SAM_INFO | wc -l #95
+awk -F',' '{if ($12=="NonOil" && $9!="NA" && $9!="HA412") {print $9}}' $SAM_INFO > ${OUT_DIR}/Fst/NonOil_lines.txt
 ```
 
 ### Calculate Fst for each variant (parallelize among chromosomes)
@@ -30,24 +37,24 @@ awk -F',' '{if ($12=="NonOil" && $9!="NA" && $9!="HA412") {print $9}}' $SAM_info
 HA/RHA
 ```bash
 sbatch --export=GenomeFile='/scratch/eld72413/SunflowerGenome/GenomeFile.txt',\
-VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
-LIST1='/scratch/eld72413/SAM_seq/Fst/HA_lines.txt',\
-LIST2='/scratch/eld72413/SAM_seq/Fst/RHA_lines.txt',\
-OUT_PREFIX='/scratch/eld72413/SAM_seq/Fst/HA_RHA/HA_RHA' \
-/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Fst_calc.sh # Submitted batch job 8084025
+VCF='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter.vcf.gz',\
+LIST1='/scratch/eld72413/SAM_seq/dSNP_results/Fst/HA_lines.txt',\
+LIST2='/scratch/eld72413/SAM_seq/dSNP_results/Fst/RHA_lines.txt',\
+OUT_PREFIX='/scratch/eld72413/SAM_seq/dSNP_results/Fst/HA_RHA' \
+/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Fst_calc.sh # Submitted batch job 12666566
 
-awk '{if ($3 > 0.1) {print $0}}' HA_RHA_Ha412HOChr01.weir.fst | wc -l # 385,459 (out of 1,847,871)
-awk '{if ($3 > 0.1) {print $0}}' HA_RHA_Ha412HOChr10.weir.fst | wc -l # 786,185 (out of 1,802,564)
+awk '{if ($5 > 0.1) {print $0}}' HA_RHA_Ha412HOChr01.windowed.weir.fst | wc -l # 3 (out of 161)
+awk '{if ($5 > 0.1) {print $0}}' HA_RHA_Ha412HOChr10.windowed.weir.fst | wc -l # 184 (out of 192)
 ```
 
 Oil/NonOil
 ```bash
 sbatch --export=GenomeFile='/scratch/eld72413/SunflowerGenome/GenomeFile.txt',\
-VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
-LIST1='/scratch/eld72413/SAM_seq/Fst/Oil_lines.txt',\
-LIST2='/scratch/eld72413/SAM_seq/Fst/NonOil_lines.txt',\
-OUT_PREFIX='/scratch/eld72413/SAM_seq/Fst/Oil_NonOil/Oil_NonOil' \
-/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Fst_calc.sh # Submitted batch job 8093662
+VCF='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter.vcf.gz',\
+LIST1='/scratch/eld72413/SAM_seq/dSNP_results/Fst/Oil_lines.txt',\
+LIST2='/scratch/eld72413/SAM_seq/dSNP_results/Fst/NonOil_lines.txt',\
+OUT_PREFIX='/scratch/eld72413/SAM_seq/dSNP_results/Fst/Oil_NonOil' \
+/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Fst_calc.sh # Submitted batch job 12666622
 ```
 
 ### Plot with R
