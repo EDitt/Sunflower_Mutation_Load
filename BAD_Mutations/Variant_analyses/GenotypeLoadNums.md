@@ -61,3 +61,22 @@ write.table(dSNP_table, "/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/All
 
 
 ### Total homozygous and heterogzygous load
+
+
+
+
+----- below failed- not sure I need this information so have not retried yet
+
+### Number of derived SNPs for each genotype
+
+First get number of called genotypes for polarized positions ** note: this failed
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
+awk 'BEGIN{FS=OFS="\t"}; NR>1 {if ($11!="NA") {print $1,$2}}' ${OUT_DIR}/IntermediateFiles/SNPINFO_ForUnfolded.txt > /scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/PolarizedSNP_Posititions.txt
+
+bcftools view -Oz ${VCF} -R ${OUT_DIR}/IntermediateFiles/PolarizedSNP_Posititions.txt | \
+bcftools stats -s - | \
+grep "PSC" > ${OUT_DIR}/GenotypeInfo/AllDerived_VariantStats.txt
+```
