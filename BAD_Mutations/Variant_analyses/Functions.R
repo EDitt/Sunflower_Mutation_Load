@@ -80,6 +80,28 @@ Genotype_dSNP_count <- function (DirPath, ref_name, alt_name, all_stats) {
   return(all_data)
 }
 
+# function for boxplot showing dSNP burden across germplasm groups
+Burden_boxplot <- function(dataframe, groupColumn, burdenColumn, yLabel, xGroups) {
+  p <- ggplot(data = dataframe[which(dataframe$group!="landrace"),], 
+              aes(x=dataframe[which(dataframe$group!="landrace"), groupColumn],
+                  y=dataframe[which(dataframe$group!="landrace"), burdenColumn])) + 
+    geom_boxplot(notch = FALSE, fill="grey") +
+    theme_minimal() +
+    ylab(yLabel) +
+    scale_x_discrete(limits=xGroups) +
+    geom_point(data=dataframe[which(dataframe$group=="landrace"),], 
+               aes(x=1, y=dataframe[which(dataframe$group=="landrace"),burdenColumn],
+                   shape=dataframe[which(dataframe$group=="landrace"),"SequenceName"]),
+               size = 3, fill="grey", show.legend = FALSE) +
+    scale_shape_manual(values = c(22,23,24)) +
+    theme(axis.text = element_text(size=10),
+          axis.text.x = element_text(angle=90),
+          legend.text = element_blank(),
+          #legend.text = element_text(size=12),
+          strip.text.x = element_text(size = 12),
+          axis.title.x = element_blank())
+  return(p)
+}
 
 ###########################################
 ##### HETEROTIC GROUP DIFFERENTIATION #####
