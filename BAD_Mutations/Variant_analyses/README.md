@@ -149,6 +149,10 @@ See `${REPO_DIR}/Variant_analyses/PCA.md` for information on the creation of a P
 
 Plotted Fst across the genome. See: `${REPO_DIR}/Variant_analyses/Fst.md`
 
+### Number of dSNPs per Genotype
+
+See GenotypeLoadNums.md for getting the number of dSNPs per genotype
+
 ### Numbers of Derived Variants for all Genotypes for different variant classes
 
 Use scripts to output a table with number of derived variants across all variant classes
@@ -173,12 +177,15 @@ Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_ana
 "_Alt_"
 ```
 
+In `/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/SampleCounts/intermediates`
+	- lists of sample, nRefHom, nNonRefHom, nHets, etc. for each variant class
+	- (deleterious, synonymous, and tolerated are in subdirectory 'ToUse'
+
+In `/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo`, file: `Annotation_VariantStats.txt` which contains the number of ancestral homozygous, number derived homozygous, number of heterozygotes, number missing for each line for deleterious, synonymous, and tolerated variant classes
+
 See graph of derived dSNPs/sSNPs for different germplasm groups at: Plots/Germplasm_boxplot.R
 
-See GenotypeLoadNums.md for getting the number of dSNPs per genotype
-
 ### Frequency of derived SNPs for different germplasm groups
-
 ```bash
 sbatch --export=SAM_INFO='/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/LineKeywINFO.csv',\
 VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
@@ -187,6 +194,39 @@ snps_remove='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/ToRemove_N
 
 # this returns tables for all groups of variants with the 
 ```
+
+In `/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/GroupFreqs` 
+	- lists of each SNP with num ref/alt alleles; MAF, derived freq, for each variant class, for each germplasm group
+	- in subdirectory `intermediates`, `_info_ForUnfolded.txt` is the same as the above but without deleterious alleles that are not derived relative to Debilis
+	- `_DerivedFreq_Bins.txt` has the frequency bins for all variant classes for all germplasm groups
+
+### Proportion of heterozygous dSNPs/sSNPs across different MAF classes
+To see if the greater heterozygosity in dSNPs is due only to lower frequencies
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
+SNP_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info_new.txt
+
+awk 'BEGIN{FS=OFS="\t"}; {if ($13 == "AllDel") {print $1, $2-1, $2}}' $SNP_INFO > $OUT_DIR/IntermediateFiles/AllDel_Positions.bed
+
+awk 'BEGIN{FS=OFS="\t"}; {if ($13 == "SynonymousNodups") {print $1, $2-1, $2}}' $SNP_INFO > $OUT_DIR/IntermediateFiles/AllSynon_Positions.bed
+
+module load GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
+
+gatk IndexFeatureFile \
+     -F ${VCF}
+
+SNPset=AllDel
+SNPset=AllSynon
+
+gatk VariantsToTable \
+     -V ${VCF} \
+     -L ${OUT_DIR}/IntermediateFiles/${SNPset}_Positions.bed \
+     -F CHROM -F POS -F HET -F HOM-REF -F HOM-VAR -F NCALLED \
+     -O ${OUT_DIR}/GenotypeInfo/Heterozygosity/${SNPset}_Het_table.txt
+```
+see: heterozygosity.R
 
 #### Private/Shared
 I will look at the proportion of shared versus private SNPs for deleterious and synonymous across the different frequency classes as well as plot the frequencies of all SNPs for both groups
@@ -451,6 +491,7 @@ module load VCFtools/0.1.16-GCC-8.3.0-Perl-5.30.0
 vcftools --gzvcf ${VCF} --singletons --out ${OUT_DIR}/GenomicPatterns/Freq/All_snps
 wc -l All_snps.singletons # 12,803,824
 awk '{if ($3=="D") {print $0}}' All_snps.singletons | wc -l # 4,997,248 are private doubletons
+awk '{if ($3=="S") {print $0}}' All_snps.singletons | wc -l # 7,806,575
 
 awk 'OFS="\t" {print $1,$2}' ${OUT_DIR}/GenomicPatterns/Freq/All_snps.singletons > ${OUT_DIR}/GenomicPatterns/Freq/SingletonPositions.txt
 
@@ -468,6 +509,21 @@ awk -v var="$VariantClass" 'OFS="\t" {if ($13==var){print $1, $2-1, $2}}' ${OUT_
 ```
 
 See R script
+
+how many dSNPs are singletons or private doubletons?
+```bash
+# how many dSNPs are singletons or private doubletons?
+awk 'NR>1 {if ($3=="S") {print $1":"$2}}' ${OUT_DIR}/GenomicPatterns/Freq/All_snps.singletons > ${OUT_DIR}/IntermediateFiles/SingletonPositions.txt
+awk 'NR>1 {if ($3=="D") {print $1":"$2}}' ${OUT_DIR}/GenomicPatterns/Freq/All_snps.singletons > ${OUT_DIR}/IntermediateFiles/PrivateDoubletonPositions.txt
+
+grep -w -Ff ${OUT_DIR}/IntermediateFiles/SingletonPositions.txt ${OUT_DIR}/IntermediateFiles/AllDel_Positions.txt | wc -l # 22,824
+grep -w -Ff ${OUT_DIR}/IntermediateFiles/PrivateDoubletonPositions.txt ${OUT_DIR}/IntermediateFiles/AllDel_Positions.txt | wc -l # 10,120
+```
+###### Answer: 
+- 22,824 dSNPs are Singletons (26%)
+- 10,120 Private doubletons (11.5%)
+Total: 32,944 (37.5%)
+
 
 ### Haplotypes blocks across genome
 Haplotype block coordinates obtained from Plink by Andries Temme (uploaded to cluster "blocks_with_delmut261.csv")

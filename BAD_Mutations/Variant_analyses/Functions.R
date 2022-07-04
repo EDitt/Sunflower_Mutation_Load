@@ -48,6 +48,18 @@ Hist_bins <- function (dataset, hist_breaks, colName, Annotation) {
 	return(hist_df)
 }
 
+# function to calculate Proportion of heterozygous genotypes and MAF
+PropHet_MAF <- function(dataframe) {
+  dataframe$RefFreq <- (dataframe$HET + 2*dataframe$HOM.REF) / (2*dataframe$NCALLED)
+  dataframe$AltFreq <- (dataframe$HET + 2*dataframe$HOM.VAR) / (2*dataframe$NCALLED)
+  dataframe$MAF <- ifelse(dataframe$RefFreq < dataframe$AltFreq,
+    dataframe$RefFreq, dataframe$AltFreq)
+  dataframe$PropHets <- dataframe$HET / dataframe$NCALLED
+  dataframe$MAFbin <-cut(dataframe$MAF,seq(0,0.5,0.05))
+  return(dataframe)
+}
+
+
 ###########################################
 ########### GERMPLASM PATTERNS ############
 ###########################################
