@@ -228,3 +228,40 @@ piechart_data <- function(slices, labels, color_names) {
   New_labels <- (paste0(labels, " ", pct, "%"))
   return(pie(slices, labels=New_labels, col=color_names))
 }
+
+###########################################
+## GENOMIC DEMOGRAPHIC STATISTIC GRAPHS ###
+###########################################
+
+# to plot Fst across the genome
+plotFst <- function(dataframe, ColName, quantiles){
+  quantiles <- quantile(dataframe[,ColName], quantiles, na.rm = T)
+  dataframe$PointCol <- ifelse(dataframe[,ColName]>quantiles[2],
+                               "99%",
+                               ifelse(dataframe[,ColName]>quantiles[1],
+                                      "95%",
+                                      ifelse((as.numeric(gsub("Ha412HOChr", "", dataframe$Chromosome)) %%2)==0,
+                                             "even",
+                                             "odd")))
+  dataframe$PointCol <- factor(dataframe$PointCol, levels = c("99%", "95%", "odd", "even"))
+  ChromosomeNames <- as.character(unique(as.numeric(gsub("Ha412HOChr", "", dataframe$Chromosome))))
+  names(ChromosomeNames) <- unique(dataframe$Chromosome)
+  plot <- ggplot(data=dataframe, aes(x=Mbp, y=dataframe[,ColName])) +
+    geom_point(aes(color=PointCol)) +
+    facet_grid(~Chromosome, 
+               scales = "free_x", space = "free_x", switch = "x",
+               labeller = labeller(Chromosome=ChromosomeNames)) +
+    theme_minimal() +
+    scale_color_manual(
+      values= c("tomato1", "darkgoldenrod1",
+                "lightskyblue3", "grey70"),
+      name = "", labels = c("99% quantile", 
+                            "95% quantile", "", "")) +
+    theme(panel.grid.major.x = element_blank(), 
+          panel.grid.minor.x = element_blank(),
+          panel.spacing.x = unit(0, "null"),
+          axis.text.x = element_blank()) +
+    xlab("Chromosome Position") +
+    ylab("Fst")
+  return(plot)
+}
