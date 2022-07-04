@@ -137,17 +137,12 @@ awk '{if ($5>1) {print $0}}' $Pos_info > All_alleleFreqInfo_noSingleton.txt # 29
 
 # what about cases where reference exhibits the minor allele only in heterozygote form?
 ```
-
 ----- 
 
 ## Germplasm patterns
 Spreadsheet `scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/LineKeywINFO.csv` contains grouping information for each genotype to match with Variant ID's from VCF
 
 See `${REPO_DIR}/Variant_analyses/PCA.md` for information on the creation of a PCA for genotypes in the SAM pop
-
-### Heterotic Group Differentiaton
-
-Plotted Fst across the genome. See: `${REPO_DIR}/Variant_analyses/Fst.md`
 
 ### Number of dSNPs per Genotype
 
@@ -227,6 +222,30 @@ gatk VariantsToTable \
      -O ${OUT_DIR}/GenotypeInfo/Heterozygosity/${SNPset}_Het_table.txt
 ```
 see: heterozygosity.R
+
+high heterozygosity in certain regions of the genome?
+```bash
+awk 'BEGIN{FS=OFS="\t"}; {if ($12 == "Del") {print $1, $2-1, $2, $10}}' $OUT_DIR/GenotypeInfo/Heterozygosity/HetGenome_data.txt > PropHet_dSNP.bed
+
+awk 'BEGIN{FS=OFS="\t"}; {if ($12 == "Synon") {print $1, $2-1, $2, $10}}' $OUT_DIR/GenotypeInfo/Heterozygosity/HetGenome_data.txt > PropHet_synony.bed
+
+module load BEDTools/2.30.0-GCC-8.3.0
+
+bedtools makewindows -g /scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.genome.fasta.fai -w 1000000 \
+| bedtools intersect -a - -b $OUT_DIR/GenotypeInfo/Heterozygosity/PropHet_dSNP.bed -wo \
+| bedtools groupby -g 1,2,3 -c 7 -o mean,median,count > ${OUT_DIR}/GenotypeInfo/Heterozygosity/PropHet_dSNP_1Mbp.txt
+
+bedtools makewindows -g /scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.genome.fasta.fai -w 1000000 \
+| bedtools intersect -a - -b $OUT_DIR/GenotypeInfo/Heterozygosity/PropHet_synony.bed -wo \
+| bedtools groupby -g 1,2,3 -c 7 -o mean,median,count > ${OUT_DIR}/GenotypeInfo/Heterozygosity/PropHet_Synon_1Mbp.txt
+```
+
+
+----- 
+
+## Heterotic Group Differentiaton
+
+Plotted Fst across the genome for HA vs. RHA. See: `${REPO_DIR}/Variant_analyses/Fst.md`
 
 #### Private/Shared
 I will look at the proportion of shared versus private SNPs for deleterious and synonymous across the different frequency classes as well as plot the frequencies of all SNPs for both groups
