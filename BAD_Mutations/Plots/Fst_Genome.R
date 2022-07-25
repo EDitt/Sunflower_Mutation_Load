@@ -31,8 +31,16 @@ Fst_df$Mbp <- round((Fst_df$StartPos / 1000000) + 1, digits = 0)  # need to add 
 ######## PLOT ACROSS GENOME ##########
 ######################################
 
+ChromosomeNames <- as.character(unique(as.numeric(gsub("Ha412HOChr", "", Fst_HA_RHA$Chromosome))))
+names(ChromosomeNames) <- unique(Fst_HA_RHA$Chromosome)
+
 plotFst(subset(Fst_df, Variant_type=="HA_RHA"), "Weighted_Fst", c(0.975, 0.995))
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/Fst_HA_RHA.pdf",
+       width = 10, height = 10)
+
 plotFst(subset(Fst_df, Variant_type=="Oil_NonOil"), "Weighted_Fst", c(0.975, 0.995))
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/Fst_Oil_NonOil.pdf",
+       width = 10, height = 10)
 
 ######################################
 ######### PLOT BOTH AS GRID ###########
@@ -90,6 +98,48 @@ ggplot(data=Pi_all_wide, aes(x=Mbp, y=PiRHA_PiHA)) +
   #geom_line() +
   geom_smooth() +
   facet_wrap(~CHROM, scales = "free_x")
+
+######################################
+#### IMPORT AND GRAPH TAJIMA'S D #####
+######################################
+
+HetGroups_Dem <- function(DIR, suffix, prefix, headerTF) {
+  Data <- ImportFilesAsList(DIR, suffix, prefix, headerTF)
+  Data_HA <- Data[c(grep("^HAH", names(Data)))]
+  names(Data_HA) <- gsub("HA", "", names(Data_HA))
+  Data_HA <- lapply(Data_HA, function(x) {
+    x$group <- "HA"; return(x)
+  })
+  Data_RHA <- Data[c(grep("^RHA", names(Data)))]
+  names(Data_RHA) <- gsub("RHA", "", names(Data_RHA))
+  Data_RHA <- lapply(Data_RHA, function(x) {
+    x$group <- "RHA"; return(x)
+  })
+  Data_all <- rbind(do.call("rbind", Data_HA),
+                  do.call("rbind", Data_RHA))
+  Data_all$Mbp <- round((Data_all$BIN_START / 1000000) + 1, digits = 0) 
+  Data_all <- Data_all[order(Data_all$CHROM, Data_all$Mbp),]
+}
+
+
+Pi_test <- HetGroups_Dem("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicPatterns/Fst_data",
+                        ".windowed.pi", "_Mbp1_", TRUE)
+
+ggplot(data=Pi_test, aes(x=Mbp, y=PI)) +
+  geom_smooth(aes(color=group)) +
+  #geom_line(aes(color=group)) +
+  facet_wrap(~CHROM, scales = "free_x")
+ 
+
+TajD <- HetGroups_Dem("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicPatterns/Fst_data",
+                         ".Tajima.D", "_Mbp1_", TRUE)
+
+ggplot(data=TajD, aes(x=Mbp, y=TajimaD)) +
+  geom_smooth(aes(color=group)) +
+  #geom_line(aes(color=group)) +
+  facet_wrap(~CHROM, scales = "free_x")
+
+
 
 
 ######################################
