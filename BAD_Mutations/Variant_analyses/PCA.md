@@ -7,18 +7,16 @@
 
 ```bash
 srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
-module load BCFtools/1.13-GCC-8.3.0
-vcf=/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz
-outputdir=/scratch/eld72413/SAM_seq/PCA
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
 
-bcftools filter -e 'F_MISSING > 0.1' --threads 4 $vcf -Ou | bcftools view --min-ac 2[:minor] > ${outputdir}/Sunflower_SAM_SNP_Calling_PCAfilter.vcf
+bcftools filter -e 'F_MISSING > 0.1' --threads 4 ${VCF} -Ou | bcftools view --min-ac 2[:minor] > /scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter.vcf
 # now contains 13,973,358 variants
 ```
 
 ### 2. Convert to Plink and LD prune
 ```bash
 cd /home/eld72413/DelMut/Sunflower_Mutation_Load/SNP-calling/Plink
-sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter.vcf',OUT_PREFIX='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter' VCF_convert.sh # Submitted batch job 7997074
+sbatch --export=INPUT_VCF='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter.vcf',OUT_PREFIX='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter' VCF_convert.sh # Submitted batch job 12568993
 
 # calculate r^2 among pairs of SNPs, parallelizing across chromosomes
 cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses
@@ -36,15 +34,6 @@ Window_Size='1',Step_Size='1',Rsquared='0.9' LD_prune.sh # Submitted batch job 7
 # Got warning message: step size should be 1 when window size is in kb
 # Pruning complete.  9037810 of 13973358 variants removed (at R^2 of 0.8)
 # Pruning complete.  8460435 of 13973358 variants removed (at R^2 of 0.9)
-
-
-plink --file /scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_PCAfilter \
---extract /scratch/eld72413/SAM_seq/PCA/PrunedLists/Plink_0.9.prune.in \
---allow-extra-chr \
---out /scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_Pruned_R2_0.9 \
---recode
-
-#--make-bed
 ```
 
 ### 3. Convert from Plink format to Eigensoft format
@@ -72,7 +61,7 @@ convertf -p $parfile
 ## eigenstrat output
 ## ##end of convertf run
 ```
-
+parfile created by making a .txt file and changing the files and directory paths following the eigenstrat directions for converting between ped and eigenstrat format
 
 do I wnat to change column 6 and alter the "outputgroup" parameter?
 
@@ -97,79 +86,73 @@ smartpca.perl -i ${Dir}/Sunflower_SAM.eigenstratgeno \
 -s 6.0
 
 ##### 31 genotypes were removed?
+## -s flag controls outlier removal (# of SDs an individual must exceed to be considered an outlier), can increase above 6.0 for large datasets
+## to turn off outlier removal set -m 0
 
-# smartpca -p /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_SAM.pca.par >/scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_SAM_PCA.log
-# ploteig -i /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_SAM.pca.evec -c 1:2  -p ???  -x  -y  -o /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_Sam_Unlabeled.plot.xtxt 
-# sh: ploteig: command not found
-# evec2pca.perl 10 /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_SAM.pca.evec /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_SAM.ind /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/Sunflower_SAM.pca
+# try without removing outliers
+Dir=/scratch/eld72413/SAM_seq/PCA/EigenstratFiles
+smartpca.perl -i ${Dir}/Sunflower_SAM10.eigenstratgeno \
+-a ${Dir}/Sunflower_SAM10.snp \
+-b ${Dir}/Sunflower_SAM10.ind \
+-k 10 \
+-o /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/NoOutRem/Sunflower_SAM_all.pca \
+-p /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/NoOutRem/Sunflower_Sam_Unlabeled_all.plot \
+-e /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/NoOutRem/Sunflower_SAM_all.eval \
+-l /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/NoOutRem/Sunflower_SAM_PCA_all.log \
+-m 0 \
+-t 10 \
+-s 12.0
 ```
 
-### 5. Plot
-```R
-### plot PCA results from SmartPCA
+### 5. Plot (see PCA_plot.R)
 
-library(ggplot2)
-library(ggsci)
+### Additional: PCA of only chromosome 10 to see if there is haplotype structure
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
 
-smartpca <- read.table("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/Genotype_patterns/Sunflower_SAM.pca.evec",
-                       col.names=c("Sample", "PC1", "PC2", "PC3", "PC4", "PC5",
-                                   "PC6", "PC7", "PC8", "PC9", "PC10", "Pop"))
-# combine with sample info
+# subset chromosome 10
+plink --file /scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_Pruned_R2_0.9 \
+--allow-extra-chr \
+--chr Ha412HOChr10 \
+--out /scratch/eld72413/SAM_seq/PCA/Chr10/Sunflower_SAM_SNP_Calling_Pruned_R2_0.9_CHR10 \
+--recode
 
-sample_info <- read.csv("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/Genotype_patterns/LineKeywINFO.csv",
-                        header=T)
+# edit .map file for eigensoft
+awk 'BEGIN{FS=OFS="\t"}; {gsub("Ha412HOChr","",$1)}1' Sunflower_SAM_SNP_Calling_Pruned_R2_0.9_CHR10.map | sed 's/^0//' | sed 's/^0c...../18/' > /scratch/eld72413/SAM_seq/PCA/Chr10/Sunflower_SAM_SNP_Calling_Pruned_R2_0.9_CHR10_edit.map
 
-pca_wInfo <- merge(smartpca, sample_info, by.x="Sample", by.y = "PPN")
+# convert to eigensoft format
+module load EIGENSOFT/7.2.1-foss-2019b
 
-smartpca[which(!smartpca$Sample %in% pca_wInfo$Sample),] # PI 531071 and SF-33
+parfile10="/scratch/eld72413/SAM_seq/PCA/Chr10/par.PED.EIGENSTRAT"
 
-# make groups for graphing
-pca_wInfo$group <- ifelse(pca_wInfo$heterotic_group=="OPV" |
-                    pca_wInfo$heterotic_group=="landrace", "OPV/landrace",
-                    paste0(pca_wInfo$heterotic_group, "-", pca_wInfo$Oil_NonOil))
+convertf -p $parfile10
 
-plot(pca_wInfo$PC1, pca_wInfo$PC2)
+Dir=/scratch/eld72413/SAM_seq/PCA/Chr10
+smartpca.perl -i ${Dir}/Sunflower_SAM10.eigenstratgeno \
+-a ${Dir}/Sunflower_SAM10.snp \
+-b ${Dir}/Sunflower_SAM10.ind \
+-k 10 \
+-o ${Dir}/Sunflower_SAM10.pca \
+-p ${Dir}/Sunflower_SAM10_Unlabeled.plot \
+-e ${Dir}/Sunflower_SAM10.eval \
+-l ${Dir}/Sunflower_SAM10_PCA.log \
+-m 5 \
+-t 10 \
+-s 6.0
 
-pal_jco(palette = c("default"), alpha = 1)
-show_col(pal_jco("default")(10))
-
-ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
-  geom_point(aes(color=heterotic_group, shape=Oil_NonOil), size=2) +
-  #scale_color_uchicago() +
-  scale_color_jco() +
-  theme_minimal()
-
-ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
-  geom_point(aes(color=Mandel), size=2) +
-  scale_color_jco() +
-  theme_minimal()
-
-## using the code below
-ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
-  geom_point(aes(color=Oil_NonOil, shape = heterotic_group), size=4) +
-  #scale_color_uchicago() +
-  #scale_color_jco() +
-  scale_color_manual(values = c("#A7303099", "#EFC00099")) +
-  #scale_fill_manual(values = c("#A7303099", "#EFC00099")) +
-  #scale_color_manual(values = c("#A7303099", "#003C6799", "#EFC00099")) +
-  scale_shape_manual(values = c(16, 7, 8, 12, 21)) +
-  theme_minimal() +
-  geom_text(aes(label=SequenceName, color=Oil_NonOil))
-
-ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
-  geom_point(aes(color=group), size=2) +
-  #scale_color_uchicago() +
-  #scale_color_jco() +
-  #scale_color_manual(values = c("#0073C299", "#EFC00099", "darkgrey","darkgrey","#CD534C99", "darkgrey","darkgrey","#A7303099","#003C6799", "#8F770099")) +
-  theme_minimal() +
-  geom_text(aes(label=SequenceName, color=group))
-  
-ggplot(data = pca_wInfo, aes(x=PC1, y=PC2)) +
-  geom_point(aes(color=heterotic_group, shape = Oil_NonOil, ), size=4) +
-  #scale_color_uchicago() +
-  scale_color_jco() +
-  #scale_color_manual(values = c("#A7303099", "#003C6799", "#EFC00099")) +
-  scale_shape_manual(values = c(16, 7, 8, 12, 9, 21)) +
-  theme_minimal()
-  
+# try without removing outliers
+smartpca.perl -i ${Dir}/Sunflower_SAM10.eigenstratgeno \
+-a ${Dir}/Sunflower_SAM10.snp \
+-b ${Dir}/Sunflower_SAM10.ind \
+-k 10 \
+-o ${Dir}/Sunflower_SAM10.pca \
+-p ${Dir}/Sunflower_SAM10_Unlabeled.plot \
+-e ${Dir}/Sunflower_SAM10.eval \
+-l ${Dir}/Sunflower_SAM10_PCA.log \
+-m 5 \
+-t 10 \
+-s 6.0
 ```
+
+
