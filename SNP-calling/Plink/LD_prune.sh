@@ -34,7 +34,7 @@ plink --file ${File_Prefix} \
 Num_removed=$(wc -l "${Output_Dir}"/PrunedLists/Plink_"${Rsquared}".prune.out)
 Num_kept=$(wc -l "${Output_Dir}"/PrunedLists/Plink_"${Rsquared}".prune.in)
 
-Echo "Pruning SNPs with R^2 more than ${Rsquared} in ${Window_Size} kb windows will remove ${Num_removed} variants, keeping ${Num_kept} variants"
+echo "Pruning SNPs with R^2 more than ${Rsquared} in ${Window_Size} kb windows will remove ${Num_removed} variants, keeping ${Num_kept} variants"
 
 plink --file ${File_Prefix} \
 --extract "${Output_Dir}"/PrunedLists/Plink_"${Rsquared}".prune.in \
