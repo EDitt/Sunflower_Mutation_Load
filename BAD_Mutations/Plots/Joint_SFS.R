@@ -84,6 +84,30 @@ pdf("/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/HeteroticGroup/HA_RHA_J
 print(ggarrange(SFS_plots2$SynonymousNodups, SFS_plots2$AllDel), labels=c("A. Synonymous", "B. Deleterious"))
 dev.off()
 
+######################################
+##### SFS FOR CHROM 10 HAPLOTYPE #####
+######################################
 
+snp_freqs_haplo10 <- subset(snp_freqs_derived, Chromosome=="Ha412HOChr10" &
+	Position > 40336916 & Position <= 113115980) # N=3762
+
+write.table(snp_freqs_haplo10, file = "/scratch/eld72413/SAM_seq/dSNP_results/Haplotypes/Chrom10/Haplotype_Chr10_Info.txt",
+	sep = "\t", quote = FALSE)
+
+######################################
+############# EXPLORATORY ############
+######################################
+
+# a groups of SNPs (dSNPs and sSNPs) have >0.75 derived allele frequency for RHA but close to 0 for HA
+
+RHA_highFreq <- snp_freqs_type$AllDel[which(snp_freqs_type$AllDel$Derived_Freq_RHA > 0.75 & snp_freqs_type$AllDel$Derived_Freq_HA < 0.25),]
+#RHA_highFreq <- snp_freqs_type$AllDel[which(snp_freqs_type$AllDel$Derived_Freq_RHA > 0.5 & snp_freqs_type$AllDel$Derived_Freq_HA < 0.25),]
+aggregate(RHA_highFreq$Position, by=list(RHA_highFreq$Chromosome), length) # 26 on Chromosome 10, 15 on chromosome 13 (with 0.5 cutoff, many chromosomes represented, but majority on chromosomes 4,8,10,13)
+
+HA_highFreq <- snp_freqs_type$AllDel[which(snp_freqs_type$AllDel$Derived_Freq_RHA < 0.25 & snp_freqs_type$AllDel$Derived_Freq_HA > 0.75),]
+aggregate(HA_highFreq$Position, by=list(HA_highFreq$Chromosome), length) # 17 on Chromosome 10, 2 on Chromosome 13
+
+RHA_highFreq2 <- snp_freqs_type$AllDel[which(snp_freqs_type$AllDel$Derived_Freq_RHA > 0.25 & snp_freqs_type$AllDel$Derived_Freq_HA < 0.1),]
+aggregate(RHA_highFreq2$Position, by=list(RHA_highFreq2$Chromosome), length) # represented across multiple chromosomes, 197 on Chromosome 10
 
 

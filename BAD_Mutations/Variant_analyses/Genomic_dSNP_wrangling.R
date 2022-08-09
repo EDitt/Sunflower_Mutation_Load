@@ -86,6 +86,14 @@ GenDfDel_Rel_long <- reshape(GenDf_Rel[,c(1:5,7)],
 #                                           levels=c("Count.Num_HighDerFreq.Deleterious", "Count.Num_HighMAF.Deleterious",
 #                                                    "Count.Num_LowMAF_minusSingle.Deleterious", "Count.SingleIndiv_Alleles.Deleterious"))
 
+max(GenDf_Rel$TotalNum.Deleterious) # 0.0021
+MeandSNPCod <- mean(GenDf_Rel$TotalNum.Deleterious) 
+SDdSNPCod <-sd(GenDf_Rel$TotalNum.Deleterious)
+
+# make dataset to plot in margin
+max(GenDf_Rel$dSNP_sSNP) # 0.338
+dSNP_sSNP <- GenDf_Rel[,c(1,2,13)]
+#dSNP_sSNPChrom <- split(GenDf_Rel[,c(1,2,13)], GenDf_Rel$Chromosome)
 
 ######################################
 ######### SAVE AS A DATAFRAME ########
@@ -95,3 +103,9 @@ write.table(GenDfDel_Rel_long,
             file = "/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicPatterns/dSNPperCodonNums.txt",
             sep = "\t", quote = FALSE, row.names = FALSE)
 
+dSNPNums <- GenDfDel_Rel_long
+row.names(dSNPNums) <- NULL
+
+# save df + other objects as R object
+save(dSNPNums, dSNP_sSNP, MeandSNPCod, SDdSNPCod, 
+     file = "/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicPatterns/dSNP_genomeGraph.RData")

@@ -21,8 +21,9 @@ Annotations <- args[1]
 Ancestral_file <- args[2]
 Output_Dir <- args[3]
 Group_name <- args[4]
+Input_file <- args[5]
 
-Input_file <- paste0(Output_Dir, "/intermediates/", Group_name, "_SNP_freq.txt")
+#Input_file <- paste0(Output_Dir, "/intermediates/", Group_name, "_SNP_freq.txt")
 Output_file <- paste0(Output_Dir, "/", Group_name, "_SNP_info.txt")
 
 #########################

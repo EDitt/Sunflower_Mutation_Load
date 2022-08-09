@@ -543,7 +543,75 @@ grep -w -Ff ${OUT_DIR}/IntermediateFiles/PrivateDoubletonPositions.txt ${OUT_DIR
 - 10,120 Private doubletons (11.5%)
 Total: 32,944 (37.5%)
 
+### Runs of homozygosity
+Using the pruned Plink files created for the PCA (see PCA.md)
 
+```bash
+cd /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts
+sbatch --export=Output_Dir='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH',\
+File_Prefix='/scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_Pruned_R2_0.9',\
+Output_Prefix='Plink' Runs_homozygosity.sh # Submitted batch job 12983328 (node undergoing maintenance)
+
+# submit as interactive job since batch nodes undergoing maintenance
+plink --file /scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_Pruned_R2_0.9 \
+--homozyg \
+--homozyg-group \
+--allow-extra-chr \
+--out /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default
+
+# how many SNPs are found in ROH across genome?
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l # tmux window in ss-sub4
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+module load BEDTools/2.30.0-GCC-8.3.0
+
+# subset to only ROH > 2 Mpb? (~78th percentile)
+awk '{if ($9>2000) {print $0}}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom > LROH_2Mbp.hom
+
+# (make .bed for from ROH Plink output before using intersect command)
+#awk 'NR>1 {print $4 "\t" $7-1 "\t" $8}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom | \
+awk 'NR>1 {print $4 "\t" $7-1 "\t" $8}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/LROH_2Mbp.hom | \
+sort -k 1,1 -k2,2n | \
+bedtools intersect -c -a ${VCF} \
+-b stdin -sorted | awk '{print $1,$2,$4,$5,$298}' > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/LROH_2Mbp_freq_SNP.txt
+#/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/ROH_freq_SNP.txt
+
+bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 1000000 > $OUT_DIR/IntermediateFiles/Mbp1_windows.bed
+
+#awk 'OFS="\t" {print $1,$2-1,$2,$5}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/ROH_freq_SNP.txt | \
+awk 'OFS="\t" {print $1,$2-1,$2,$5}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/LROH_2Mbp_freq_SNP.txt | \
+bedtools intersect -a $OUT_DIR/IntermediateFiles/Mbp1_windows.bed -b - -wo | \
+bedtools groupby -g 1,2,3 -c 7 -o mean,median,count >  /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/LROH_2Mbp_freq_1MbpBins.txt
+#/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/ROH_freq_1MbpBins.txt
+```
+
+How many dSNPs are in runs of homozygosity? Calculate for each genotype:
+Number of derived, homozygous dSNPs and sSNPs in ROH 
+(can compare to numbers in full dataset: /scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/Annotation_VariantStats.txt)
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+
+# first, subset VCF to dSNPs/sSNPs and derived calls to save time
+Table="/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/SNPINFO_ForUnfolded.txt"
+awk 'BEGIN{FS=OFS="\t"}; {if ($13 == "AllDel" || $13 == "SynonymousNodups") {print $0}}' ${Table} |\
+awk 'BEGIN{FS=OFS="\t"}; {if ($11!="NA") {print $1,$2}}' > ${OUT_DIR}/IntermediateFiles/dSNP_sSNP_Polarized_positions.txt # 725,117
+
+bcftools view -Oz ${VCF} -R ${OUT_DIR}/IntermediateFiles/dSNP_sSNP_Polarized_positions.txt > ${OUT_DIR}/IntermediateFiles/Sunflower_SAM_SNP_Calling_BIALLELIC_Polarized_sSNP_dSNP.vcf.gz
+
+# need to make a key for Plink names and VCF names
+awk '{if ($1==$2) print $1"\t"$2"\t"$1;
+else print $1"\t"$2"\t"$1"_"$2}' Plink_default.nosex > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/sample_name_key.txt
+
+# script to calculate numbers of snps in roh for all genotypes and convert to number derived homozygous
+sbatch --export=SampleFile='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/sample_name_key.txt',\
+outdir='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH',\
+ROH='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom',\
+vcf='Sunflower_SAM_SNP_Calling_BIALLELIC_Polarized_sSNP_dSNP.vcf.gz' X.sh
+
+```
+also look specifically at long runs of homozygosity?
+
+----
 ### Haplotypes blocks across genome
 Haplotype block coordinates obtained from Plink by Andries Temme (uploaded to cluster "blocks_with_delmut261.csv")
 

@@ -100,6 +100,13 @@ labels <- paste0("Chromosome ", seq(1,17, by=1))
 
 ggarrange(plotlist = GenomePlots, labels=labels) 
 
+
+## or
+Genome_plot(AllGenData, AllGenData$Mbp, AllGenData$dSNP_codon,
+            AllGenData$sSNP_codon,
+            Col_Deleterious, Col_Synonymous, 10, 0.0025, meanDel+sdDel) +
+  facet_wrap(~Chromosome, scales = "free_x") 
+
 ######################################
 ########### PLOT dSNP/sSNP ###########
 ######################################
@@ -117,11 +124,11 @@ Genome_plot2 <- function(dataset, X_column, y, y_col, yMax) {
 
 # test
 Genome_plot2(ChromosomeData$Ha412HOChr01, ChromosomeData$Ha412HOChr01$Mbp, 
-            ChromosomeData$Ha412HOChr01$dSNP_sSNP, "blue")
+            ChromosomeData$Ha412HOChr01$dSNP_sSNP, "blue", 0.35)
 
 GenomePlots2 <- lapply(ChromosomeData, function(x) {
   Genome_plot2(x, x$Mbp, 
-              x$dSNP_sSNP, "blue")})
+              x$dSNP_sSNP, "blue", 0.36)})
 
 ggarrange(plotlist = GenomePlots2, labels=labels) 
 
@@ -171,7 +178,7 @@ HighFreq_derChrom <- split(HighFreq_derWide, HighFreq_derWide$Chromosome)
 Genome_plot(HighFreq_derChrom$Ha412HOChr01, HighFreq_derChrom$Ha412HOChr01$Mbp, 
             HighFreq_derChrom$Ha412HOChr01$CountPerCodon.DerFreqAllDel, 
             HighFreq_derChrom$Ha412HOChr01$CountPerCodon.DerFreqSynonymousNodups,
-            Col_Deleterious, Col_Synonymous, 50, 0.00020, mean_HighDerFreqCodon + 2*sd_HighDerFreqCodon)
+            Col_Deleterious, Col_Synonymous, 50, 0.00020, mean_HighDerFreqCodon + sd_HighDerFreqCodon)
 
 GenomeDerFreqPlots <- lapply(HighFreq_derChrom, function(x) {
   Genome_plot(x, x$Mbp, 
@@ -206,7 +213,7 @@ HighMAF_Chrom <- split(HighMAF_Wide, HighMAF_Wide$Chromosome)
 Genome_plot(HighMAF_Chrom$Ha412HOChr01, HighMAF_Chrom$Ha412HOChr01$Mbp, 
             HighMAF_Chrom$Ha412HOChr01$CountPerCodon.MAFAllDel, 
             HighMAF_Chrom$Ha412HOChr01$CountPerCodon.MAFSynonymousNodups,
-            Col_Deleterious, Col_Synonymous, 20, 0.00050, mean_HighMAFCodon + 2*sd_HighMAFCodon)
+            Col_Deleterious, Col_Synonymous, 20, 0.00050, mean_HighMAFCodon + sd_HighMAFCodon)
 
 GenomeMAFPlots <- lapply(HighMAF_Chrom, function(x) {
   Genome_plot(x, x$Mbp, 

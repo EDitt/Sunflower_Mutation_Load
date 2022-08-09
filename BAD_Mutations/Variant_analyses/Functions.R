@@ -231,6 +231,13 @@ Col_Splice <- "#E7298A"
 scale_fill_manual(values= c("#999999", "#00AFBB", "#C3D7A4", "#FC4E07", "#E7B800"),
                   name = "Variant Class", labels = c("Non-coding", "Synonymous", "Tolerated", "Deleterious", "Stop Codon Lost/Gained"))
 
+HA_Oil <- c("#EFC000FF")
+RHA_Oil <- c("#8F7700FF")
+HA_NonOil <- c("#7AA6DCFF")
+RHA_NonOil <- c("#4A6990FF")
+introgressed <- c("#CD534CFF")
+landrace_OPV <- c("#A73030FF")
+
 ###########################################
 ################# PLOTS ##################
 ###########################################

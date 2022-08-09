@@ -18,6 +18,7 @@ module load PLINK/1.9b_5-x86_64
 
 plink --file ${File_Prefix} \
 --homozyg \
+--homozyg-group \
 --allow-extra-chr \
 --homozyg-window-kb 5000 \
 --homozyg-window-snp 50 \

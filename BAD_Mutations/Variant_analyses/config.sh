@@ -46,6 +46,9 @@ DSNP_DATA=/scratch/eld72413/SAM_seq/BAD_Mut_Files/Results/dsnp_data_Polarized.ta
 SNP_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info.txt
 	# permanently saved at: /project2/jmblab/dittmar/NSF_Proj/dSNP_files
 
+# Number ancestral homozygous, number derived homozygous, number heterozygous alleles for deleterious, tolerated, synonymous sites for all genotypes
+SAMPLE_SNP_DATA=/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/Annotation_VariantStats.txt
+
 ###########################################
 #########     COMMON VARIABLES    #########
 ###########################################
