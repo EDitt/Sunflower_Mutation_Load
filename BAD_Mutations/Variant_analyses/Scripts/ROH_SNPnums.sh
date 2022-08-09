@@ -47,7 +47,7 @@ bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' |\
 awk '{if ($5>0) {print $0}}' > ${outdir}/intermediates/ROH_${Sample}_SNPstats.txt
 
 #4.) convert to derived and ancestral
-Rscript "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/Variant_Table.R" \
+Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Variant_Table.R" \
 "/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_Positions.txt" \
 "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
 "${outdir}/intermediates/GenotypeFiles" \
