@@ -289,14 +289,36 @@ plotFst <- function(dataframe, ColName, quantiles){
 ########### RUNS OF HOMOZYGOSITY ##########
 ###########################################
 
-VarTable_toData <- function(dataframe, VariantTypes) {
+# calculates the sum of the derived homozygotes for each SNP in each variant class 
+#       (using zeros for genotypes with no derived homozygotes in roh for the specified variant types)
+aggregate_snp_data <- function(dataframe, VariantTypes) {
   VariantSubset <- subset(dataframe, Variant_type %in% VariantTypes)
   VariantSubset$Variant_type <- factor(VariantSubset$Variant_type)
   NoHets <- subset(VariantSubset, Derived_Freq==0 | Derived_Freq==1)
   NoHets$Derived_Freq <- as.numeric(NoHets$Derived_Freq)
-  Derived_homozygoteNum <- aggregate(NoHets$Derived_Freq,
-    by=list(NoHets$Variant_type), sum, drop=FALSE)
-  colnames(Derived_homozygoteNum) <- c("Variant_type", "NumHomozygousDerived")
-  #colnames(Derived_homozygoteNum) <- c("Variant_type", paste0(Sample, "_NumHomozygousDerived"))
-  return(Derived_homozygoteNum)
+  if(length(NoHets$Variant_type)==0)
+    {return(data.frame(Variant_type = VariantTypes, NumHomozygousDerived = c(0,0,0)))
+      } else{
+        Derived_homozygoteNum <- aggregate(NoHets$Derived_Freq, 
+          by=list(NoHets$Variant_type), sum, drop=FALSE)
+        colnames(Derived_homozygoteNum) <- c("Variant_type", "NumHomozygousDerived")
+        return(Derived_homozygoteNum)
+      }
 }
+
+# executes the prior function & combines the aggregated data for each genotype into one dataframe
+CombineROHlists <- function(directory, variant_types) {
+  SNPs_in_ROH <- ImportFilesAsList(directory, ".txt", "_SNP_info", TRUE)
+  SNPs_totalhom <- lapply(SNPs_in_ROH, function(x) {
+  aggregate_snp_data(x, variant_types)
+  })
+  SNPs_totalhom <- lapply(names(SNPs_totalhom), function(x) {
+    SNPs_totalhom[[x]]["Genotype"] <- x; return(SNPs_totalhom[[x]])
+  }
+)
+  roh_dataframe <- do.call("rbind", SNPs_totalhom)
+  roh_dataframe$NumHomozygousDerived[which(is.na(roh_dataframe$NumHomozygousDerived))] <- 0
+  colnames(roh_dataframe) <- c("Consequence", "NumDerivedHom_inROH", "sample")
+  return(roh_dataframe[,c(3,2,1)])
+}
+
