@@ -592,11 +592,11 @@ srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 -
 source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
 
 # first, subset VCF to dSNPs/sSNPs and derived calls to save time
-Table="/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/SNPINFO_ForUnfolded.txt"
-awk 'BEGIN{FS=OFS="\t"}; {if ($13 == "AllDel" || $13 == "SynonymousNodups") {print $0}}' ${Table} |\
-awk 'BEGIN{FS=OFS="\t"}; {if ($11!="NA") {print $1,$2}}' > ${OUT_DIR}/IntermediateFiles/dSNP_sSNP_Polarized_positions.txt # 725,117
+#Table="/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/SNPINFO_ForUnfolded.txt"
+#awk 'BEGIN{FS=OFS="\t"}; {if ($13 == "AllDel" || $13 == "SynonymousNodups") {print $0}}' ${Table} |\
+#awk 'BEGIN{FS=OFS="\t"}; {if ($11!="NA") {print $1,$2}}' > ${OUT_DIR}/IntermediateFiles/dSNP_sSNP_Polarized_positions.txt # 725,117
 
-bcftools view -Oz ${VCF} -R ${OUT_DIR}/IntermediateFiles/dSNP_sSNP_Polarized_positions.txt > ${OUT_DIR}/IntermediateFiles/Sunflower_SAM_SNP_Calling_BIALLELIC_Polarized_sSNP_dSNP.vcf.gz
+#bcftools view -Oz ${VCF} -R ${OUT_DIR}/IntermediateFiles/dSNP_sSNP_Polarized_positions.txt > ${OUT_DIR}/IntermediateFiles/Sunflower_SAM_SNP_Calling_BIALLELIC_Polarized_sSNP_dSNP.vcf.gz
 
 # need to make a key for Plink names and VCF names
 awk '{if ($1==$2) print $1"\t"$2"\t"$1;
@@ -606,8 +606,50 @@ else print $1"\t"$2"\t"$1"_"$2}' Plink_default.nosex > /scratch/eld72413/SAM_seq
 sbatch --export=SampleFile='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/sample_name_key.txt',\
 outdir='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH',\
 ROH='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom',\
-vcf='Sunflower_SAM_SNP_Calling_BIALLELIC_Polarized_sSNP_dSNP.vcf.gz' X.sh
+vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz' \
+${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/ROH_SNPnums.sh # 13245327
+# failed at index 40 (PPN 038) - no roh for this genotype
+```
 
+combine data
+```R
+source("/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Functions.R")
+SNP_ROH <- ImportFilesAsList("/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/intermediates/GenotypeFiles", 
+	".txt", "_SNP_info", TRUE)
+
+# 1 dataframe with no rows?
+dims <- do.call('rbind', lapply(SNP_ROH, function(x) {dim(x)}))
+
+which(dims[,1]==min(dims[,1])) # PPN135
+
+# no rows to aggregate after subsetting
+SizeAfterSubset <- lapply(SNP_ROH, function(x) {
+	length(x[which(x$Variant_type %in% c("AllDel", "SynonymousNodups", "Tolerated") &
+		(x$Derived_Freq==0 | x$Derived_Freq==1)),"Position"])
+	})
+which(SizeAfterSubset==0) # PPN128 (index 128), PPN135 (index 135), PPN 148 (index 147)
+
+# need to exclude these or function fails:
+
+SNP_ROH_include <- SNP_ROH[-c(128, 135, 147)]
+
+SNP_totalhom <- lapply(SNP_ROH_include, function(x) {
+	VarTable_toData(x, c("AllDel", "SynonymousNodups", "Tolerated"))
+	})
+
+SNP_totalhom <- lapply(names(SNP_totalhom), function(x) {
+	SNP_totalhom[[x]]["Genotype"] <- x; return(SNP_totalhom[[x]])
+	}
+)
+
+roh_dataframe <- do.call("rbind", SNP_totalhom)
+roh_dataframe$NumHomozygousDerived[which(is.na(roh_dataframe$NumHomozygousDerived))] <- 0
+
+colnames(roh_dataframe) <- c("Consequence", "NumDerivedHom_inROH", "sample")
+# 4 genotypes will be missing: 3 that don't have any dSNP, sSNP or tolerated in roh, and 1 that doesn't have any roh
+
+write.table(roh_dataframe[,c(3,2,1)], file="/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/SNPs_in_ROH.txt",
+	sep="\t", quote=FALSE, row.names=FALSE)
 ```
 also look specifically at long runs of homozygosity?
 
