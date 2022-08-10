@@ -284,3 +284,19 @@ plotFst <- function(dataframe, ColName, quantiles){
     ylab("Fst")
   return(plot)
 }
+
+###########################################
+########### RUNS OF HOMOZYGOSITY ##########
+###########################################
+
+VarTable_toData <- function(dataframe, VariantTypes) {
+  VariantSubset <- subset(dataframe, Variant_type %in% VariantTypes)
+  VariantSubset$Variant_type <- factor(VariantSubset$Variant_type)
+  NoHets <- subset(VariantSubset, Derived_Freq==0 | Derived_Freq==1)
+  NoHets$Derived_Freq <- as.numeric(NoHets$Derived_Freq)
+  Derived_homozygoteNum <- aggregate(NoHets$Derived_Freq,
+    by=list(NoHets$Variant_type), sum, drop=FALSE)
+  colnames(Derived_homozygoteNum) <- c("Variant_type", "NumHomozygousDerived")
+  #colnames(Derived_homozygoteNum) <- c("Variant_type", paste0(Sample, "_NumHomozygousDerived"))
+  return(Derived_homozygoteNum)
+}
