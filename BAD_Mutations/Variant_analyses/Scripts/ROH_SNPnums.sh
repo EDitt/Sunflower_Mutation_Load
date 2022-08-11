@@ -11,7 +11,7 @@
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --array=0-1
+#SBATCH --array=2-287
 
 
 module load R/4.0.0-foss-2019b
@@ -59,7 +59,7 @@ Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_ana
 "${outdir}/intermediates/ROH_${Sample}_SNPstats.txt"
 
 #5.) # put all SNPs that are homozygous, derived into a .bed file & combine with ROH lengths
-### columns: chromosome, position, variant type, roh_start_position (0-based), roh_end_position, roh length
+### columns: chromosome, position, variant type, roh_start_position (0-based), roh_end_position, roh length (Kb)
 awk '{if ($12==1) {print $1"\t"$2-1"\t"$2"\t"$13}}' ${outdir}/intermediates/GenotypeFiles/${Sample}_SNP_info.txt |\
 sort -k 1,1 -k2,2n |\
 bedtools intersect -a - -b ${outdir}/intermediates/ROH_${Sample}.bed -wao |\
