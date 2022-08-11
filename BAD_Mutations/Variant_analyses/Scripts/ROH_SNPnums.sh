@@ -18,6 +18,8 @@ module load R/4.0.0-foss-2019b
 
 module load BCFtools/1.13-GCC-8.3.0
 
+module load BEDTools/2.30.0-GCC-8.3.0
+
 # calculates number of SNPs in a specific genomic region (i.e. ROH) for a specific genotype, across variant classes
 
 # variables that need to be defined
