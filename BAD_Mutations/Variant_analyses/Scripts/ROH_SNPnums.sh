@@ -11,7 +11,7 @@
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --array=0-287
+#SBATCH --array=0-1
 
 
 module load R/4.0.0-foss-2019b
@@ -30,6 +30,8 @@ mkdir -p ${outdir}/intermediates
 
 mkdir -p ${outdir}/intermediates/GenotypeFiles
 
+mkdir -p ${outdir}/intermediates/SNPs_ROH
+
 #1.) get the sample names:
 declare -a sample_array=($(awk '{print $3}' "${SampleFile}"))
 declare -a plink_name_array=($(awk '{print $2}' "${SampleFile}"))
@@ -37,11 +39,11 @@ declare -a plink_name_array=($(awk '{print $2}' "${SampleFile}"))
 Sample="${sample_array[${SLURM_ARRAY_TASK_ID}]}"
 Plink_Sample="${plink_name_array[${SLURM_ARRAY_TASK_ID}]}"
 
-#2.) make a bedfile for the runs of homozygosity
-awk -v var="$Plink_Sample" '{OFS="\t"}; {if ($2==var) {print $4 "\t" $7-1 "\t" $8}}' $ROH | \
+#2.) make a bedfile for the runs of homozygosity, including roh length
+awk -v var="$Plink_Sample" '{OFS="\t"}; {if ($2==var) {print $4 "\t" $7-1 "\t" $8 "\t" $9}}' $ROH | \
 sort -k 1,1 -k2,2n > ${outdir}/intermediates/ROH_${Sample}.bed
 
-#3.) get info for each allele in sample
+#3.) get variant alleles in those regions for each sample
 bcftools view ${vcf} -Ou -s ${Sample} -R ${outdir}/intermediates/ROH_${Sample}.bed | \
 bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' |\
 awk '{if ($5>0) {print $0}}' > ${outdir}/intermediates/ROH_${Sample}_SNPstats.txt
@@ -53,4 +55,11 @@ Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_ana
 "${outdir}/intermediates/GenotypeFiles" \
 "${Sample}" \
 "${outdir}/intermediates/ROH_${Sample}_SNPstats.txt"
+
+#5.) # put all SNPs that are homozygous, derived into a .bed file & combine with ROH lengths
+### columns: chromosome, position, variant type, roh_start_position (0-based), roh_end_position, roh length
+awk '{if ($12==1) {print $1"\t"$2-1"\t"$2"\t"$13}}' ${outdir}/intermediates/GenotypeFiles/${Sample}_SNP_info.txt |\
+sort -k 1,1 -k2,2n |\
+bedtools intersect -a - -b ${outdir}/intermediates/ROH_${Sample}.bed -wao |\
+awk '{OFS="\t"}; {print $1,$3,$4,$6,$7,$8}' > ${outdir}/intermediates/SNPs_ROH/${Sample}_SNP_ROH.txt
 
