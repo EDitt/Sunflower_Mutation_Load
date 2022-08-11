@@ -11,7 +11,7 @@
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --array=2-287
+#SBATCH --array=0-287
 
 
 module load R/4.0.0-foss-2019b
@@ -40,6 +40,8 @@ declare -a plink_name_array=($(awk '{print $2}' "${SampleFile}"))
 
 Sample="${sample_array[${SLURM_ARRAY_TASK_ID}]}"
 Plink_Sample="${plink_name_array[${SLURM_ARRAY_TASK_ID}]}"
+
+echo "Working on sample ${Sample}"
 
 #2.) make a bedfile for the runs of homozygosity, including roh length
 awk -v var="$Plink_Sample" '{OFS="\t"}; {if ($2==var) {print $4 "\t" $7-1 "\t" $8 "\t" $9}}' $ROH | \
