@@ -11,7 +11,7 @@
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --array=0-287
+#SBATCH --array=0-3
 
 
 module load R/4.0.0-foss-2019b
