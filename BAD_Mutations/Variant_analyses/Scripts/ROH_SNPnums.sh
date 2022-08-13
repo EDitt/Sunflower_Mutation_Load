@@ -27,6 +27,7 @@ module load BEDTools/2.30.0-GCC-8.3.0
 ### outdir - the output directory to save results
 ### ROH - the output of plink with each ROH for each individual
 ### vcf - the vcf file to use (can be a subset with only dSNP and sSNP)
+### gff3 - filepath of gff3 file (includiing directory)
 
 mkdir -p ${outdir}/intermediates
 
@@ -45,7 +46,11 @@ echo "Working on sample ${Sample}"
 
 #2.) make a bedfile for the runs of homozygosity, including roh length
 awk -v var="$Plink_Sample" '{OFS="\t"}; {if ($2==var) {print $4 "\t" $7-1 "\t" $8 "\t" $9}}' $ROH | \
-sort -k 1,1 -k2,2n > ${outdir}/intermediates/ROH_${Sample}.bed
+sort -k 1,1 -k2,2n |\
+bedtools intersect -a - -b $GFF3 -wo |\
+awk '{if ($7=="mRNA") {print $0}}' |\
+bedtools groupby -g 1,2,3,4,7 -c 14 -o sum,count |\
+awk 'OFS="\t" {print $1,$2,$3,$4,$6/3}' > ${outdir}/intermediates/ROH_${Sample}.bed
 
 #3.) get variant alleles in those regions for each sample
 bcftools view ${vcf} -Ou -s ${Sample} -R ${outdir}/intermediates/ROH_${Sample}.bed | \
@@ -65,5 +70,5 @@ Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_ana
 awk '{if ($12==1) {print $1"\t"$2-1"\t"$2"\t"$13}}' ${outdir}/intermediates/GenotypeFiles/${Sample}_SNP_info.txt |\
 sort -k 1,1 -k2,2n |\
 bedtools intersect -a - -b ${outdir}/intermediates/ROH_${Sample}.bed -wao |\
-awk '{OFS="\t"}; {print $1,$3,$4,$6,$7,$8}' > ${outdir}/intermediates/SNPs_ROH/${Sample}_SNP_ROH.txt
+awk '{OFS="\t"}; {print $1,$3,$4,$6,$7,$8,$9}' > ${outdir}/intermediates/SNPs_ROH/${Sample}_SNP_ROH.txt
 
