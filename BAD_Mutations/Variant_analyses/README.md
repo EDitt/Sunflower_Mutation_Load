@@ -599,10 +599,13 @@ else print $1"\t"$2"\t"$1"_"$2}' Plink_default.nosex > /scratch/eld72413/SAM_seq
 sbatch --export=SampleFile='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/sample_name_key.txt',\
 outdir='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH',\
 ROH='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom',\
-vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz' \
-${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/ROH_SNPnums.sh # 13245327
+vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
+GFF3='/scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.gff3' \
+${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/ROH_SNPnums.sh # 
 # failed at index 40 (PPN 038) - no roh for this genotype
 
+
+##########
 ## also do this for long runs of homozygosity - 3 Mbp?
 wc -l Plink_default.hom # 109,230
 awk '{if ($9>2000) {print $0}}' Plink_default.hom | wc -l # 23,776 (~22%)
@@ -614,28 +617,43 @@ sbatch --export=SampleFile='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatter
 outdir='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/SNPs_3MbLROH',\
 ROH='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/LROH_3Mbp.hom',\
 vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz' \
-${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/ROH_SNPnums.sh # 
+${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/ROH_SNPnums.sh
 ```
 
 combine data
 ```R
 source("/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Functions.R")
 
-# all runs of homozygosity
-ROH_SNPs <- CombineROHlists("/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/intermediates/GenotypeFiles",
-	c("AllDel", "SynonymousNodups", "Tolerated"))
+ROH_SNPs <- CombineROHlists("/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/intermediates/SNPs_ROH",
+  c("AllDel", "SynonymousNodups", "Tolerated"),
+  c(1000, 2000, 3000, 25000))
 
 write.table(ROH_SNPs, file="/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/SNPs_in_ROH.txt",
 	sep="\t", quote=FALSE, row.names=FALSE)
-```
-also look specifically at long runs of homozygosity?
 
-combine datapoints
-```R
+
 # merge with full dataset:
+# long to wide (by length bin)
+ROH_SNPs_wide <- reshape(ROH_SNPs,
+	idvar=c("Genotype", "Variant_type"),
+	timevar=c("ROH_bin"),
+	direction="wide")
+colnames(ROH_SNPs_wide)[3:5] <- c("Num_Small", "Num_Medium", "Num_large")
+# small=1k-2k, medium=2k-3k, large=3k and above
+ROH_SNPs_wide$Tot_HomDer_inROH <- ROH_SNPs_wide$Num_Small + ROH_SNPs_wide$Num_Medium + ROH_SNPs_wide$Num_large
+
 All_snps <- read.table("/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/Annotation_VariantStats.txt",
 	header=T)
+
+ROH_SNPs_all <- merge(All_snps[c(1,3,5,6)],
+	ROH_SNPs_wide, by.x=c("sample", "Consequence"), by.y=c("Genotype", "Variant_type"))
+
+ROH_SNPs_all$Not_in_ROH <- ROH_SNPs_all$NumDerivedHom - ROH_SNPs_all$Tot_HomDer_inROH
+
+write.table(ROH_SNPs_all, file="/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/ROH_SNP_info.txt",
+	sep="\t", quote=FALSE, row.names=FALSE)
 ```
+
 
 
 

@@ -11,7 +11,7 @@
 #SBATCH --export=None 
 #SBATCH --mail-user=dittmare@gmail.com
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --array=0-3
+#SBATCH --array=0-287
 
 
 module load R/4.0.0-foss-2019b
@@ -27,7 +27,7 @@ module load BEDTools/2.30.0-GCC-8.3.0
 ### outdir - the output directory to save results
 ### ROH - the output of plink with each ROH for each individual
 ### vcf - the vcf file to use (can be a subset with only dSNP and sSNP)
-### gff3 - filepath of gff3 file (includiing directory)
+### GFF3 - filepath of gff3 file (includiing directory)
 
 mkdir -p ${outdir}/intermediates
 
