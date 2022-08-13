@@ -76,6 +76,8 @@ IndROH_INFO <- merge(IndROH[,c(7,4,5,6)],
                         key,
                         by = "SequenceName")
 
+IndROH_INFO$Mb <- IndROH_INFO$KB / 1000
+
 ######################################
 ###### PLOT BY GERMPLASM GROUP #######
 ######################################
@@ -95,7 +97,7 @@ ggplot(data=IndROH_INFO, aes(x=IndROH_INFO$NSEG,
 
 # to color-code:
 ggplot(data=IndROH_INFO[which(IndROH_INFO$group!="landrace"),], 
-        aes(x=group, y=KB)) +
+        aes(x=group, y=Mb)) +
   #geom_violin(outlier.colour = NULL, aes(colour = group))
   geom_boxplot(notch = FALSE, outlier.colour = NULL, aes(colour = group)) +
   geom_boxplot(outlier.shape = NA, aes(fill = group)) +  # in order to keep outline of box black but have outlier colors the same
@@ -110,14 +112,49 @@ ggplot(data=IndROH_INFO[which(IndROH_INFO$group!="landrace"),],
   scale_x_discrete(limits=c("landrace", "OPV", "NonOil", "Oil")) +
   geom_point(data=IndROH_INFO[which(IndROH_INFO$group=="landrace"),], 
              position = "identity",
-             aes(x=1, y=KB, color="black", fill=landrace_OPV),
+             aes(x=1, y=Mb, color="black", fill=landrace_OPV),
              shape=c(22,23,24), size = 3)
 
-Burden_boxplot(IndROH_INFO, "group", "KB", "Total ROH Length", c("landrace", "OPV", "NonOil", "Oil"))
+Burden_boxplot(IndROH_INFO, "group", "Mb", "Total Length of ROH (Mb)", 
+               c("landrace", "OPV", "NonOil", "Oil"))
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/ROH_Length_Boxplot.pdf",
+       width = 5, height = 7)
 
-Burden_boxplot(IndROH_INFO, "Groups", "KB", "Total ROH Length", c("landrace", "OPV", 
-                                                                  "HA-NonOil", "RHA-NonOil", 
-                                                                  "HA-Oil", "RHA-Oil"))
+Burden_boxplot(IndROH_INFO, "Groups", "Mb", "Total Length of ROH (Mb)", 
+               c("landrace", "OPV", 
+                 "HA-NonOil", "RHA-NonOil",
+                 "HA-Oil", "RHA-Oil"))
+
+######################################
+# 3.) how many dSNPs are in ROH?
+
+######################################
+######### SET UP DATAFRAME ###########
+######################################
+
+SNP_ROH <- read.table("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/ROH/ROH_SNP_info.txt",
+                     header=TRUE)
+
+# wide to long
+SNP_ROH_long <- reshape(SNP_ROH,
+                        varying=list(names(SNP_ROH)[c(5:9)]),
+                        v.names = "Value",
+                        idvar=c("sample", "Consequence", "NumDerivedHom"),
+                        timevar = "Category",
+                        times=names(SNP_ROH)[c(5:9)],
+                        drop=names(SNP_ROH)[c(4)],
+                        direction = "long"
+)
+SNP_ROH_long$Proportion <- SNP_ROH_long$Value / SNP_ROH_long$NumDerivedHom
+
+######################################
+### BOXPLOT BY CONSEQUENCE AND SIZE ###
+######################################
+
+ggplot(data=SNP_ROH_long[which(SNP_ROH_long$Category!="Tot_HomDer_inROH"),],
+       aes(x=Category, y=Proportion)) +
+  geom_boxplot(aes(color=Consequence))
+
 
 ######################################
 # N.) Differentiation in proportion of ROH between HA & RHA on chromosome 10

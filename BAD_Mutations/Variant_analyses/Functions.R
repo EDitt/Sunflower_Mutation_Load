@@ -7,13 +7,21 @@
 # import files into a list and make informative names
 ImportFilesAsList <- function (Dir, Suffix, Prefix, headerTF) {
 	my_files <- list.files(path = Dir, pattern = Suffix, full.names = TRUE)
-  	my_data <- lapply(my_files, function(x) {read.table(x, header=headerTF, na.strings=c("NaN"))})
-  	names(my_data) <- gsub(Suffix, "", my_files)
-  	names(my_data) <- gsub(Dir, "", names(my_data))
-  	names(my_data) <- gsub("/", "", names(my_data))
-  	names(my_data) <- gsub(Prefix, "", names(my_data))
-  	return(my_data)
+  my_data <- lapply(my_files, function(name) {x <- try(read.table(name, header=headerTF, na.strings=c("NaN")))
+  if(inherits(x, "try-error"))
+    return(NULL)
+  else
+    return(x)
+    })
+  	#my_data <- lapply(my_files, function(x) {read.table(x, header=headerTF, na.strings=c("NaN"))})
+  names(my_data) <- gsub(Suffix, "", my_files)
+  names(my_data) <- gsub(Dir, "", names(my_data))
+  names(my_data) <- gsub("/", "", names(my_data))
+  names(my_data) <- gsub(Prefix, "", names(my_data))
+  return(my_data)
   }
+
+
 
 # import files as list. Make a column with the name of the list and combine into a dataframe
 ImportFilesAsDf <- function (Dir, Suffix, Prefix, Colnames, headerTF) {
@@ -291,26 +299,27 @@ plotFst <- function(dataframe, ColName, quantiles){
 
 # calculates the sum of the derived homozygotes for each SNP in each variant class 
 #       (using zeros for genotypes with no derived homozygotes in roh for the specified variant types)
-aggregate_snp_data <- function(dataframe, VariantTypes) {
+aggregate_snp_data <- function(dataframe, VariantTypes, interval_breaks) {
+  colnames(dataframe) <- c("Chromosome", "Position", "Variant_type", "ROH_start", "ROH_end", "ROH_length")
+  dataframe$roh_bin <- cut(dataframe$ROH_length, interval_breaks, right=FALSE)
   VariantSubset <- subset(dataframe, Variant_type %in% VariantTypes)
-  VariantSubset$Variant_type <- factor(VariantSubset$Variant_type)
-  NoHets <- subset(VariantSubset, Derived_Freq==0 | Derived_Freq==1)
-  NoHets$Derived_Freq <- as.numeric(NoHets$Derived_Freq)
-  if(length(NoHets$Variant_type)==0)
-    {return(data.frame(Variant_type = VariantTypes, NumHomozygousDerived = c(0,0,0)))
+  VariantSubset$Variant_type <- factor(VariantSubset$Variant_type,
+    levels=VariantTypes)
+  if(length(VariantSubset$Variant_type)==0)
+    {return(data.frame(expand.grid(Variant_type = VariantTypes, NumHomozygousDerived = c(0), ROH_bin = levels(dataframe$roh_bin))))
       } else{
-        Derived_homozygoteNum <- aggregate(NoHets$Derived_Freq, 
-          by=list(NoHets$Variant_type), sum, drop=FALSE)
+        Derived_homozygoteNum <- aggregate(VariantSubset$Position, 
+          by=list(VariantSubset$Variant_type, VariantSubset$roh_bin), length, drop=FALSE)
         colnames(Derived_homozygoteNum) <- c("Variant_type", "NumHomozygousDerived")
         return(Derived_homozygoteNum)
       }
 }
 
 # executes the prior function & combines the aggregated data for each genotype into one dataframe
-CombineROHlists <- function(directory, variant_types) {
-  SNPs_in_ROH <- ImportFilesAsList(directory, ".txt", "_SNP_info", TRUE)
+CombineROHlists <- function(directory, variant_types, interval_breaks) {
+  SNPs_in_ROH <- ImportFilesAsList(directory, ".txt", "_SNP_ROH", FALSE)
   SNPs_totalhom <- lapply(SNPs_in_ROH, function(x) {
-  aggregate_snp_data(x, variant_types)
+  aggregate_snp_data(x, variant_types, interval_breaks)
   })
   SNPs_totalhom <- lapply(names(SNPs_totalhom), function(x) {
     SNPs_totalhom[[x]]["Genotype"] <- x; return(SNPs_totalhom[[x]])
