@@ -300,19 +300,30 @@ plotFst <- function(dataframe, ColName, quantiles){
 # calculates the sum of the derived homozygotes for each SNP in each variant class 
 #       (using zeros for genotypes with no derived homozygotes in roh for the specified variant types)
 aggregate_snp_data <- function(dataframe, VariantTypes, interval_breaks) {
-  colnames(dataframe) <- c("Chromosome", "Position", "Variant_type", "ROH_start", "ROH_end", "ROH_length")
-  dataframe$roh_bin <- cut(dataframe$ROH_length, interval_breaks, right=FALSE)
-  VariantSubset <- subset(dataframe, Variant_type %in% VariantTypes)
-  VariantSubset$Variant_type <- factor(VariantSubset$Variant_type,
-    levels=VariantTypes)
-  if(length(VariantSubset$Variant_type)==0)
-    {return(data.frame(expand.grid(Variant_type = VariantTypes, NumHomozygousDerived = c(0), ROH_bin = levels(dataframe$roh_bin))))
+  if(length(colnames(dataframe))==0)
+  {return(data.frame(expand.grid(Variant_type = VariantTypes, ROH_bin = levels(cut(seq(1000,25000, by=500), interval_breaks, right=FALSE)), 
+    NumHomozygousDerived = c(0), NumCodons=c(0))))
       } else{
-        Derived_homozygoteNum <- aggregate(VariantSubset$Position, 
-          by=list(VariantSubset$Variant_type, VariantSubset$roh_bin), length, drop=FALSE)
-        colnames(Derived_homozygoteNum) <- c("Variant_type", "NumHomozygousDerived")
-        return(Derived_homozygoteNum)
-      }
+        colnames(dataframe) <- c("Chromosome", "Position", "Variant_type", "ROH_start", "ROH_end", "ROH_length", "Num_codons")
+      dataframe$roh_bin <- cut(dataframe$ROH_length, interval_breaks, right=FALSE)
+      VariantSubset <- subset(dataframe, Variant_type %in% VariantTypes)
+      VariantSubset$Variant_type <- factor(VariantSubset$Variant_type,
+        levels=VariantTypes)
+      if(length(VariantSubset$Variant_type)==0)
+        {return(data.frame(expand.grid(Variant_type = VariantTypes, ROH_bin = levels(cut(seq(1000,25000, by=500), interval_breaks, right=FALSE)), 
+          NumHomozygousDerived = c(0), NumCodons=c(0))))
+          } else{
+            Derived_homozygoteNum <- aggregate(VariantSubset$Position, 
+                by=list(VariantSubset$Variant_type, VariantSubset$roh_bin), length, drop=FALSE)
+            colnames(Derived_homozygoteNum) <- c("Variant_type", "ROH_bin", "NumHomozygousDerived")
+            roh_regions <- VariantSubset[!duplicated(VariantSubset[c(1,3,4,5,7)]),]
+            CodonNum <- aggregate(roh_regions$Num_codons, 
+              by=list(roh_regions$Variant_type, roh_regions$roh_bin), sum, drop=FALSE)
+            colnames(CodonNum) <- c("Variant_type", "ROH_bin", "NumCodons")
+            Alldata <- merge(Derived_homozygoteNum, CodonNum, by=c("Variant_type", "ROH_bin"))
+            return(Alldata)
+          }
+        }
 }
 
 # executes the prior function & combines the aggregated data for each genotype into one dataframe
@@ -327,7 +338,6 @@ CombineROHlists <- function(directory, variant_types, interval_breaks) {
 )
   roh_dataframe <- do.call("rbind", SNPs_totalhom)
   roh_dataframe$NumHomozygousDerived[which(is.na(roh_dataframe$NumHomozygousDerived))] <- 0
-  colnames(roh_dataframe) <- c("Consequence", "NumDerivedHom_inROH", "sample")
-  return(roh_dataframe[,c(3,2,1)])
+  return(roh_dataframe)
 }
 
