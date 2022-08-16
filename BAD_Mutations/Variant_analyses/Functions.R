@@ -338,6 +338,29 @@ CombineROHlists <- function(directory, variant_types, interval_breaks) {
 )
   roh_dataframe <- do.call("rbind", SNPs_totalhom)
   roh_dataframe$NumHomozygousDerived[which(is.na(roh_dataframe$NumHomozygousDerived))] <- 0
+  roh_dataframe$NumCodons[which(is.na(roh_dataframe$NumCodons))] <- 0
   return(roh_dataframe)
+}
+
+# combines the dataframe with the full dataframe and calculates relevant stats
+WrangleROH_df <- function(ROH_SNP_df, Full_df, Tot_CodonNum) {
+  ROH_SNPs_wide <- reshape(ROH_SNP_df,
+  idvar=c("Genotype", "Variant_type"),
+  timevar=c("ROH_bin"),
+  direction="wide")
+  colnames(ROH_SNPs_wide)[3:8] <- c("Num_Small", "NumCodon_Small", 
+              "Num_Medium","NumCodon_Medium", 
+              "Num_Large", "NumCodon_Large")
+  ROH_SNPs_wide$Tot_HomDer_inROH <- ROH_SNPs_wide$Num_Small + ROH_SNPs_wide$Num_Medium + ROH_SNPs_wide$Num_Large
+  ROH_SNPs_wide$NumCodons_inROH <- ROH_SNPs_wide$NumCodon_Small + ROH_SNPs_wide$NumCodon_Medium + ROH_SNPs_wide$NumCodon_Large
+  ROH_SNPs_wide$Tot_HomDer_perCodon <- ROH_SNPs_wide$Tot_HomDer_inROH / ROH_SNPs_wide$NumCodons_inROH
+  ROH_SNPs_wide$Tot_HomDer_perCodon[which(is.na(ROH_SNPs_wide$Tot_HomDer_perCodon))] <- 0
+  ROH_SNPs_all <- merge(Full_df,
+  ROH_SNPs_wide, by.x=c("sample", "Consequence"), by.y=c("Genotype", "Variant_type"))
+  ROH_SNPs_all$Not_in_ROH <- ROH_SNPs_all$NumDerivedHom - ROH_SNPs_all$Tot_HomDer_inROH
+  ROH_SNPs_all$NumCodons_NotROH <- Tot_CodonNum - ROH_SNPs_all$NumCodons_inROH
+  ROH_SNPs_all$Tot_HomDer_perCodon_outROH <- ROH_SNPs_all$Not_in_ROH / ROH_SNPs_all$NumCodons_NotROH
+  ROH_SNPs_all$Tot_HomDer_perCodon_outROH[which(is.na(ROH_SNPs_all$Tot_HomDer_perCodon_outROH))] <- 0
+  return(ROH_SNPs_all)
 }
 

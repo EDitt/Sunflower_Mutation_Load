@@ -618,6 +618,7 @@ combine data
 ```R
 source("/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Functions.R")
 
+
 ROH_SNPs <- CombineROHlists("/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/intermediates/SNPs_ROH",
   c("AllDel", "SynonymousNodups", "Tolerated"),
   c(1000, 2000, 3000, 25000))
@@ -625,35 +626,15 @@ ROH_SNPs <- CombineROHlists("/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatte
 write.table(ROH_SNPs[,c(5,2,3,4,1)], file="/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/SNPs_in_ROH.txt",
 	sep="\t", quote=FALSE, row.names=FALSE)
 
-ROH_SNPs_wide <- reshape(ROH_SNPs,
-	idvar=c("Genotype", "Variant_type"),
-	timevar=c("ROH_bin"),
-	direction="wide")
-
-colnames(ROH_SNPs_wide)[3:8] <- c("Num_Small", "NumCodon_Small", 
-							"Num_Medium","NumCodon_Medium", 
-							"Num_Large", "NumCodon_Large")
-# small=1k-2k, medium=2k-3k, large=3k and above
-ROH_SNPs_wide$Tot_HomDer_inROH <- ROH_SNPs_wide$Num_Small + ROH_SNPs_wide$Num_Medium + ROH_SNPs_wide$Num_Large
-ROH_SNPs_wide$Tot_NumCodons <- ROH_SNPs_wide$NumCodon_Small + ROH_SNPs_wide$NumCodon_Medium + ROH_SNPs_wide$NumCodon_Large
-ROH_SNPs_wide$Tot_NumCodons[which(is.na(ROH_SNPs_wide$Tot_NumCodons))] <- 0
-
-ROH_SNPs_wide$Tot_HomDer_perCodon <- ROH_SNPs_wide$Tot_HomDer_inROH / ROH_SNPs_wide$Tot_NumCodons
-ROH_SNPs_wide$Tot_HomDer_perCodon[which(is.na(ROH_SNPs_wide$Tot_HomDer_perCodon))] <- 0
 
 # merge with full dataset:
 
 All_snps <- read.table("/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/Annotation_VariantStats.txt",
 	header=T)
 
-ROH_SNPs_all <- merge(All_snps[c(1,3,5,6)],
-	ROH_SNPs_wide, by.x=c("sample", "Consequence"), by.y=c("Genotype", "Variant_type"))
 
-ROH_SNPs_all$Not_in_ROH <- ROH_SNPs_all$NumDerivedHom - ROH_SNPs_all$Tot_HomDer_inROH
-
-ROH_SNPs_all$NumCodons_NotROH <- 72158746.42 - ROH_SNPs_all$Tot_NumCodons
-
-ROH_SNPs_all$Tot_HomDer_perCodon_outROH <- ROH_SNPs_all$Not_in_ROH / ROH_SNPs_all$NumCodons_NotROH
+ROH_SNPs_all <- WrangleROH_df(ROH_SNPs, All_snps[c(1,3,5,6)], 72158746.42)
+# small=1k-2k, medium=2k-3k, large=3k and above
 
 write.table(ROH_SNPs_all, file="/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/ROH_SNP_info.txt",
 	sep="\t", quote=FALSE, row.names=FALSE)
