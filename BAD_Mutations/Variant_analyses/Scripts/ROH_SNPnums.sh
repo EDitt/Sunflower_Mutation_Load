@@ -55,7 +55,7 @@ awk 'OFS="\t" {print $1,$2,$3,$4,$6/3}' > ${outdir}/intermediates/ROH_${Sample}.
 #3.) get variant alleles in those regions for each sample
 bcftools view ${vcf} -Ou -s ${Sample} -R ${outdir}/intermediates/ROH_${Sample}.bed | \
 bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' |\
-awk '{if ($5>0) {print $0}}' > ${outdir}/intermediates/ROH_${Sample}_SNPstats.txt
+awk '{if ($6>0) {print $0}}' > ${outdir}/intermediates/ROH_${Sample}_SNPstats.txt
 
 #4.) convert to derived and ancestral
 Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Variant_Table.R" \
