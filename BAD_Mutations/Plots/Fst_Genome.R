@@ -27,6 +27,13 @@ Fst_df$Variant_type[grep("Oil_NonOil", Fst_df$Variant_type)] <- "Oil_NonOil"
 
 Fst_df$Mbp <- round((Fst_df$StartPos / 1000000) + 1, digits = 0)  # need to add 1 otherwise will not graph 0 class
 
+Fst_df[which(Fst_df$Weighted_Fst > quantile(Fst_df$Weighted_Fst, 0.995)),] # 0.42
+# on chrom 10: 7, 10-25, 30-33, 38-39, 45-46, 90,109
+
+Fst_df[which(Fst_df$Weighted_Fst > quantile(Fst_df$Weighted_Fst, 0.975)),] # 0.268
+# on chrom 10: 1-2,6-40, 42-48, 52, 69, 71-82, 89-112, 117-120, 122-124, 
+#               126-128, 130, 136, 140, 145, 149-150, 156-157, 162, 169
+# on chrom 13: 159-166, 174
 ######################################
 ######## PLOT ACROSS GENOME ##########
 ######################################
@@ -35,6 +42,8 @@ ChromosomeNames <- as.character(unique(as.numeric(gsub("Ha412HOChr", "", Fst_HA_
 names(ChromosomeNames) <- unique(Fst_HA_RHA$Chromosome)
 
 plotFst(subset(Fst_df, Variant_type=="HA_RHA"), "Weighted_Fst", c(0.975, 0.995))
+Fst_df[which(Fst_df$Weighted_Fst > 0.4 & Fst_df$Variant_type=="HA_RHA"),]
+
 ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/Fst_HA_RHA.pdf",
        width = 10, height = 10)
 
@@ -99,6 +108,11 @@ ggplot(data=Pi_all_wide, aes(x=Mbp, y=PiRHA_PiHA)) +
   geom_smooth() +
   facet_wrap(~CHROM, scales = "free_x")
 
+ggplot(data=Pi_all_wide, aes(x=Mbp, y=PiRHA_PiHA)) +
+  #geom_line() +
+  geom_smooth() +
+  facet_grid(~CHROM, scales = "free_x")
+
 ######################################
 #### IMPORT AND GRAPH TAJIMA'S D #####
 ######################################
@@ -139,7 +153,10 @@ ggplot(data=TajD, aes(x=Mbp, y=TajimaD)) +
   #geom_line(aes(color=group)) +
   facet_wrap(~CHROM, scales = "free_x")
 
-
+ggplot(data=TajD, aes(x=Mbp, y=TajimaD)) +
+  geom_smooth(aes(color=group)) +
+  #geom_line(aes(color=group)) +
+  facet_grid(~CHROM, scales = "free_x")
 
 
 ######################################

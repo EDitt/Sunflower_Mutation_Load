@@ -76,13 +76,13 @@ sbatch --export=GenomeFile='/scratch/eld72413/SunflowerGenome/GenomeFile.txt',\
 VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
 GenoList='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/HA_genotypes.txt',\
 OUT_PREFIX='/scratch/eld72413/SAM_seq/dSNP_results/Fst/Pi_heterotic/HA_Mbp1' \
-/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Pi_TajD_calc.sh # 12680096
+/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Pi_TajD_calc.sh # 13838554
 
 sbatch --export=GenomeFile='/scratch/eld72413/SunflowerGenome/GenomeFile.txt',\
 VCF='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
 GenoList='/scratch/eld72413/SAM_seq/dSNP_results/IntermediateFiles/RHA_genotypes.txt',\
 OUT_PREFIX='/scratch/eld72413/SAM_seq/dSNP_results/Fst/Pi_heterotic/RHA_Mbp1' \
-/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Pi_TajD_calc.sh # 12745498 (prev 12680201)- resubmitted due to missing data for RHA on chr 17
+/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Pi_TajD_calc.sh #  13838643 (prev 12680201)- resubmitted due to missing data for RHA on chr 17
 
 ```
 
