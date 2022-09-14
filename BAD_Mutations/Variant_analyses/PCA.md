@@ -91,9 +91,9 @@ smartpca.perl -i ${Dir}/Sunflower_SAM.eigenstratgeno \
 
 # try without removing outliers
 Dir=/scratch/eld72413/SAM_seq/PCA/EigenstratFiles
-smartpca.perl -i ${Dir}/Sunflower_SAM10.eigenstratgeno \
--a ${Dir}/Sunflower_SAM10.snp \
--b ${Dir}/Sunflower_SAM10.ind \
+smartpca.perl -i ${Dir}/Sunflower_SAM.eigenstratgeno \
+-a ${Dir}/Sunflower_SAM.snp \
+-b ${Dir}/Sunflower_SAM.ind \
 -k 10 \
 -o /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/NoOutRem/Sunflower_SAM_all.pca \
 -p /scratch/eld72413/SAM_seq/PCA/EigenstratFiles/NoOutRem/Sunflower_Sam_Unlabeled_all.plot \
@@ -141,6 +141,7 @@ smartpca.perl -i ${Dir}/Sunflower_SAM10.eigenstratgeno \
 -t 10 \
 -s 6.0
 
+# N=276 (12 individuals removed)
 # try without removing outliers
 smartpca.perl -i ${Dir}/Sunflower_SAM10.eigenstratgeno \
 -a ${Dir}/Sunflower_SAM10.snp \
