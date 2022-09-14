@@ -26,14 +26,58 @@ GenomeROH$Mbp <- round((GenomeROH$StartPos / 1000000) + 1, digits = 0)
 hist(GenomeROH$Mean_Num_Indiv)
 hist(GenomeROH$Median_Num_Indiv)
 
+quantile(GenomeROH$Median_Num_Indiv, c(0.975, 0.995), na.rm = T) # 85 and 157
+
 plotFst(GenomeROH, "Median_Num_Indiv", c(0.975, 0.995))
 GenomeROH[which(GenomeROH$Median_Num_Indiv > 150),]
+GenomeROH[which(GenomeROH$Median_Num_Indiv > 85),]
 
 plotFst(GenomeROH, "Mean_Num_Indiv", c(0.975, 0.995))
 
+######################################
+#### HOTSPOT/NON-HOTSPOT REGIONS #####
+######################################
+
+quant97.5 <- quantile(GenomeROH$Mean, c(0.975), na.rm = T)
+
+hotspot <- GenomeROH[which(GenomeROH$Median_Num_Indiv > quant97.5),]
+non_hotspot <- GenomeROH[which(GenomeROH$Median_Num_Indiv < quant97.5),]
+
 
 ######################################
-# 2.) length and number of ROH for all individuals (color-coded by group)
+# 2.) Distribution of ROH across genome
+
+######################################
+######### SET UP DATAFRAME ###########
+######################################
+
+AllROH <- read.table("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/ROH/Plink_default.hom",
+                     header=TRUE)
+aggregate(AllROH$KB, by=list(AllROH$CHR), length)
+hist(AllROH$KB, plot=FALSE)
+
+ggplot(data=AllROH, aes(x=CHR, y=KB)) +
+  #geom_violin()
+  geom_boxplot(notch = TRUE, outlier.shape=NA) +
+  ylim(1000,3500)
+
+ggplot(data=AllROH, aes(x=CHR))+
+  geom_histogram(stat="count")
+
+ggplot(data=AllROH[which(AllROH$KB>3000),], aes(x=CHR, y=KB)) +
+  #geom_violin()
+  geom_boxplot(notch = TRUE)
+
+TotLength <- aggregate(AllROH$KB, by=list(AllROH$FID, AllROH$CHR), sum)
+colnames(TotLength) <- c("Genotype", "Chromosome", "Total_ROHlength")
+hist(TotLength$Total_ROHlength)
+
+ggplot(data=TotLength, aes(x=Chromosome, y=Total_ROHlength)) +
+  geom_boxplot(notch = TRUE) +
+  geom_hline(yintercept = mean(TotLength$Total_ROHlength))
+
+######################################
+# 3.) length and number of ROH for all individuals (color-coded by group)
 
 ######################################
 ######### SET UP DATAFRAME ###########
