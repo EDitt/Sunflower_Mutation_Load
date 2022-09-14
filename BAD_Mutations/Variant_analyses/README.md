@@ -195,6 +195,8 @@ In `/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/GroupFreqs`
 	- in subdirectory `intermediates`, `_info_ForUnfolded.txt` is the same as the above but without deleterious alleles that are not derived relative to Debilis
 	- `_DerivedFreq_Bins.txt` has the frequency bins for all variant classes for all germplasm groups
 
+See Plots/Germplasm_VariantFreq.R
+
 ### Proportion of heterozygous dSNPs/sSNPs across different MAF classes
 To see if the greater heterozygosity in dSNPs is due only to lower frequencies
 ```bash
@@ -558,31 +560,210 @@ plink --file /scratch/eld72413/SAM_seq/PCA/Sunflower_SAM_SNP_Calling_Pruned_R2_0
 --homozyg-group \
 --allow-extra-chr \
 --out /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default
+```
 
-# how many SNPs are found in ROH across genome?
-srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l # tmux window in ss-sub4
+
+#### Genomic "hotspots" of runs of homozygosity
+
+Hotspots across all individuals - per 250 kb windows
+Defined as higher than 97.5 percentile of the mean number of individuals that have a hotspot that overlaps that window
+```bash
+# Analyses
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l 
 source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
 module load BEDTools/2.30.0-GCC-8.3.0
 
-# subset to only ROH > 2 Mpb? (~78th percentile)
-awk '{if ($9>2000) {print $0}}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom > LROH_2Mbp.hom
+bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 250000 > $OUT_DIR/IntermediateFiles/Kbp250_windows.bed # 12,725
 
-# (make .bed for from ROH Plink output before using intersect command)
-#awk 'NR>1 {print $4 "\t" $7-1 "\t" $8}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom | \
-awk 'NR>1 {print $4 "\t" $7-1 "\t" $8}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/LROH_2Mbp.hom | \
+# number
+awk 'NR>1 {print $4"\t"$7-1"\t"$8}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom | \
+sort -k 1,1 -k2,2n | \
+bedtools intersect -f 0.5 -a $OUT_DIR/IntermediateFiles/Kbp250_windows.bed -b - -wo | \
+bedtools groupby -g 1,2,3 -c 6 -o count >  /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Hotspots_all.txt
+```
+
+Find upper hotspot quantiles
+```R
+roh_all <- read.table("/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Hotspots_all.txt",
+	header=FALSE) # 12,684
+colnames(roh_all) <- c("Chromosome", "StartPos", "EndPos", "Num_Individuals")
+
+quant97.5 <- quantile(roh_all$Num_Individuals, c(0.975), na.rm = T) # 173
+
+roh_hotspot <- subset(roh_all, Num_Individuals > quant97.5) # 316
+
+write.table(roh_hotspot, file="/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Hotspots_windows.txt",
+	sep="\t", row.names=FALSE, quote=FALSE)
+```
+
+Number of dSNPs, sSNPs, and number of codons inside/outside roh hotspots
+```bash
+# codon counts:
+GFF3=/scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.gff3
+
+awk 'NR>1 {print $1 "\t" $2 "\t" $3}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Hotspots_windows.txt | \
+sort -k 1,1 -k2,2n |\
+bedtools intersect -a - -b $GFF3 -wo | \
+awk '{if ($6=="mRNA") {print $0}}' | \
+bedtools groupby -g 1,2,3 -c 13 -o sum,count | \
+awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$4/3}' > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/ROH_NumCodonCounts.txt # 255
+
+# first get windows that aren't covered by ROH hotspots:
+awk 'NR>1 {print $1 "\t" $2 "\t" $3}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Hotspots_windows.txt | \
+sort -k 1,1 -k2,2n | \
+bedtools intersect -v -f 0.5 -a $OUT_DIR/IntermediateFiles/Kbp250_windows.bed -b - -wo | \
+bedtools intersect -a - -b $GFF3 -wo | \
+awk '{if ($6=="mRNA") {print $0}}' | \
+bedtools groupby -g 1,2,3 -c 13 -o sum,count | \
+awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$4/3}' > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/OUT_ROH_NumCodonCounts.txt # 11300
+
+# number of dSNPs and sSNPs
+# make bed file for hotspot range
+awk 'NR>1 {print $1 "\t" $2 "\t" $3}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Hotspots_windows.txt > Hotspot_range.bed #316
+
+awk 'NR>1 {print $1 "\t" $2 "\t" $3}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Hotspots_windows.txt | \
+sort -k 1,1 -k2,2n | \
+bedtools intersect -v -f 0.5 -a $OUT_DIR/IntermediateFiles/Kbp250_windows.bed -b - -wo > Non_Hotspot_range.bed # 12,409
+
+SNP_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info_new.txt
+
+VariantClass="AllDel"
+VariantClass="SynonymousNodups"
+
+awk -v var="$VariantClass" 'OFS="\t" {if ($13==var){print $1, $2-1, $2}}' $SNP_INFO | \
+bedtools intersect -a /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Hotspot_range.bed -b - -c > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Num_${VariantClass}_IN_LROH.bed
+
+awk -v var="$VariantClass" 'OFS="\t" {if ($13==var){print $1, $2-1, $2}}' $SNP_INFO | \
+bedtools intersect -a /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Non_Hotspot_range.bed -b - -c > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Num_${VariantClass}_OUT_LROH.bed
+```
+
+Use bedtools to get the derived frequencies of SNPs inside/outside ROH for the shared hotspot ranges:
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l #tmux ss-sub2
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+module load BEDTools/2.30.0-GCC-8.3.0
+
+SNP_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info_new.txt
+
+#awk '{if ($12!="NA") {print $0}}' $SNP_INFO | head
+
+# make bedfile of SNPs with derived frequencies and annotation:
+awk 'NR>1 {if ($12!="NA") {print $1 "\t" $2-1 "\t" $2 "\t" $12 "\t" $13}}' $SNP_INFO > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/SNP_derived_Freqs.bed
+
+
+# SNPs in hotspots
+bedtools intersect -a /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Hotspot_range.bed \
+-b /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/SNP_derived_Freqs.bed -wo | \
+awk '{print $4"\t"$6"\t"$7"\t"$8}' > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/SNPs_in_rohHotspots.txt
+
+bedtools intersect -a /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Non_Hotspot_range.bed \
+-b /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/SNP_derived_Freqs.bed -wo | \
+awk '{print $4"\t"$6"\t"$7"\t"$8}' > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/SNPs_outside_rohHotspots.txt
+
+# add headers for Rscript
+(echo -e "Chromosome\tPosition\tDerived_Freq\tVariant_type"; cat /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/SNPs_in_rohHotspots.txt) > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/SNPs_in_rohHotspots_HEADER.txt
+
+(echo -e "Chromosome\tPosition\tDerived_Freq\tVariant_type"; cat /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/SNPs_outside_rohHotspots.txt) > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/SNPs_outside_rohHotspots_HEADER.txt
+
+# get frequency bins
+Rscript --verbose "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
+"/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/SNPs_in_rohHotspots_HEADER.txt" \
+"1.0" \
+"0.1" \
+"Derived_Freq" \
+"/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/DerivedFreq_INhotspots_Bins.txt"
+
+Rscript --verbose "${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
+"/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/SNPs_outside_rohHotspots_HEADER.txt" \
+"1.0" \
+"0.1" \
+"Derived_Freq" \
+"/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/DerivedFreq_OUThotspots_Bins.txt"
+```
+See `ROH_Hotspots.R` for graphs
+
+
+Combine germplasm grouping information to look at hotspots of ROH by groups-
+```R
+
+roh <- read.table("/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom",
+	header=TRUE)
+
+roh$SequenceName <- ifelse(roh$FID==roh$IID,
+                             as.character(roh$FID),
+                             as.character(paste0(roh$FID, "_", 
+                                                 roh$IID)))
+
+SAM_info <- read.csv("/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/LineKeywINFO.csv", header=T)
+
+roh_wINFO <- merge(SAM_info[,c(9,11,12,14)], roh, by="SequenceName")
+
+write.table(roh_wINFO, "/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/ROH_wGroups.txt",
+	quote=FALSE, sep = "\t", row.names=FALSE)
+```
+
+Use bedtools to count the number of individuals for each group that have a ROH that overlaps (at least 50%) with a 250 kbp window across the genome
+```bash
+module load BEDTools/2.30.0-GCC-8.3.0
+
+
+awk 'NR>1 {print $8 "\t" $11-1 "\t" $12 "\t" $4 "\t" $1}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/ROH_wGroups.txt | \
+sort -k 1,1 -k2,2n | \
+bedtools intersect -f 0.5 -a $OUT_DIR/IntermediateFiles/Kbp250_windows.bed -b - -wo | \
+sort -k1,1 -k2,2 -k7,7 -k8,8 |
+bedtools groupby -g 1,2,3,7 -c 8 -o count_distinct > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/ROH_GroupHotpots.txt
+
+
+#bedtools groupby -g 1,2,3,7 -c 7 -o count > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/ROH_GroupHotpots.txt
+
+# initially I did not require a 50% overlap, and didn't use "count_distinct" so double-counted windows where there was more than 1 ROH for the same individual
+
+# also get windows that don't contain a hotspot:
+awk 'NR>1 {print $1 "\t" $2-1 "\t" $3}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Hotspots/Shared_hotspot_range.txt | \
+sort -k 1,1 -k2,2n | \
+bedtools intersect -v -f 0.5 -a $OUT_DIR/IntermediateFiles/Kbp250_windows.bed -b - -wo > NonHotspot_range.bed # 12631
+```
+
+Looked at regions of the genome with the number of individuals above the 97.5% quantile for each group. Found the ranges of continguous windows
+(See ROH_ranges.R)
+	3 files created:
+		- "Shared_hotspot_range.txt": hotspots found in all germplasm groups
+		- "Outside_hotspot_range.txt": continugous areas outside of shared hotspots
+		- "Het_group_ranges.txt": hotspots found only in HA or RHA (not both)
+		- "Oil_group_ranges.txt": hotspots found only in Oil or NonOil (not both)
+
+
+###### Frequencies of SNPs in/out of ROHs
+
+```bash
+srun --pty  -p inter_p  --mem=50G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l # tmux window in ss-sub3
+source /home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/config.sh
+module load BEDTools/2.30.0-GCC-8.3.0
+
+#### Frequencies of SNPs in / not in ROHs
+
+# a list of SNPs including whether they are in (1) or out (0) of a ROH
+awk 'NR>1 {print $4 "\t" $7-1 "\t" $8}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom | \
 sort -k 1,1 -k2,2n | \
 bedtools intersect -c -a ${VCF} \
--b stdin -sorted | awk '{print $1,$2,$4,$5,$298}' > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/LROH_2Mbp_freq_SNP.txt
-#/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/ROH_freq_SNP.txt
-
-bedtools makewindows -g /scratch/eld72413/SunflowerGenome/GenomeFile.txt -w 1000000 > $OUT_DIR/IntermediateFiles/Mbp1_windows.bed
-
-#awk 'OFS="\t" {print $1,$2-1,$2,$5}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/ROH_freq_SNP.txt | \
-awk 'OFS="\t" {print $1,$2-1,$2,$5}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/LROH_2Mbp_freq_SNP.txt | \
-bedtools intersect -a $OUT_DIR/IntermediateFiles/Mbp1_windows.bed -b - -wo | \
-bedtools groupby -g 1,2,3 -c 7 -o mean,median,count >  /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/LROH_2Mbp_freq_1MbpBins.txt
-#/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/ROH_freq_1MbpBins.txt
+-b stdin -sorted | awk '{print $1,$2,$4,$5,$298}' > /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/freqs/SNP_INOUT_ROH.txt
+R
 ```
+Combine with SNP info table to get frequencies
+```R
+SNP_info <- read.table("/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info.txt",
+	sep = "\t", header=TRUE)
+
+SNP_roh <- read.table("/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/freqs/SNP_INOUT_ROH.txt", header=FALSE)
+colnames(SNP_roh) <- c("Chromosome", "Position", "Ref_allele", "Alt_allele", "ROH")
+
+SNP_ROH_info <- merge(SNP_info, SNP_roh, by=c("Chromosome", "Position", "Ref_allele", "Alt_allele"))
+
+write.table(SNP_ROH_info, file="/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/stats/freqs/SNP_info_ROH.txt",
+	sep="\t", quote=FALSE, row.names=FALSE)
+```
+
+###### How many dSNPs (and other variant classes) are in ROH?
 
 How many dSNPs are in runs of homozygosity? Calculate for each genotype:
 Number of derived, homozygous dSNPs and sSNPs in ROH 
@@ -601,7 +782,7 @@ outdir='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH',\
 ROH='/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom',\
 vcf='/scratch/eld72413/SAM_seq/results2/VCF_results_new/Create_HC_Subset/New2/VarFilter_All/Sunflower_SAM_SNP_Calling_BIALLELIC_norm.vcf.gz',\
 GFF3='/scratch/eld72413/SunflowerGenome/Ha412HOv2.0-20181130.gff3' \
-${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/ROH_SNPnums.sh # Submitted batch job 13278587
+${REPO_DIR}/BAD_Mutations/Variant_analyses/Scripts/ROH_SNPnums.sh # Submitted batch job 13667599
 # failed at index 40 (PPN 038) - no roh for this genotype
 
 # calculate total number of codons for number of codons inside/outside ROH for each genotype
@@ -639,6 +820,25 @@ ROH_SNPs_all <- WrangleROH_df(ROH_SNPs, All_snps[c(1,3,5,6)], 72158746.42)
 write.table(ROH_SNPs_all, file="/scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/ROH_SNP_info.txt",
 	sep="\t", quote=FALSE, row.names=FALSE)
 ```
+
+##### ROH Hotspots
+graph distribution of runs of homozygosity for different groups of germplasm
+```bash
+HA_genotypes=$(awk -F',' '{if ($11=="HA" && $9!="HA412" && $9!="NA") {print $9}}' $SAM_INFO | paste -sd"\n")
+HA_genotypes=$(awk -F',' '{if ($11=="HA" && $9!="HA412" && $9!="NA") {print $9}}' $SAM_INFO | paste -sd,) 
+RHA_genotypes=$(awk -F',' '{if ($11=="RHA" && $9!="HA412" && $9!="NA") {print $9}}' $SAM_INFO | paste -sd,) 
+
+
+
+awk '{if ($9>2000 && $1) {print $0}}' /scratch/eld72413/SAM_seq/dSNP_results/GenomicPatterns/LROH/Plink_default.hom > LROH_2Mbp.hom
+
+
+
+#genotypes=$(awk -v var="$Group" -F',' '{if ($14==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_INFO | paste -sd,) 
+#bcftools view -Ou --samples ${genotypes} ${VCF} |\
+#bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' > ${outputdir}/intermediates/${Group}_SNP_freq.txt
+```
+
 
 
 
