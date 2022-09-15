@@ -41,11 +41,15 @@ Fst_df[which(Fst_df$Weighted_Fst > quantile(Fst_df$Weighted_Fst, 0.975)),] # 0.2
 ChromosomeNames <- as.character(unique(as.numeric(gsub("Ha412HOChr", "", Fst_HA_RHA$Chromosome))))
 names(ChromosomeNames) <- unique(Fst_HA_RHA$Chromosome)
 
-plotFst(subset(Fst_df, Variant_type=="HA_RHA"), "Weighted_Fst", c(0.975, 0.995))
+Fst_HARHA <- plotFst(subset(Fst_df, Variant_type=="HA_RHA"), "Weighted_Fst", c(0.975, 0.995))
 Fst_df[which(Fst_df$Weighted_Fst > 0.4 & Fst_df$Variant_type=="HA_RHA"),]
+
+Fst_HARHA + theme(legend.position = "top")
 
 ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/Fst_HA_RHA.pdf",
        width = 10, height = 10)
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/Fst_HA_RHA.png",
+       width = 10, height = 8)
 
 plotFst(subset(Fst_df, Variant_type=="Oil_NonOil"), "Weighted_Fst", c(0.975, 0.995))
 ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/Fst_Oil_NonOil.pdf",
@@ -111,7 +115,23 @@ ggplot(data=Pi_all_wide, aes(x=Mbp, y=PiRHA_PiHA)) +
 ggplot(data=Pi_all_wide, aes(x=Mbp, y=PiRHA_PiHA)) +
   #geom_line() +
   geom_smooth() +
-  facet_grid(~CHROM, scales = "free_x")
+  facet_grid(~CHROM, scales = "free_x") +
+  theme_minimal()
+
+# for manuscript
+Pi_HARHA <- ggplot(data=Pi_all_wide, aes(x=Mbp, y=PI_RHA/PI_HA)) +
+  geom_smooth(method="loess", se=FALSE, color="black") +
+  facet_grid(~CHROM, scales = "free_x",
+             labeller = labeller(CHROM=ChromosomeNames),
+             switch = "x") +
+  theme_minimal() +
+  #theme_bw() +
+  theme(panel.grid.major.x = element_blank(), 
+        panel.grid.minor.x = element_blank(),
+        panel.spacing.x = unit(0, "null"),
+        axis.text.x = element_blank())
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/Pi_HA_RHA.pdf",
+       width = 10, height = 2)
 
 ######################################
 #### IMPORT AND GRAPH TAJIMA'S D #####
@@ -153,11 +173,91 @@ ggplot(data=TajD, aes(x=Mbp, y=TajimaD)) +
   #geom_line(aes(color=group)) +
   facet_wrap(~CHROM, scales = "free_x")
 
-ggplot(data=TajD, aes(x=Mbp, y=TajimaD)) +
-  geom_smooth(aes(color=group)) +
-  #geom_line(aes(color=group)) +
-  facet_grid(~CHROM, scales = "free_x")
+ChromosomeNames <- as.character(unique(as.numeric(gsub("Ha412HOChr", "", TajD$CHROM))))
+names(ChromosomeNames) <- unique(TajD$CHROM)
 
+TajD_HARHA <- ggplot(data=TajD, aes(x=Mbp, y=TajimaD)) +
+  geom_smooth(aes(color=group, linetype=group), se=FALSE) +
+  #geom_line(aes(color=group)) +
+  facet_grid(~CHROM, scales = "free_x",
+             labeller = labeller(CHROM=ChromosomeNames),
+             switch = "x") +
+  theme_minimal() +
+  #theme_bw() +
+  scale_color_manual(values= c(HA_Oil, RHA_Oil),
+                     name = "Heterotic Group") + 
+  scale_linetype_manual(values= c("solid", "dashed"),
+                     name = "Heterotic Group") +
+  theme(panel.grid.major.x = element_blank(), 
+        panel.grid.minor.x = element_blank(),
+        panel.spacing.x = unit(0, "null"),
+        axis.text.x = element_blank())
+TajD_HARHA + theme(legend.position = "top")
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/TajD_HA_RHA.pdf",
+       width = 10, height = 2)
+
+######################################
+###### COMBINE FOR MANUSCRIPT ########
+######################################
+p1 <- Fst_HARHA + theme(legend.position = "none", strip.text.x = element_blank()) + xlab("")
+p2 <- Pi_HARHA + theme(strip.text.x = element_blank()) + xlab("")
+p3 <- TajD_HARHA + theme(legend.position = "none") + xlab("Chromosome")
+
+ggarrange(p1, p2, p3, ncol = 1, heights=c(8,3,3), align="v")
+
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/HA_RHA_genome.pdf",
+       width = 10, height = 10)
+
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/HA_RHA_genome.png",
+       width = 10, height = 10)
+
+######################################
+######## CHROMOSOME 10 ONLY ##########
+######################################
+
+#chr10_a <- plotFst(subset(Fst_df, Variant_type=="HA_RHA" & Chromosome=="Ha412HOChr10"), "Weighted_Fst", c(0.975, 0.995))
+
+Fst_HARHA <- subset(Fst_df, Variant_type=="HA_RHA")
+
+Fst_HARHA$PointCol <- ifelse(Fst_HARHA$Weighted_Fst > quantile(Fst_HARHA$Weighted_Fst, 0.995, na.rm = T),
+                             "99%",
+                             ifelse(Fst_HARHA$Weighted_Fst > quantile(Fst_HARHA$Weighted_Fst, 0.975, na.rm = T),
+                                    "95%",
+                                    ifelse((as.numeric(gsub("Ha412HOChr", "", Fst_HARHA$Chromosome)) %%2)==0,
+                                           "even",
+                                           "odd")))
+Fst_HARHA$PointCol <- factor(Fst_HARHA$PointCol, levels = c("99%", "95%", "odd", "even"))
+
+chr10_a <- ggplot(data=Fst_HARHA[which(Fst_HARHA$Chromosome=="Ha412HOChr10"),], aes(x=Mbp, y=Weighted_Fst)) +
+  geom_point(aes(color=PointCol)) +
+  theme_minimal() +
+  scale_color_manual(
+    values= c("tomato1", "darkgoldenrod1",
+              "lightskyblue3", "grey70"),
+    name = "", labels = c("99% quantile", 
+                          "95% quantile", "", "")) +
+  xlab("Chromosome Position") +
+  ylab("Fst")
+
+chr10_b <- ggplot(data=TajD[which(TajD$CHROM=="Ha412HOChr10"),], aes(x=Mbp, y=TajimaD)) +
+  geom_point(aes(color=group)) + # several regions with extremely low Tajima's D for HA
+  geom_smooth(aes(color=group, linetype=group), se=FALSE) +
+  theme_minimal() +
+  scale_color_manual(values= c(HA_Oil, RHA_Oil),
+                     name = "Heterotic Group") + 
+  scale_linetype_manual(values= c("solid", "dashed"),
+                        name = "Heterotic Group")
+
+chr10_c <- ggplot(data=Pi_all[which(Pi_all$CHROM=="Ha412HOChr10"),], aes(x=Mbp, y=PI)) +
+  #geom_point(aes(color=group)) +
+  geom_smooth(aes(color=group, linetype=group), se=FALSE) +
+  theme_minimal() +
+  scale_color_manual(values= c(HA_Oil, RHA_Oil),
+                     name = "Heterotic Group") + 
+  scale_linetype_manual(values= c("solid", "dashed"),
+                        name = "Heterotic Group")
+
+ggarrange(chr10_a, chr10_b, chr10_c, ncol=1)
 
 ######################################
 ########### TROUBLESHOOT #############
