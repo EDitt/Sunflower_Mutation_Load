@@ -50,7 +50,7 @@ SNP_INFO=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_SNP_Info.txt
 SAMPLE_SNP_DATA=/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/Annotation_VariantStats.txt
 
 # The re-mapped SNPs from ..
-GENETIC_MAP_SNPs=./MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf
+GENETIC_MAP_SNPs=/scratch/eld72413/SAM_seq/Recombination/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf
 	# permanently saved at: /project2/jmblab/dittmar/NSF_Proj/SupportingData
 
 ###########################################
