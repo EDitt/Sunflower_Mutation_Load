@@ -126,7 +126,7 @@ dSNP_nums_INFO <- merge(key[,c(9, 11, 12, 14,16,17)],
 # remove introgressed & put landraces as dots since N=3
 
 # additive burden
-Burden_boxplot(dSNP_nums_INFO,
+boxplot1 <- Burden_boxplot(dSNP_nums_INFO,
                "group", "Rel_additive",
                "Relative Additive Burden",
                c("landrace", "OPV", "NonOil", "Oil"))
@@ -153,7 +153,7 @@ ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sun
        width = 5, height = 7)
 
 # recessive burden
-Burden_boxplot(dSNP_nums_INFO,
+boxplot2 <- Burden_boxplot(dSNP_nums_INFO,
                "group", "Rel_recessive",
                "Relative Homozygous Burden",
                c("landrace", "OPV", "NonOil", "Oil"))
@@ -237,7 +237,7 @@ GenoLong <- reshape(SNP_genotypes[,c(1,7,6)],
 
 GenoLong$dSNP_sSNP <- GenoLong$NumDerivedAlleles.AllDel / GenoLong$NumDerivedAlleles.SynonymousNodups
 
-Geno_all <- merge(key[,c(9, 11, 12, 14,16)],
+Geno_all <- merge(key[,c(9, 11, 12, 14,16,17)],
                   GenoLong,
                   by.x = "SequenceName",
                   by.y = "sample")
@@ -294,7 +294,7 @@ ggplot(GenoProportions, aes(x=group, y=PropHetGenos, fill = Consequence)) +
 ## interesting that introgressed has much higher heterogyzous genotypes
 
 
-ggplot(GenoProportions[which(GenoProportions$group!="landrace"),], 
+boxplot3 <- ggplot(GenoProportions[which(GenoProportions$group!="landrace"),], 
        aes(x=group, y=PropHetGenos)) + 
   geom_boxplot(notch = FALSE, outlier.colour = NULL, aes(colour = Consequence)) +
   geom_boxplot(outlier.shape = NA, aes(fill = Consequence)) +  # in order to keep outline of box black but have outlier colors the same
@@ -331,3 +331,9 @@ ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sun
        width = 5, height = 7)
 ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/Figure2_GenotypeBoxplot_wLeg.pdf",
        width = 5, height = 7)
+
+######################################
+####### COMBINE 3 FOR MAIN TEXT ######
+######################################
+
+ggarrange(boxplot1, boxplot2, boxplot3, nrow=1)
