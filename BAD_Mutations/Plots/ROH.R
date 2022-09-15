@@ -208,6 +208,7 @@ levels(SNP_ROH_long$Consequence)
 SNP_ROH_long$Consequence <- factor(SNP_ROH_long$Consequence,
                                    levels=c("AllDel", "Tolerated", "SynonymousNodups"))
 
+
 ######################################
 # BOXPLOT BY CONSEQUENCE AND/OR SIZE #
 ######################################
@@ -264,8 +265,22 @@ SNP_ROH_ratio$Value[is.na(SNP_ROH_ratio$Value)] <- 0
 
 ggplot(data=SNP_ROH_ratio, aes(x=Category, y=Value)) +
   #geom_violin() +
-  geom_boxplot(notch=TRUE) +
+  geom_boxplot(notch=FALSE, fill="grey") +
   ylim(0,0.15)
+
+ggplot(data=SNP_ROH_ratio, aes(x=Category, y=log(Value))) +
+  #geom_violin() +
+  geom_boxplot(notch=FALSE, fill="grey") 
+
+# could be an inset
+ggplot(data=SNP_ROH_ratio, aes(x=Category, y=Value)) +
+  geom_boxplot(notch=FALSE, fill="grey", outlier.colour = NA) +
+  #geom_violin()
+  #geom_jitter(shape=21) +
+  theme_minimal() +
+  ylim(0,0.06)
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/dSNP_sSNP_ROH_inset.pdf",
+       width = 4, height = 5)
 
 # violin plot is the best data for this
 ggplot(data=SNP_ROH_ratio, aes(x=Category, y=log(Value))) +
@@ -285,6 +300,25 @@ SNP_ROH_wgroups <- merge(SNP_ROH_ratio, key,
 
 ggplot(data=SNP_ROH_wgroups, aes(x=group, y=Value)) +
   geom_boxplot(aes(color=Category))
+
+######################################
+########### RATIO IN/OUT ROH ##########
+######################################
+
+# ratio in/out ROH
+SNP_ROH_Numbers$Fract_InROH <- SNP_ROH_Numbers$Tot_HomDer_inROH / SNP_ROH_Numbers$Not_in_ROH
+
+hist(SNP_ROH_Numbers$Fract_InROH[which(SNP_ROH_Numbers$Fract_InROH < 10)])
+
+ggplot(data=SNP_ROH_Numbers, aes(x=Consequence, y=log(Fract_InROH))) +
+  #geom_boxplot() +
+  geom_violin() +
+  ylim(-10,2)
+
+ggplot(data=SNP_ROH_Numbers, aes(y=Fract_InROH)) +
+  geom_boxplot() +
+  facet_wrap(vars(Consequence), scales="free_y")
+
 
 ####################################################
 ### BOXPLOT W/ AVE dSNPs/codon IN AND OUT OF ROH ###
@@ -313,10 +347,13 @@ SNP_ROH_NumPerCodon_long$Consequence <- factor(SNP_ROH_NumPerCodon_long$Conseque
                                                levels=c("AllDel",
                                                         "Tolerated",
                                                         "SynonymousNodups"))
+
+
 # this is one possibility for main manuscript
+#ggplot(data=SNP_ROH_NumPerCodon_long, aes(x=Category, y=Value)) +
 ggplot(data=SNP_ROH_NumPerCodon_long, aes(x=Category, y=log(Value))) +
-  geom_violin(aes(fill=Consequence)) +
-  #geom_boxplot(aes(fill=Consequence), notch=TRUE) +
+  #geom_violin(aes(fill=Consequence)) +
+  geom_boxplot(aes(fill=Consequence), notch=FALSE) +
   theme_minimal() +
   xlab("") + ylab("Number of Homozygous Derived per Codon (log-scaled)") +
   scale_fill_manual(values= c(Col_Deleterious, 
@@ -328,12 +365,28 @@ ggplot(data=SNP_ROH_NumPerCodon_long, aes(x=Category, y=log(Value))) +
 ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/SNPNum_Consequence_ROH_violin.pdf",
        width = 8, height = 10)
 
+# another good possibility for main manuscript
 ggplot(data=SNP_ROH_NumPerCodon_long, aes(x=Category, y=Value)) +
-  geom_boxplot() +
-  facet_wrap(vars(Consequence), scales="free_y")
+  #geom_jitter(color="grey", alpha=0.8, shape=21) +
+  #geom_jitter(aes(color=Consequence), alpha=0.9, shape=21) +
+  #geom_boxplot(outlier.shape = NA, fill=NA) +
+  geom_boxplot(outlier.shape = NA, aes(fill=Consequence)) +
+  scale_fill_manual(values= c(Col_Deleterious, Col_Tolerated, Col_Synonymous),
+                    name = "Variant Class", labels = c("Deleterious", "Tolerated", "Synonymous")) +
+  scale_color_manual(values= c(Col_Deleterious, Col_Tolerated, Col_Synonymous),
+                    name = "Variant Class", labels = c("Deleterious", "Tolerated", "Synonymous")) +
+  #geom_violin(fill=NA) +
+  #geom_dotplot(binaxis = "y", stackdir = "center", size=0.5) +
+  facet_wrap(vars(Consequence), scales="free_y") +
+  theme_minimal() +
+  ylab("Number of Variants per Codon")
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/ROH_boxplot_VariantsperCodon.pdf",
+       width = 10, height = 7)
+
 
 ggplot(data=SNP_ROH_NumPerCodon_long, aes(x=Consequence, y=log(Value))) +
   geom_boxplot() +
+  #geom_violin() +
   facet_wrap(vars(Category), scales="free_y")
 
 # differences across germplasm?
@@ -388,7 +441,7 @@ ggplot(data=SNP_ROH_size[which(SNP_ROH_size$group!="introgressed"),], aes(x=Mb_r
   theme_minimal() +
   ylab("Fraction of derived homozygotes in a ROH") +
   xlab("Sum ROH Length (Mb)")
-ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/ROH_scatterplot.pdf",
+ggsave("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Manuscript/Sunflower_MutationLoad_Manuscript/Sunflower_MutationLoad_v1/RawFigs/ROH_scatterplot.eps",
        width = 10, height = 10)
 
 ggplot(data=SNP_ROH_size[which(SNP_ROH_size$group!="introgressed"),], aes(x=Mb_roh, y=Proportion_inROH)) +
@@ -412,9 +465,16 @@ ggplot(data = SNP_ROH_size[which(SNP_ROH_size$Consequence=="AllDel"),],
 # for all consequences?
 ggplot(data = SNP_ROH_size,
        aes(x=Mb_roh, y=NumDerivedHom)) +
-  geom_point(aes(color=Consequence)) +  
+  geom_point(aes(color=group)) +  
   facet_wrap(vars(Consequence), scales="free_y") +
-  geom_smooth(se=TRUE)
+  geom_smooth(se=FALSE, method="lm", aes(color=group))
+
+# same graph faceted by group
+ggplot(data = SNP_ROH_size,
+       aes(x=Mb_roh, y=log(NumDerivedHom))) +
+  geom_point(aes(color=Consequence)) +  
+  facet_wrap(vars(group), scales="free_y") +
+  geom_smooth(se=FALSE, method="lm", aes(color=Consequence))
 
 # total dSNPs/codon
 ggplot(data = SNP_ROH_size[which(SNP_ROH_size$Consequence=="AllDel"),], 
@@ -425,6 +485,17 @@ ggplot(data = SNP_ROH_size,
        aes(x=Mb_roh, y=Tot_HomDer_perCodon)) +
   geom_point(aes(color=Consequence)) +  geom_smooth(se=TRUE) +
   facet_wrap(vars(Consequence), scales="free_y")
+
+# dSNP/sSNP
+# convert to wide
+SNP_ROH_size_wide <- reshape(SNP_ROH_size[,c(1:3,37),],
+                             idvar = c("sample", "Mb_roh"),
+                             timevar = "Consequence",
+                             direction = "wide")
+
+ggplot(data = SNP_ROH_size_wide, 
+       aes(x=Mb_roh, y=NumDerivedHom.AllDel/NumDerivedHom.SynonymousNodups)) +
+  geom_point() + geom_smooth(method="lm")
 
 #########################################################
 ### BOXPLOT SHOWING TOTAL LENGTH OF ROH OF DIFF SIZES ###
@@ -443,3 +514,5 @@ Chr10_ROH$HA_prop <- Chr10_ROH$HA_num / 145
 Chr10_ROH$RHA_prop <- Chr10_ROH$RHA_num / 112
 
 plot(Chr10_ROH$HA_prop ~ Chr10_ROH$RHA_prop)
+
+Chr10_ROH[which(Chr10_ROH$RHA_prop==0),]

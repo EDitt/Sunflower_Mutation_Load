@@ -60,6 +60,7 @@ ggplot(Group_ROH_new[which(Group_ROH_new$Group!="introgressed"),],
   geom_point(data=Group_ROH_new[which(Group_ROH_new$PointCol=="97.5%" &
                                         Group_ROH_new$Group!="introgressed"),],
              aes(x=Mbp, y=Proportion, color=Group), alpha=0.6) +
+  scale_color_manual(values = c(HA_NonOil, HA_Oil, landrace_OPV, RHA_NonOil, RHA_Oil)) +
   facet_wrap(~Chromosome, 
              scales = "free_x")
 
@@ -69,9 +70,20 @@ ggplot(Group_ROH_new[which(Group_ROH_new$Group!="introgressed"),],
   geom_point(data=Group_ROH_new[which(Group_ROH_new$PointCol!="none" &
                                         Group_ROH_new$Group!="introgressed"),],
              aes(x=Mbp, y=Proportion, color=Group), alpha=0.6) +
+  scale_color_manual(values = c(HA_NonOil, HA_Oil, landrace_OPV, RHA_NonOil, RHA_Oil)) +
   facet_wrap(~Chromosome, 
              scales = "free_x")
 
+# chromosome 10 only
+ggplot(Group_ROH_new[which(Group_ROH_new$Group!="introgressed" &
+                             Group_ROH_new$Chromosome=="Ha412HOChr10"),], 
+       aes(x=Mbp, y=Proportion)) +
+  geom_smooth(aes(color=Group), method="loess") +
+  geom_point(data=Group_ROH_new[which(Group_ROH_new$PointCol=="97.5%" &
+                                        Group_ROH_new$Group!="introgressed" &
+                                        Group_ROH_new$Chromosome=="Ha412HOChr10"),],
+             aes(x=Mbp, y=Proportion, color=Group), alpha=0.6) +
+  scale_color_manual(values = c(HA_NonOil, HA_Oil, landrace_OPV, RHA_NonOil, RHA_Oil))
 
 ######################################
 ########## SHARED HOTSPOTS ###########
@@ -200,6 +212,17 @@ ggplot(HetGrp_ROH,
   facet_wrap(~Chromosome, 
              scales = "free_x") +
   geom_segment(data=Het_ranges, aes(x=MbpStart, y=0.5, xend=MbpEnd, yend=0.5, color=Het_Group)) +
+  theme_minimal()
+
+# chromosome 10 only
+ggplot(HetGrp_ROH[which(HetGrp_ROH$Chromosome=="Ha412HOChr10"),], 
+       aes(x=Mbp, y=Proportion)) +
+  geom_smooth(aes(color=Group), method="loess") +
+  geom_point(data=HetGrp_ROH[which(HetGrp_ROH$PointCol=="97.5%" &
+                                     HetGrp_ROH$Chromosome=="Ha412HOChr10"),],
+             aes(x=Mbp, y=Proportion, color=Group), alpha=0.5) +
+  geom_segment(data=Het_ranges[which(Het_ranges$Chromosome=="Ha412HOChr10"),], 
+               aes(x=MbpStart, y=0.5, xend=MbpEnd, yend=0.5, color=Het_Group)) +
   theme_minimal()
 
 ######################################
