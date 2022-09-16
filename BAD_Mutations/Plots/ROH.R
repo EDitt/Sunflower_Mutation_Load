@@ -126,8 +126,8 @@ IndROH_INFO$Mb <- IndROH_INFO$KB / 1000
 ###### PLOT BY GERMPLASM GROUP #######
 ######################################
 
-ggplot(data=IndROH_INFO, aes(x=IndROH_INFO$NSEG,
-                             y=IndROH_INFO$KB)) +
+ggplot(data=IndROH_INFO, aes(y=IndROH_INFO$NSEG,
+                             x=IndROH_INFO$KB)) +
   geom_point(aes(fill=group, shape=group, color=group), size=3, alpha=0.8) +
   scale_shape_manual(values=c(8, 23, 21, 21, 21), name = "Germplasm Group") +
   scale_fill_manual(limits=c("landrace", "OPV", "NonOil", "Oil"),
@@ -136,7 +136,8 @@ ggplot(data=IndROH_INFO, aes(x=IndROH_INFO$NSEG,
                        name = "Germplasm Group") +
   scale_color_manual(values=c(landrace_OPV, "black", "black", "black", "black")) +
   theme_minimal() +
-  xlab("nROH") + ylab("Total Length")
+  ylab("nROH") + xlab("Total Length") +
+  geom_smooth(method="lm")
 
 
 # to color-code:
