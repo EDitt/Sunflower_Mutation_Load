@@ -32,21 +32,22 @@ Group="${group_array[${SLURM_ARRAY_TASK_ID}]}"
 
 echo Group is $Group
 
-#genotypes=$(awk -v var="$Group" -F',' '{if ($14==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_INFO | paste -sd,) 
-#bcftools view -Ou --samples ${genotypes} ${VCF} |\
-#bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' > ${outputdir}/intermediates/${Group}_SNP_freq.txt
+genotypes=$(awk -v var="$Group" -F',' '{if ($14==var && $9!="HA412" && $9!="NA") {print $9}}' $SAM_INFO | paste -sd,) 
+bcftools view -Ou --samples ${genotypes} ${VCF} |\
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT{0}\t%AC\t%AN\t%AF\n' > ${outputdir}/intermediates/${Group}_SNP_freq.txt
 
 Rscript "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/Variant_Table.R" \
 "/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/All_Positions.txt" \
 "/scratch/eld72413/SAM_seq/Polarized/AncestralStateCalls.txt" \
 "${outputdir}" \
-"${Group}"
+"${Group}" \
+"${outputdir}/intermediates/${Group}_SNP_freq.txt"
 
 grep -v -w -f ${snps_remove} "${outputdir}/${Group}_SNP_info.txt" | sort -V > "${outputdir}/intermediates/${Group}_SNP_info_ForUnfolded.txt"
 
 
 Rscript --verbose "/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Scripts/SFS_Info.R" \
-"${Group}" \
+"${outputdir}/intermediates/${Group}_SNP_info_ForUnfolded.txt" \
 "1.0" \
 "0.05" \
 "Derived_Freq" \
