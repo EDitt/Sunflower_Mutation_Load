@@ -67,6 +67,13 @@ PropHet_MAF <- function(dataframe) {
   return(dataframe)
 }
 
+# converts counts of reference and alternate alleles to derived allele counts and frequency
+DerivedAlleleCount <- function(df, DerCountColName, DerFreqColName, AncestralAlleleCol, RefAlleleCol, AltAlleleCol, NumRefCol, NumAltCol) {
+  df[,DerCountColName] <- ifelse(df[,AncestralAlleleCol]==df[,RefAlleleCol], 
+    df[,NumAltCol], df[,NumRefCol])
+  df[,DerFreqColName] <- df[,DerCountColName] / (df[,NumAltCol] + df[,NumRefCol])
+  return(df)
+}
 
 ###########################################
 ########### GERMPLASM PATTERNS ############
@@ -215,7 +222,6 @@ JointSFSPlot2 <- function(df, BinNum, Group1Col, Group2Col, Group1_X_label, Grou
 ###########################################
 
 library(ggplot2)
-library("ggplot2")
 library(dplyr)
 library(viridis)
 library(ggExtra)
