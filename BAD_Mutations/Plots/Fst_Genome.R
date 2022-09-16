@@ -38,8 +38,9 @@ Fst_df[which(Fst_df$Weighted_Fst > quantile(Fst_df$Weighted_Fst, 0.975)),] # 0.2
 ######## PLOT ACROSS GENOME ##########
 ######################################
 
-ChromosomeNames <- as.character(unique(as.numeric(gsub("Ha412HOChr", "", Fst_HA_RHA$Chromosome))))
-names(ChromosomeNames) <- unique(Fst_HA_RHA$Chromosome)
+#ChromosomeNames <- as.character(unique(as.numeric(gsub("Ha412HOChr", "", Fst_HA_RHA$Chromosome))))
+ChromosomeNames <- as.character(unique(as.numeric(gsub("Ha412HOChr", "", Fst_df$Chromosome))))
+names(ChromosomeNames) <- unique(Fst_df$Chromosome)
 
 Fst_HARHA <- plotFst(subset(Fst_df, Variant_type=="HA_RHA"), "Weighted_Fst", c(0.975, 0.995))
 Fst_df[which(Fst_df$Weighted_Fst > 0.4 & Fst_df$Variant_type=="HA_RHA"),]
@@ -167,6 +168,11 @@ ggplot(data=Pi_test, aes(x=Mbp, y=PI)) +
 
 TajD <- HetGroups_Dem("/Volumes/GoogleDrive/My Drive/Active Projects/DelMutation/Results/GenomicPatterns/Fst_data",
                          ".Tajima.D", "_Mbp1_", TRUE)
+
+TajD_HA <- subset(TajD, group=="HA")
+TajD_HA[which(TajD_HA$TajimaD < quantile(TajD_HA$TajimaD, 0.005)),] 
+# chrom 4: 132, chrom 11: 103-106, 128, 130, chrom 12: 82-83, chrom 15: 82-84, 88-90, 103
+
 
 ggplot(data=TajD, aes(x=Mbp, y=TajimaD)) +
   geom_smooth(aes(color=group)) +
