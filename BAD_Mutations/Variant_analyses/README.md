@@ -197,6 +197,76 @@ In `/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/GroupFreqs`
 
 See Plots/Germplasm_VariantFreq.R
 
+#### Combined output from previous script (group frequencies for all derived SNPs)
+```R
+# srun --pty  -p inter_p  --mem=100G --nodes=1 --ntasks-per-node=8 --time=6:00:00 --job-name=qlogin /bin/bash -l
+
+source("/home/eld72413/DelMut/Sunflower_Mutation_Load/BAD_Mutations/Variant_analyses/Functions.R")
+
+DirPath=c("/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/GroupFreqs/intermediates")
+my_files <- list.files(path = DirPath, 
+                       pattern = "*_SNP_info_ForUnfolded.txt", full.names = TRUE)
+my_data <- lapply(my_files, read.table, header=T)
+names(my_data) <- gsub("_SNP_info_ForUnfolded.txt", "", my_files)
+names(my_data) <- gsub(DirPath, "", names(my_data))
+names(my_data) <- gsub("/", "", names(my_data))
+
+# subset to only include derived alleles:
+my_data_derived <- lapply(my_data, function(x) {
+	x[which(!is.na(x$Ancestral_Allele)),]
+	})
+
+for (i in seq_along(my_data_derived)) {
+    name <- names(my_data_derived[i])
+    my_data_derived[[i]]["Group"] <- name
+    my_data_derived[[i]]["Num_Ref_alleles"] <- my_data_derived[[i]]["Num_alleles"] - my_data_derived[[i]]["Num_Alt_alleles"]
+  	}
+
+my_data_derived <- lapply(my_data_derived, function(x) {
+	DerivedAlleleCount(x, "DerivedCount", "DerivedFreq", "Ancestral_Allele", "Ref_allele", "Alt_allele", "Num_Ref_alleles", "Num_Alt_alleles")
+	})
+
+save(my_data_derived, file="GroupDerivedAlleleData.RData") # to save a stopping point
+
+rm(my_data) # to save memory
+
+HA_data <- merge(my_data_derived[["HA-NonOil"]][c("Chromosome", "Position", "Num_alleles", "DerivedCount", "DerivedFreq", "Variant_type")], 
+	my_data_derived[["HA-Oil"]][c("Chromosome", "Position", "Num_alleles", "DerivedCount", "DerivedFreq", "Variant_type")], 
+	by=c("Chromosome", "Position", "Variant_type"),
+	suffixes=c("NonOil", "Oil"))
+
+HA_data$HA_derivedFreq <- (HA_data$DerivedCountNonOil + HA_data$DerivedCountOil) / (HA_data$Num_allelesNonOil + HA_data$Num_allelesOil)
+
+RHA_data <- merge(my_data_derived[["RHA-NonOil"]][c("Chromosome", "Position", "Num_alleles", "DerivedCount", "DerivedFreq", "Variant_type")], 
+	my_data_derived[["RHA-Oil"]][c("Chromosome", "Position", "Num_alleles", "DerivedCount", "DerivedFreq", "Variant_type")], 
+	by=c("Chromosome", "Position", "Variant_type"),
+	suffixes=c("NonOil", "Oil"))
+
+RHA_data$RHA_derivedFreq <- (RHA_data$DerivedCountNonOil + RHA_data$DerivedCountOil) / (RHA_data$Num_allelesNonOil + RHA_data$Num_allelesOil)
+
+Elite_data <- merge(HA_data,
+	RHA_data,
+	by=c("Chromosome", "Position", "Variant_type"),
+	suffixes=c("HA", "RHA"))
+
+Elite_data$Oil_derivedFreq <- (Elite_data$DerivedCountOilHA + Elite_data$DerivedCountOilRHA) / (Elite_data$Num_allelesOilHA + Elite_data$Num_allelesOilRHA)
+
+Elite_data$NonOil_derivedFreq <- (Elite_data$DerivedCountNonOilHA + Elite_data$DerivedCountNonOilRHA) / (Elite_data$Num_allelesNonOilHA + Elite_data$Num_allelesNonOilRHA)
+save(Elite_data, file="Elite_AlleleData.RData") # to save a stopping point
+
+
+AllGroups <- merge(Elite_data[,c("Chromosome", "Position", "Variant_type", "HA_derivedFreq", "RHA_derivedFreq",
+	"Oil_derivedFreq", "NonOil_derivedFreq", "DerivedFreqOilHA", "DerivedFreqNonOilHA", "DerivedFreqOilRHA", "DerivedFreqNonOilRHA")],
+					merge(my_data_derived[["landrace_OPV"]][c("Chromosome", "Position", "Variant_type", "DerivedFreq")],
+							my_data_derived[["introgressed"]][c("Chromosome", "Position", "Variant_type", "DerivedFreq")],
+							by=c("Chromosome", "Position", "Variant_type"),
+							suffixes=c("landrace_OPV", "introgressed")),
+					by=c("Chromosome", "Position", "Variant_type"))
+
+write.table(AllGroups, file="/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/Group_Derived_Freqs.txt",
+	quote=FALSE, row.names=FALSE, sep="\t")
+```
+
 ### Proportion of heterozygous dSNPs/sSNPs across different MAF classes
 To see if the greater heterozygosity in dSNPs is due only to lower frequencies
 ```bash

@@ -53,6 +53,9 @@ SAMPLE_SNP_DATA=/scratch/eld72413/SAM_seq/dSNP_results/GenotypeInfo/Annotation_V
 GENETIC_MAP_SNPs=/scratch/eld72413/SAM_seq/Recombination/MapUniqueSNP_idt90_rename_rmContigs_sorted.vcf
 	# permanently saved at: /project2/jmblab/dittmar/NSF_Proj/SupportingData
 
+# A table of all polarized SNPs and derived frequencies for all germplasm groups:
+SNP_DERIVED_FREQS=/scratch/eld72413/SAM_seq/dSNP_results/SupportingFiles/Group_Derived_Freqs.txt
+
 ###########################################
 #########     COMMON VARIABLES    #########
 ###########################################
